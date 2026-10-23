@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { cx, scoreOf, kondisiOf, pct, groupOfComponent, fmtDateTime, latestByUnit, clamp } from '../lib/analytics'
 import { GRADES, gradeMeta, isConfigured, getAutoSyncMaster, TARGET_SHEET, kondisiMeta } from '../lib/config'
 import { submitInspection, syncMaster } from '../lib/api'
-import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, ScoreRing, Empty, Segmented, Toast } from '../components/ui'
+import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, ScoreRing, Empty, Segmented, Toast, MultiSelect } from '../components/ui'
 import {
   IconSearch, IconCheck, IconX, IconClipboard, IconChevronDown, IconChevron, IconAlert, IconExternal,
   IconTruck, IconDroplet, IconUser, IconCalendar, IconSheet, IconBolt, IconRefresh, IconSpark, IconGauge,
@@ -28,6 +28,8 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const [result, setResult] = useState(null)
   const [openGroups, setOpenGroups] = useState({})
   const [onlyEmpty, setOnlyEmpty] = useState(false)
+  const [divisiSel, setDivisiSel] = useState([])
+  const [jenisSel, setJenisSel] = useState([])
   const [mode, setMode] = useState(initial?.kode ? 'form' : 'pick')
   const topRef = useRef(null)
 
@@ -35,15 +37,26 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const pool = tipe === 'Mesin' ? data.mesin : data.irrigator
   const allComponents = useMemo(() => groups.flatMap((g) => g.items), [groups])
 
+  /* ---- pilihan filter ---- */
+  const divisiList = useMemo(() => [...new Set(pool.map((u) => u.wilayah).filter(Boolean))].sort(), [pool])
+  const jenisList = useMemo(() => [...new Set(pool.map((u) => u.unit).filter(Boolean))].sort(), [pool])
+  const divisiCount = useMemo(() => pool.reduce((m, u) => { const k = u.wilayah || '—'; m[k] = (m[k] || 0) + 1; return m }, {}), [pool])
+  const jenisCount = useMemo(() => pool.reduce((m, u) => { const k = u.unit || '—'; m[k] = (m[k] || 0) + 1; return m }, {}), [pool])
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    const list = q
-      ? pool.filter((u) =>
-          [u.kode, u.wilayah, u.spec, u.unit, u.status, u.pompa, u.nozzle].filter(Boolean).join(' ').toLowerCase().includes(q)
-        )
-      : pool
-    return list.slice(0, 60)
-  }, [pool, query])
+    let list = pool
+    if (divisiSel.length) list = list.filter((u) => divisiSel.includes(u.wilayah))
+    if (jenisSel.length) list = list.filter((u) => jenisSel.includes(u.unit))
+    if (q) {
+      list = list.filter((u) =>
+        [u.kode, u.wilayah, u.spec, u.unit, u.status, u.pompa, u.nozzle].filter(Boolean).join(' ').toLowerCase().includes(q)
+      )
+    }
+    return list
+  }, [pool, query, divisiSel, jenisSel])
+
+  const adaFilter = divisiSel.length > 0 || jenisSel.length > 0 || !!query.trim()
 
   const unit = useMemo(() => pool.find((u) => u.kode === kode) || null, [pool, kode])
 
@@ -307,23 +320,60 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
           <div className="card-pad space-y-3">
             <Segmented
               value={tipe}
-              onChange={(v) => { setTipe(v); setKode(''); setQuery('') }}
+              onChange={(v) => { setTipe(v); setKode(''); setQuery(''); setDivisiSel([]); setJenisSel([]) }}
               options={[
                 { value: 'Mesin', label: `Mesin · ${data.mesin.length}` },
                 { value: 'Irrigator', label: `Irrigator · ${data.irrigator.length}` },
               ]}
             />
-            <div className="relative">
-              <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-              <input
-                autoFocus
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Cari kode unit, wilayah, spec… (mis. SPC0095 / PG2)"
-                className="input !py-2.5 !pl-9"
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative min-w-[190px] flex-1">
+                <IconSearch size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={tipe === 'Mesin' ? 'Cari kode / spec… (mis. SPC0018)' : 'Cari kode / nozzle… (mis. ITI0083)'}
+                  className="input !py-2.5 !pl-9 !text-[12.5px]"
+                />
+              </div>
+              <MultiSelect
+                label={tipe === 'Mesin' ? 'Divisi' : 'Wilayah'}
+                placeholder="Semua divisi"
+                options={divisiList}
+                value={divisiSel}
+                onChange={setDivisiSel}
+                counts={divisiCount}
+                className="min-w-[140px]"
               />
+              <MultiSelect
+                label={tipe === 'Mesin' ? 'Jenis Engine' : 'Jenis Irrigator'}
+                placeholder="Semua jenis"
+                options={jenisList}
+                value={jenisSel}
+                onChange={setJenisSel}
+                counts={jenisCount}
+                className="min-w-[150px]"
+              />
+              {(adaFilter) && (
+                <button
+                  className="btn-ghost !py-2 !text-[11.5px] !border-rose-500/30 !text-rose-300"
+                  onClick={() => { setQuery(''); setDivisiSel([]); setJenisSel([]) }}
+                  title="Bersihkan filter"
+                >
+                  <IconX size={13} /> Reset
+                </button>
+              )}
             </div>
-            <div className="grid max-h-[52vh] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
+
+            <div className="flex flex-wrap items-center gap-2 text-[10.5px] text-slate-500">
+              <span>
+                Menampilkan <span className="font-mono font-semibold text-slate-300">{filtered.length}</span> dari{' '}
+                <span className="font-mono font-semibold text-slate-300">{pool.length}</span> unit {tipe.toLowerCase()}
+              </span>
+              {divisiSel.length > 0 && <span className="chip !py-0.5 !text-[10px]">Divisi: {divisiSel.join(', ')}</span>}
+              {jenisSel.length > 0 && <span className="chip !py-0.5 !text-[10px]">Jenis: {jenisSel.join(', ')}</span>}
+            </div>
+            <div className="grid max-h-[58vh] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
               {filtered.map((u) => {
                 const rec = latestByUnit(records).get(`${tipe}:${u.kode}`)
                 return (
