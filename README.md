@@ -312,3 +312,30 @@ bash scripts/publish-pages.sh
 ---
 
 © 2026 — FS Inspection · Inspeksi Engine & Service
+
+
+---
+
+## Logo & ikon PWA
+
+Mark: centang tebal di atas squircle gradien cyan → biru (selaras tema gelap aplikasi).
+
+| Berkas | Fungsi |
+|---|---|
+| `public/icon.svg` | logo aplikasi (sidebar) + favicon SVG modern |
+| `public/favicon.ico` | favicon 16/32/48 px (browser lama, bookmark) |
+| `public/icons/favicon-{16,32,48}.png` | favicon PNG |
+| `public/icons/icon-{72,96,144,192,256,384,512}.png` | ikon "any" — Android/Chrome/desktop install, taskbar |
+| `public/icons/maskable-{192,512}.png` | ikon **maskable** Android (aman untuk mask bulat/squircle) |
+| `public/apple-touch-icon.png` | iOS/iPadOS home screen (180 px, full-bleed) |
+| `public/manifest.webmanifest` | nama, tema `#05080f`, `display: standalone`, shortcut **Tambah Inspeksi** & **Riwayat** |
+| `public/sw.js` | service worker: navigasi network-first, aset cache-first, offline shell |
+
+Membuat ulang seluruh ikon setelah logo diubah:
+
+```bash
+npm i -D playwright-core          # sekali saja
+node scripts/make-icons.mjs       # butuh CHROME_PATH bila Chromium tak standar
+```
+
+**Memasang sebagai aplikasi:** Chrome/Edge desktop → ikon *Install* di address bar · Android → *Add to Home screen* · iPhone/iPad (Safari) → *Share ▸ Add to Home Screen*.

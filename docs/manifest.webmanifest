@@ -1,0 +1,40 @@
+{
+  "id": "fs-inspection",
+  "name": "FS Inspection — Inspeksi Unit Mesin & Irrigator",
+  "short_name": "FS Inspection",
+  "description": "Dashboard inspeksi berkala unit mesin & irrigator: checklist komponen, analitik kondisi aset, dan input inspeksi langsung ke Google Sheets.",
+  "lang": "id",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "any",
+  "background_color": "#05080f",
+  "theme_color": "#05080f",
+  "categories": ["productivity", "business", "utilities"],
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-256.png", "sizes": "256x256", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-384.png", "sizes": "384x384", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    {
+      "name": "Tambah Inspeksi",
+      "short_name": "Inspeksi",
+      "description": "Buka pop-up inspeksi baru",
+      "url": "./#/inspeksi",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Riwayat Inspeksi",
+      "short_name": "Riwayat",
+      "url": "./#/riwayat",
+      "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ]
+}

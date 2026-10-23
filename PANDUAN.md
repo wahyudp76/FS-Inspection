@@ -4,6 +4,14 @@ Checklist singkat. Detail lengkap ada di [`README.md`](README.md).
 
 ---
 
+## Pasang sebagai aplikasi (PWA)
+
+- **Android (Chrome)**: menu ⋮ ▸ **Add to Home screen / Instal aplikasi**.
+- **iPhone/iPad (Safari)**: **Share** ▸ **Add to Home Screen**.
+- **Desktop (Chrome/Edge)**: klik ikon **Install** di kanan address bar.
+
+Setelah dipasang, aplikasi terbuka tanpa address bar, ikonnya memakai logo FS Inspection, dan shell tetap terbuka saat sinyal buruk (data inspeksi tetap butuh koneksi ke Apps Script).
+
 ## Navigasi
 
 - **Header atas membeku (freeze)** — judul halaman, tombol **+ Tambah Inspeksi**, **Sinkron**, dan **Buka Sheet** tetap terlihat saat halaman digulir ke bawah; muncul bayangan halus sebagai penanda.
