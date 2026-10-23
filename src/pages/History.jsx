@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { cx, fmtDateTime, trendByPeriod, periodKey, pct, kondisiOf } from '../lib/analytics'
 import { GRADES } from '../lib/config'
 import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, Empty, Segmented, Select } from '../components/ui'
@@ -12,6 +12,8 @@ export default function History({ records, data, navigate, onSync, syncing }) {
   const [period, setPeriod] = useState('minggu')
   const [inspector, setInspector] = useState('')
   const [expanded, setExpanded] = useState(null)
+  const [perPage, setPerPage] = useState(10)
+  const [page, setPage] = useState(0)
 
   const groupFor = (t) => (t === 'Mesin' ? data.groups.mesin : data.groups.irrigator)
 
@@ -25,6 +27,15 @@ export default function History({ records, data, navigate, onSync, syncing }) {
     if (qq) r = r.filter((x) => [x.kode, x.wilayah, x.inspector, x.catatan, x.tanggal].filter(Boolean).join(' ').toLowerCase().includes(qq))
     return r
   }, [records, tipe, inspector, q])
+
+  /* ---------- paging ---------- */
+  const totalHalaman = Math.max(1, Math.ceil(filtered.length / perPage))
+  const halamanAman = Math.min(page, totalHalaman - 1)
+  const mulai = halamanAman * perPage
+  const sampai = Math.min(mulai + perPage, filtered.length)
+  const barisHalaman = useMemo(() => filtered.slice(mulai, sampai), [filtered, mulai, sampai])
+
+  useEffect(() => { setPage(0); setExpanded(null) }, [tipe, inspector, q, perPage])
 
   const trend = useMemo(() => trendByPeriod(filtered, period), [filtered, period])
   const summary = useMemo(() => {
@@ -143,7 +154,7 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.slice(0, 200).map((r) => {
+                {barisHalaman.map((r) => {
                   const key = r.id || `${r.kode}-${r.timestamp}`
                   const isOpen = expanded === key
                   const groups = groupFor(r.tipe)
@@ -213,10 +224,9 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                 })}
               </tbody>
             </table>
-            {filtered.length > 200 && (
-              <p className="px-4 py-2 text-center text-[10.5px] text-slate-500">Menampilkan 200 sesi terbaru dari {filtered.length}. Gunakan filter atau ekspor CSV.</p>
-            )}
           </div>
+
+
         ) : (
           <Empty
             title="Belum ada riwayat inspeksi"
@@ -231,6 +241,72 @@ export default function History({ records, data, navigate, onSync, syncing }) {
             }
           />
         )}
+      {/* ---------- pager ---------- */}
+      {filtered.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.06] px-4 py-3">
+          <p className="text-[11px] text-slate-500">
+            Menampilkan{' '}
+            <span className="font-mono font-semibold text-slate-300">
+              {mulai + 1}–{sampai}
+            </span>{' '}
+            dari <span className="font-mono font-semibold text-slate-300">{filtered.length}</span> sesi
+            {filtered.length !== records.length && (
+              <span className="text-slate-600"> (difilter dari {records.length})</span>
+            )}
+          </p>
+
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <span className="text-[10.5px] text-slate-500">Baris</span>
+            <Segmented
+              value={String(perPage)}
+              onChange={(v) => setPerPage(Number(v))}
+              size="sm"
+              options={[
+                { value: '10', label: '10' },
+                { value: '20', label: '20' },
+                { value: '50', label: '50' },
+              ]}
+            />
+
+            <div className="ml-1 flex items-center gap-1">
+              <button
+                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                disabled={halamanAman === 0}
+                onClick={() => setPage(0)}
+                title="Halaman pertama"
+              >
+                «
+              </button>
+              <button
+                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                disabled={halamanAman === 0}
+                onClick={() => setPage(halamanAman - 1)}
+              >
+                Sebelumnya
+              </button>
+              <span className="px-1 font-mono text-[11px] text-slate-400">
+                {halamanAman + 1} / {totalHalaman}
+              </span>
+              <button
+                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                disabled={halamanAman >= totalHalaman - 1}
+                onClick={() => setPage(halamanAman + 1)}
+              >
+                Berikutnya
+              </button>
+              <button
+                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                disabled={halamanAman >= totalHalaman - 1}
+                onClick={() => setPage(totalHalaman - 1)}
+                title="Halaman terakhir"
+              >
+                »
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       </Card>
     </div>
   )
