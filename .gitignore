@@ -10,3 +10,7 @@ dist-ssr
 .idea
 npm-debug.log*
 .DS_Store
+
+# docs/ = hasil build untuk GitHub Pages (Deploy from a branch)
+# JANGAN di-ignore. Hanya cache di dalamnya yang dibuang.
+docs/.vite

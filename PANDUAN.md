@@ -58,27 +58,43 @@ git push -u origin main --force
 
 ---
 
-## Bagian 4 · Aktifkan GitHub Pages (2 menit)
+## Bagian 4 · Aktifkan GitHub Pages (mode branch `docs/`)
 
 1. Repo → **Settings ▸ Pages**
-   - **Source: GitHub Actions**
-2. Repo → **Settings ▸ Secrets and variables ▸ Actions ▸ New repository secret**
-   - Name: `VITE_APPS_SCRIPT_URL`
-   - Value: URL `/exec` dari Bagian 1
-   (opsional — kalau dikosongkan, endpoint diisi manual lewat menu Pengaturan)
-3. Push ke `main` (atau **Actions ▸ Deploy Dashboard to GitHub Pages ▸ Run workflow**).
-4. Setelah ±1 menit: `https://wahyudp76.github.io/FS-Inspection/`
+   - **Source: Deploy from a branch**
+   - **Branch: `main`** → **Folder: `/docs`** → **Save**
+2. Tunggu ±1 menit → buka `https://wahyudp76.github.io/FS-Inspection/`
 
----
+Sudah terpasang di repo: folder `docs/` berisi hasil build terbaru + `.nojekyll`.
+
+**Setiap kali kode diubah**, jalankan salah satu:
+
+```bash
+npm run build:pages && git add docs && git commit -m "build: perbarui dashboard" && git push
+# atau
+bash scripts/publish-pages.sh
+```
+
+> Endpoint Apps Script **tidak** dibaca dari secret di mode ini (secret hanya
+> dipakai workflow Actions). Jadi isi endpoint lewat menu **Pengaturan** di
+> dashboard, atau lewat `VITE_APPS_SCRIPT_URL` di file `.env` **sebelum**
+> `npm run build:pages`.
+
+### Kalau ingin otomatis (tanpa build manual)
+
+Ganti **Settings ▸ Pages ▸ Source** menjadi **GitHub Actions**, lalu jalankan
+**Actions ▸ Deploy Dashboard to GitHub Pages ▸ Run workflow**. Di mode itu,
+secret `VITE_APPS_SCRIPT_URL` bisa dipakai untuk mengisi endpoint otomatis.
 
 ## Bagian 5 · Pasang domain sendiri
 
 1. **Settings ▸ Pages ▸ Custom domain** → isi domain, mis. `inspeksi.domainanda.com` → **Save**.
-2. Tambah file `public/CNAME` berisi satu baris:
+2. Tambah file `public/CNAME` **dan** `docs/CNAME` berisi satu baris:
    ```
    inspeksi.domainanda.com
    ```
-   lalu commit & push (agar CNAME tidak hilang setiap deploy).
+   lalu commit & push (agar CNAME tidak hilang setiap deploy). `docs/CNAME`
+   wajib karena GitHub Pages menyajikan isi folder `docs/`.
 3. Di penyedia domain, tambahkan DNS:
 
    | Tipe | Nama/Host | Nilai | TTL |

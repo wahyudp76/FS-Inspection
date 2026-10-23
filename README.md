@@ -140,21 +140,53 @@ API yang tersedia pada Web App:
 
 ## 📦 Deploy ke GitHub Pages
 
-1. Push repo ini ke `wahyudp76/FS-Inspection` (branch `main`).
-2. **Settings ▸ Pages ▸ Source: GitHub Actions.**
-3. Push ke `main` → workflow `.github/workflows/deploy.yml` build & deploy otomatis.
-4. URL: `https://wahyudp76.github.io/FS-Inspection/`
+Ada dua mode. Repo ini sudah disiapkan untuk **keduanya**.
+
+### Mode A — Deploy from a branch (folder `docs/`) ✅ sedang dipakai
+
+1. **Settings ▸ Pages ▸ Build and deployment**
+   - **Source: Deploy from a branch**
+   - **Branch: `main`** · **Folder: `/docs`** → **Save**
+2. URL: `https://wahyudp76.github.io/FS-Inspection/`
+
+Setiap kali kode di `src/` diubah, perbarui bundle statisnya:
+
+```bash
+npm run build:pages     # build ke folder docs/ + .nojekyll
+git add docs && git commit -m "build: perbarui dashboard" && git push
+```
+
+atau sekali jalan:
+
+```bash
+bash scripts/publish-pages.sh
+```
+
+> Folder `docs/` berisi **hasil build** (HTML+JS+CSS siap saji), bukan source.
+> `.nojekyll` disertakan agar aset tidak diproses Jekyll.
+
+### Mode B — GitHub Actions (otomatis penuh)
+
+1. **Settings ▸ Pages ▸ Source: GitHub Actions**
+2. Push ke `main`, atau jalankan manual
+   **Actions ▸ Deploy Dashboard to GitHub Pages ▸ Run workflow**.
+3. Workflow `.github/workflows/deploy.yml` akan build & deploy sendiri, dan bisa
+   memakai secret `VITE_APPS_SCRIPT_URL` untuk mengisi endpoint otomatis.
+
+> Jangan mencampur: bila Source = *Deploy from a branch*, workflow Actions tidak
+> dijalankan otomatis (sudah disetel `workflow_dispatch` saja agar tidak gagal).
 
 ### Domain kustom
 
-1. Tambahkan domain Anda di **Settings ▸ Pages ▸ Custom domain**.
-2. Buat file `public/CNAME` berisi satu baris domain, contoh:
+1. Tambahkan domain di **Settings ▸ Pages ▸ Custom domain**.
+2. Buat `public/CNAME` **dan** `docs/CNAME` berisi satu baris domain, contoh:
 
    ```
    inspection.domainanda.com
    ```
 
-3. Di DNS registrar, buat record:
+   (`docs/CNAME` wajib ada karena yang disajikan adalah isi folder `docs/`)
+3. DNS di registrar:
 
    | Tipe | Nama | Nilai |
    |---|---|---|
@@ -166,8 +198,6 @@ API yang tersedia pada Web App:
 > Aplikasi memakai *hash routing* (`/#/inspeksi`), jadi tidak perlu konfigurasi
 > rewrite/404 di hosting apa pun.
 
----
-
 ## 🗂 Struktur proyek
 
 ```
@@ -175,7 +205,9 @@ API yang tersedia pada Web App:
 ├── apps-script/
 │   └── Code.gs               # backend Google Apps Script (paste ke editor)
 ├── scripts/
-│   └── build-data.mjs        # tarik tb_mesin & tb_irrigator → assets.json
+│   ├── build-data.mjs        # tarik tb_mesin & tb_irrigator → assets.json
+│   └── publish-pages.sh      # build docs/ + commit + push
+├── docs/                     # hasil build untuk GitHub Pages (branch mode)
 ├── public/
 │   └── assets-snapshot.json  # snapshot data master
 ├── src/

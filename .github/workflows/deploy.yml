@@ -1,8 +1,10 @@
 name: Deploy Dashboard to GitHub Pages
 
+# CATATAN: workflow ini HANYA dipakai bila GitHub Pages disetel
+# "Source: GitHub Actions". Bila Pages memakai "Deploy from a branch"
+# (main /docs), workflow ini tidak dijalankan otomatis — cukup jalankan
+# `npm run build:pages` lalu commit folder docs/.
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 permissions:
