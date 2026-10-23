@@ -129,6 +129,12 @@ export function readLocalHistory() {
   return { records: c.records || [], syncedAt: c.syncedAt, offline: true }
 }
 
+/** Minta Apps Script menulis hasil inspeksi terakhir ke sheet master Mesin & Irrigator */
+export async function syncMaster() {
+  const json = await post({ action: 'syncmaster' }, 45000)
+  return json.result || []
+}
+
 /** Cek koneksi endpoint */
 export async function ping() {
   const json = await post({ action: 'ping' }, 15000)

@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
 import { getEndpoint, setEndpoint, isConfigured, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
-import { ping, flushQueue, pendingCount, fetchHistory } from '../lib/api'
+import { ping, flushQueue, pendingCount, fetchHistory, syncMaster } from '../lib/api'
 import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark } from '../components/icons'
 import { cx } from '../lib/analytics'
 
@@ -91,6 +91,19 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
             </button>
             <button className="btn-ghost" onClick={() => fetchHistory().then(() => onSync?.()).catch((e) => setToast({ type: 'error', message: e.message }))}>
               <IconRefresh size={14} /> Tarik riwayat
+            </button>
+            <button
+              className="btn-ghost"
+              onClick={async () => {
+                try {
+                  const r = await syncMaster()
+                  setToast({ type: 'success', message: `Sheet master diperbarui: ${r.join(' · ')}` })
+                } catch (e) {
+                  setToast({ type: 'error', message: `Gagal sinkron master: ${e.message}` })
+                }
+              }}
+            >
+              <IconSheet size={14} /> Sinkron ke sheet Mesin &amp; Irrigator
             </button>
             {pending > 0 && (
               <button className="btn-ghost !border-amber-500/30 !text-amber-300" onClick={pushQueue}>

@@ -112,6 +112,41 @@ ke sheet.
 
 ---
 
+## 🌱 Inspeksi awal & sinkron balik ke master
+
+Dua fungsi di `apps-script/Code.gs` (tersedia juga di menu **FS Inspection** pada spreadsheet):
+
+| Menu | Fungsi | Kegunaan |
+|---|---|---|
+| **2. Isi inspeksi awal dari master** | `backfillDariMaster()` | Menyalin kondisi tb_mesin (151) & tb_irrigator (123) menjadi **274 baris** di sheet `Data Inspeksi`, tanggal **5 Maret 2026**, petugas `Inspeksi Awal (Master)`. Aman dijalankan berulang — baris dengan ID `FSI-INIT-…` dilewati. |
+| **3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator** | `syncLatestToMaster()` | Mengambil inspeksi **terbaru per unit** dari `Data Inspeksi` lalu menuliskannya ke sheet master. |
+| **Pasang jadwal otomatis harian** | `installTriggers()` | Menjalankan `syncLatestToMaster` otomatis tiap hari (±01.00 WIB). |
+| **Hapus jadwal otomatis** | `removeTriggers()` | Mematikan trigger harian. |
+
+### Kolom yang ditambahkan ke sheet Mesin & Irrigator
+
+Diletakkan **setelah kolom terakhir** (kolom asli tidak diubah sama sekali):
+
+```
+TGL INSPEKSI TERAKHIR | JAM | SKOR | KONDISI | A | B | C | PETUGAS | TEMUAN (B/C)
+```
+
+- `KONDISI` diberi warna otomatis: hijau *Baik*, kuning *Perlu Perhatian*, merah *Kritis*.
+- `TEMUAN (B/C)` berisi daftar komponen bermasalah, contoh `Radiator:B · Mesin:C`.
+- Baris yang belum pernah diinspeksi dibiarkan kosong, jadi mudah difilter.
+
+> Dari dashboard, tombol **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator** memanggil
+> fungsi yang sama lewat API (action `syncmaster`).
+
+### Urutan pemasangan (sekali saja)
+
+1. Tempel ulang `apps-script/Code.gs` ke editor Apps Script → **Save**.
+2. Jalankan **`setup`** → izinkan akses.
+3. Jalankan **`backfillDariMaster`** → 274 baris inspeksi awal masuk (5 Mar 2026).
+4. Jalankan **`syncLatestToMaster`** → kolom ringkasan muncul di sheet Mesin & Irrigator.
+5. **Deploy ▸ Manage deployments ▸ New version** (agar endpoint dashboard ikut versi baru).
+6. Opsional: **`installTriggers`** untuk sinkron otomatis harian.
+
 ## 📄 Skema sheet `Data Inspeksi`
 
 Dibuat otomatis oleh Apps Script. Satu baris = satu sesi inspeksi.
@@ -135,6 +170,8 @@ API yang tersedia pada Web App:
 | `history` | ambil semua baris (dipakai dashboard) |
 | `submit` | tulis satu sesi inspeksi |
 | `setup` | siapkan/perbaiki header sheet |
+| `syncmaster` | tulis hasil terakhir ke sheet Mesin & Irrigator |
+| `backfill` | isi inspeksi awal dari master (payload: `{tanggal}`) |
 
 ---
 

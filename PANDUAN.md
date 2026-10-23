@@ -28,6 +28,26 @@ Checklist singkat. Detail lengkap ada di [`README.md`](README.md).
 
 ---
 
+## Bagian 1b · Isi inspeksi awal + sinkron balik ke master (2 menit)
+
+Setelah `setup` berhasil, di editor Apps Script yang sama jalankan berurutan:
+
+1. **`backfillDariMaster`** → menyalin kondisi tb_mesin & tb_irrigator
+   menjadi **274 baris** di sheet `Data Inspeksi`, semua bertanggal **2026-03-05**,
+   petugas `Inspeksi Awal (Master)`. (Aman diulang; tidak akan duplikat.)
+2. **`syncLatestToMaster`** → menambahkan 9 kolom ringkasan di kanan tabel
+   sheet **Mesin** dan **Irrigator**:
+   `TGL INSPEKSI TERAKHIR · JAM · SKOR · KONDISI · A · B · C · PETUGAS · TEMUAN (B/C)`
+3. (opsional) **`installTriggers`** → sinkron otomatis tiap hari ±01.00 WIB.
+4. **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy.**
+
+Selanjutnya cukup dari menu **FS Inspection** di spreadsheet (muncul setelah reload),
+atau tombol **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator** di dashboard.
+
+> Butuh tanggal lain? Jalankan dari editor dengan parameter:
+> `backfillDariMaster('2026-03-05')` atau lewat API
+> `{"action":"backfill","payload":{"tanggal":"2026-03-05"}}`.
+
 ## Bagian 2 · Coba dulu di lokal / preview (2 menit)
 
 ```bash

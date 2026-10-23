@@ -22,8 +22,25 @@
  **************************************************************/
 
 /* ====================== KONFIGURASI ====================== */
-var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637
+var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
+
+/* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
+var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
+var MASTER = {
+  Mesin:      { sheet: 'Mesin',     kode: 'Kode Unit', wilayah: 'Asal Mesin', spec: 'Spec',  jenis: 'Jenis', status: 'Status' },
+  Irrigator:  { sheet: 'Irrigator', kode: 'KODE UNIT', wilayah: 'WILAYAH',     spec: 'Nozzle', jenis: 'Unit',  status: 'Status' }
+};
+
+/* Tanggal default untuk inspeksi awal hasil tarikan master */
+var TANGGAL_INSPEKSI_AWAL = '2026-03-05';
+var PETUGAS_INSPEKSI_AWAL = 'Inspeksi Awal (Master)';
+
+/* Kolom ringkasan yang ditulis balik ke sheet Mesin & Irrigator */
+var MASTER_SUMMARY_HEADERS = [
+  'TGL INSPEKSI TERAKHIR', 'JAM', 'SKOR', 'KONDISI',
+  'A', 'B', 'C', 'PETUGAS', 'TEMUAN (B/C)'
+];
 
 /* Daftar komponen — HARUS sama dengan dashboard.
    Boleh juga dibiarkan: script akan menambah kolom baru otomatis
@@ -90,6 +107,12 @@ function doPost(e) {
       var rec = writeInspection_(body.payload || {});
       return json_({ ok: true, record: rec });
     }
+    if (action === 'syncmaster') {
+      return json_({ ok: true, result: syncLatestToMaster() });
+    }
+    if (action === 'backfill') {
+      return json_({ ok: true, result: backfillDariMaster((body.payload || {}).tanggal) });
+    }
     if (action === 'setup') {
       var sh = ensureSheet_(true);
       return json_({ ok: true, sheet: sh.getName(), columns: sh.getLastColumn() });
@@ -125,7 +148,13 @@ function onOpen() {
   try {
     SpreadsheetApp.getUi()
       .createMenu('FS Inspection')
-      .addItem('Siapkan / perbaiki tabel Data Inspeksi', 'setup')
+      .addItem('1. Siapkan / perbaiki tabel Data Inspeksi', 'setup')
+      .addSeparator()
+      .addItem('2. Isi inspeksi awal dari master (5 Mar 2026)', 'backfillDariMaster')
+      .addItem('3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator', 'syncLatestToMaster')
+      .addSeparator()
+      .addItem('Pasang jadwal otomatis harian', 'installTriggers')
+      .addItem('Hapus jadwal otomatis', 'removeTriggers')
       .addToUi();
   } catch (e) { /* diabaikan bila bukan container-bound */ }
 }
@@ -407,3 +436,342 @@ function parseBody_(e) {
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
+
+/* ==================================================================
+ *  INSpeksi AWAL DARI MASTER  +  SINKRON BALIK KE SHEET MASTER
+ * ================================================================== */
+
+/**
+ * MENGISI sheet "Data Inspeksi" dengan kondisi terkini tb_mesin &
+ * tb_irrigator sebagai inspeksi awal (default tanggal 5 Maret 2026).
+ *
+ * - Aman dijalankan berulang: baris dengan ID yang sama akan dilewati.
+ * - Nilai komponen A/B/C diambil apa adanya dari sheet master.
+ *
+ * @param {string} [tanggal] format yyyy-MM-dd, default 2026-03-05
+ * @return {Object} {inserted, skipped, tanggal}
+ */
+function backfillDariMaster(tanggal) {
+  var tgl = tanggal || TANGGAL_INSPEKSI_AWAL;
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var sh = ensureSheet_(false);
+    var map = headerMap_(sh);
+    var cols = sh.getLastColumn();
+    var compIdx = componentIndex_();
+
+    /* kumpulkan ID yang sudah ada supaya tidak duplikat */
+    var existing = {};
+    var lastRow = sh.getLastRow();
+    if (lastRow > 1) {
+      var idCol = map['ID Inspeksi'] || 1;
+      var ids = sh.getRange(2, idCol, lastRow - 1, 1).getValues();
+      for (var i = 0; i < ids.length; i++) existing[String(ids[i][0])] = true;
+    }
+
+    var rows = [];
+    var inserted = 0;
+    var skipped = 0;
+    var list = [
+      { tipe: 'Mesin', komponen: KOMPONEN_MESIN },
+      { tipe: 'Irrigator', komponen: KOMPONEN_IRRIGATOR }
+    ];
+
+    for (var t = 0; t < list.length; t++) {
+      var tipe = list[t].tipe;
+      var assets = readMasterAsset_(tipe);
+
+      for (var n = 0; n < assets.length; n++) {
+        var a = assets[n];
+        if (!a.kode) continue;
+        var id = 'FSI-INIT-' + tipe + '-' + a.kode;
+        if (existing[id]) { skipped++; continue; }
+
+        var rekap = rekap_(a.components, tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR);
+        var jam = 7 + Math.floor((n % 8));
+        var menit = (n * 7) % 60;
+
+        var meta = {
+          'ID Inspeksi': id,
+          'Tanggal': tgl,
+          'Timestamp': tgl + ' ' + pad2_(jam) + ':' + pad2_(menit) + ':00',
+          'Tipe Aset': tipe,
+          'Kode Unit': a.kode,
+          'Wilayah': a.wilayah,
+          'Jenis Unit': a.jenis,
+          'Spesifikasi': a.spec,
+          'Status Unit': a.status,
+          'Petugas': PETUGAS_INSPEKSI_AWAL,
+          'A': rekap.a,
+          'B': rekap.b,
+          'C': rekap.c,
+          'Total': rekap.total,
+          'Skor': rekap.skor,
+          'Kondisi': rekap.kondisi,
+          'Catatan': 'Inspeksi awal — hasil tarikan kondisi master per ' + tgl
+        };
+
+        rows.push(composeRow_(map, compIdx, cols, meta, a.components));
+        inserted++;
+      }
+    }
+
+    if (rows.length) {
+      sh.getRange(sh.getLastRow() + 1, 1, rows.length, cols).setValues(rows);
+    }
+
+    var msg = inserted + ' baris inspeksi awal ditambahkan (' + tgl + '). ' +
+              (skipped ? skipped + ' baris dilewati karena sudah ada.' : '');
+    try { SpreadsheetApp.getActiveSpreadsheet().toast(msg, 'FS Inspection', 8); } catch (e) {}
+    Logger.log(msg);
+    return { inserted: inserted, skipped: skipped, tanggal: tgl };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * MENULIS HASIL INSPEKSI TERAKHIR dari sheet "Data Inspeksi" ke sheet
+ * master "Mesin" & "Irrigator" (kolom ringkasan di sisi kanan tabel).
+ *
+ * Kolom yang ditambahkan otomatis:
+ *   TGL INSPEKSI TERAKHIR | JAM | SKOR | KONDISI | A | B | C | PETUGAS | TEMUAN (B/C)
+ *
+ * Kolom master yang sudah ada TIDAK diubah.
+ */
+function syncLatestToMaster() {
+  var histories = readHistory_();           // terbaru di atas
+  var latest = {};
+  for (var i = 0; i < histories.length; i++) {
+    var h = histories[i];
+    if (!h.kode) continue;
+    var key = String(h.tipe) + '|' + String(h.kode);
+    var prev = latest[key];
+    if (!prev || String(h.timestamp) >= String(prev.timestamp)) latest[key] = h;
+  }
+
+  var src = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
+  var hasil = [];
+
+  for (var tipe in MASTER) {
+    var cfg = MASTER[tipe];
+    var sh = src.getSheetByName(cfg.sheet);
+    if (!sh) { hasil.push(tipe + ': sheet tidak ditemukan'); continue; }
+
+    var lastRow = sh.getLastRow();
+    var lastCol = sh.getLastColumn();
+    if (lastRow < 2) { hasil.push(tipe + ': sheet kosong'); continue; }
+
+    var header = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (v) { return String(v).trim(); });
+    var kodeCol = indexOfHeader_(header, cfg.kode);
+    if (kodeCol < 1) { hasil.push(tipe + ': kolom "' + cfg.kode + '" tidak ada'); continue; }
+
+    /* pastikan kolom ringkasan tersedia (tambahkan bila belum) */
+    var lastHeaderCol = 0;
+    for (var hh = 0; hh < header.length; hh++) if (header[hh] !== '') lastHeaderCol = hh + 1;
+    var startCol = Math.max(lastCol, lastHeaderCol) + 1;
+    var existingIdx = [];
+    var missing = [];
+    for (var m = 0; m < MASTER_SUMMARY_HEADERS.length; m++) {
+      var idx = indexOfHeader_(header, MASTER_SUMMARY_HEADERS[m]);
+      existingIdx.push(idx);
+      if (idx < 1) missing.push(MASTER_SUMMARY_HEADERS[m]);
+    }
+    if (missing.length) {
+      sh.getRange(1, startCol, 1, missing.length).setValues([missing])
+        .setFontWeight('bold').setBackground('#0b3d5c').setFontColor('#ffffff');
+      // posisi akhir tiap header ringkasan
+      var cursor = startCol;
+      for (var j = 0; j < MASTER_SUMMARY_HEADERS.length; j++) {
+        if (existingIdx[j] < 1) { existingIdx[j] = cursor; cursor++; }
+      }
+    }
+    var sumStart = Math.min.apply(null, existingIdx);
+    var sumEnd = Math.max.apply(null, existingIdx);
+    var sumCount = sumEnd - sumStart + 1;
+    sumCount = Math.max(sumCount, MASTER_SUMMARY_HEADERS.length);
+
+    /* baca kolom kode */
+    var kodeVals = sh.getRange(2, kodeCol, lastRow - 1, 1).getValues();
+    var out = [];
+    var terisi = 0;
+
+    for (var r = 0; r < kodeVals.length; r++) {
+      var kode = String(kodeVals[r][0]).trim();
+      var rec = kode ? latest[tipe + '|' + kode] : null;
+      var rowVals = [];
+      for (var c = 0; c < sumCount; c++) rowVals.push('');
+      if (rec) {
+        terisi++;
+        var temuan = listTemuan_(rec.komponen, tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR);
+        var values = {
+          'TGL INSPEKSI TERAKHIR': rec.tanggal || '',
+          'JAM': (rec.timestamp && String(rec.timestamp).indexOf('T') > -1)
+            ? Utilities.formatDate(new Date(rec.timestamp), 'Asia/Jakarta', 'HH:mm')
+            : (String(rec.timestamp || '').split(' ')[1] || '').slice(0, 5),
+          'SKOR': rec.skor || 0,
+          'KONDISI': rec.kondisi || '',
+          'A': rec.a || 0,
+          'B': rec.b || 0,
+          'C': rec.c || 0,
+          'PETUGAS': rec.inspector || '',
+          'TEMUAN (B/C)': temuan
+        };
+        for (var k = 0; k < MASTER_SUMMARY_HEADERS.length; k++) {
+          var hName = MASTER_SUMMARY_HEADERS[k];
+          var colPos = existingIdx[k] - sumStart;
+          if (colPos >= 0 && colPos < sumCount) rowVals[colPos] = values[hName];
+        }
+      }
+      out.push(rowVals);
+    }
+
+    if (out.length) {
+      sh.getRange(2, sumStart, out.length, sumCount).setValues(out);
+      /* warna kolom KONDISI + format tanggal */
+      var kondisiPos = existingIdx[3] - sumStart + 1;
+      var tglPos = existingIdx[0] - sumStart + 1;
+      var skorPos = existingIdx[2] - sumStart + 1;
+      var kondisiVals = sh.getRange(2, sumStart + kondisiPos - 1, out.length, 1).getValues();
+      for (var q = 0; q < kondisiVals.length; q++) {
+        var cell = sh.getRange(2 + q, sumStart + kondisiPos - 1);
+        var v = String(kondisiVals[q][0] || '');
+        if (v === 'Baik') cell.setBackground('#d9ead3').setFontColor('#1e4620');
+        else if (v === 'Perlu Perhatian') cell.setBackground('#fce8b2').setFontColor('#6b4c00');
+        else if (v === 'Kritis') cell.setBackground('#f4c7c3').setFontColor('#7a1f1f');
+        else cell.setBackground(null).setFontColor(null);
+      }
+      sh.getRange(2, sumStart + skorPos - 1, out.length, 1).setNumberFormat('0.0');
+      if (terisi) sh.getRange(2, sumStart, out.length, sumCount).setFontSize(10);
+    }
+
+    hasil.push(tipe + ': ' + terisi + '/' + kodeVals.length + ' unit diperbarui');
+  }
+
+  var msg = hasil.join(' · ');
+  try { SpreadsheetApp.getActiveSpreadsheet().toast(msg, 'FS Inspection · Sinkron master', 8); } catch (e) {}
+  Logger.log(msg);
+  return hasil;
+}
+
+/** Pasang trigger harian (01.00–02.00 WIB) untuk syncLatestToMaster */
+function installTriggers() {
+  removeTriggers();
+  ScriptApp.newTrigger('syncLatestToMaster').timeBased().atHour(1).everyDays(1).create();
+  try { SpreadsheetApp.getActiveSpreadsheet().toast('Jadwal sinkron harian dipasang.', 'FS Inspection', 6); } catch (e) {}
+}
+
+/** Hapus semua trigger syncLatestToMaster */
+function removeTriggers() {
+  var trigs = ScriptApp.getProjectTriggers();
+  for (var i = 0; i < trigs.length; i++) {
+    if (trigs[i].getHandlerFunction() === 'syncLatestToMaster') ScriptApp.deleteTrigger(trigs[i]);
+  }
+}
+
+/* ====================== PENDUKUNG ====================== */
+
+/** Baca aset dari sheet master → [{kode, wilayah, spec, jenis, status, components}] */
+function readMasterAsset_(tipe) {
+  var cfg = MASTER[tipe];
+  var ss = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
+  var sh = ss.getSheetByName(cfg.sheet);
+  if (!sh) throw new Error('Sheet master "' + cfg.sheet + '" tidak ditemukan');
+
+  var lastRow = sh.getLastRow();
+  var lastCol = sh.getLastColumn();
+  if (lastRow < 2) return [];
+  var values = sh.getRange(1, 1, lastRow, lastCol).getValues();
+  var header = values[0].map(function (v) { return String(v).trim(); });
+  var lower = header.map(function (h) { return h.toLowerCase().replace(/\u00a0/g, ' '); });
+
+  var colKode = indexOfHeader_(header, cfg.kode);
+  var colWilayah = indexOfHeader_(header, cfg.wilayah);
+  var colSpec = indexOfHeader_(header, cfg.spec);
+  var colJenis = indexOfHeader_(header, cfg.jenis);
+  var colStatus = indexOfHeader_(header, cfg.status);
+  if (colKode < 1) throw new Error('Kolom "' + cfg.kode + '" tidak ada di sheet ' + cfg.sheet);
+
+  var komponenList = tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR;
+  var colKomponen = {};
+  for (var i = 0; i < komponenList.length; i++) {
+    var pos = indexOfHeader_(header, komponenList[i]);
+    if (pos > 0) colKomponen[komponenList[i]] = pos;
+  }
+
+  var out = [];
+  for (var r = 1; r < values.length; r++) {
+    var row = values[r];
+    var kode = String(row[colKode - 1] || '').trim();
+    if (!kode) continue;
+
+    var comps = {};
+    for (var name in colKomponen) {
+      var g = normalizeGrade_(row[colKomponen[name] - 1]);
+      if (g) comps[name] = g;
+    }
+    out.push({
+      kode: kode,
+      wilayah: colWilayah > 0 ? String(row[colWilayah - 1] || '').trim() : '',
+      spec: colSpec > 0 ? String(row[colSpec - 1] || '').trim() : '',
+      jenis: colJenis > 0 ? String(row[colJenis - 1] || '').trim() : '',
+      status: colStatus > 0 ? String(row[colStatus - 1] || '').trim() : '',
+      components: comps
+    });
+  }
+  return out;
+}
+
+/** Susun satu baris lengkap sesuai urutan header sheet Data Inspeksi */
+function composeRow_(map, compIdx, cols, meta, komponen) {
+  var row = [];
+  for (var i = 0; i < cols; i++) row.push('');
+  for (var key in meta) {
+    if (map[key]) row[map[key] - 1] = meta[key];
+  }
+  var tipe = meta['Tipe Aset'];
+  for (var label in compIdx) {
+    var meta2 = compIdx[label];
+    if (meta2.tipe !== tipe) continue;
+    var col = map[label];
+    if (!col) continue;
+    var val = komponen ? komponen[meta2.name] : '';
+    if (val) row[col - 1] = val;
+  }
+  return row;
+}
+
+/** Rekap A/B/C → skor & kondisi */
+function rekap_(komponen, list) {
+  var a = 0, b = 0, c = 0;
+  for (var i = 0; i < list.length; i++) {
+    var v = komponen[list[i]];
+    if (v === 'A') a++; else if (v === 'B') b++; else if (v === 'C') c++;
+  }
+  var total = a + b + c;
+  var skor = total ? Math.round(((a * 100 + b * 60) / total) * 10) / 10 : 0;
+  var kondisi = skor >= 90 ? 'Baik' : skor >= 70 ? 'Perlu Perhatian' : 'Kritis';
+  return { a: a, b: b, c: c, total: total, skor: skor, kondisi: kondisi };
+}
+
+/** Daftar komponen bernilai B/C → "Radiator:B · Mesin:C" */
+function listTemuan_(komponen, list) {
+  if (!komponen) return '';
+  var parts = [];
+  for (var i = 0; i < list.length; i++) {
+    var v = komponen[list[i]];
+    if (v === 'B' || v === 'C') parts.push(list[i] + ':' + v);
+  }
+  return parts.join(' · ');
+}
+
+function indexOfHeader_(header, name) {
+  var target = String(name || '').trim().toLowerCase().replace(/\u00a0/g, ' ');
+  for (var i = 0; i < header.length; i++) {
+    if (String(header[i]).trim().toLowerCase().replace(/\u00a0/g, ' ') === target) return i + 1;
+  }
+  return -1;
+}
+
+function pad2_(n) { return (n < 10 ? '0' : '') + n; }
