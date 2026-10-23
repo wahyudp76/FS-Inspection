@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { kondisiOf, latestByUnit, fmtDateTime, cx, uniq } from '../lib/analytics'
-import { Card, CardHeader, Bar, StatusPill, Empty, Segmented, Select } from '../components/ui'
-import { IconSearch, IconTruck, IconDroplet, IconDownload } from '../components/icons'
+import { Card, CardHeader, Bar, StatusPill, Empty, Segmented, MultiSelect } from '../components/ui'
+import { IconSearch, IconTruck, IconDroplet, IconDownload, IconFilter, IconX } from '../components/icons'
 import DetailDrawer from './UnitsDetail'
 
 const PAGE = 20
@@ -9,8 +9,9 @@ const PAGE = 20
 export default function Units({ data, records, navigate }) {
   const [tipe, setTipe] = useState('Semua')
   const [q, setQ] = useState('')
-  const [wilayah, setWilayah] = useState('')
-  const [status, setStatus] = useState('')
+  const [wilayahSel, setWilayahSel] = useState([])
+  const [statusSel, setStatusSel] = useState([])
+  const [jenisSel, setJenisSel] = useState([])
   const [sort, setSort] = useState('skor-asc')
   const [page, setPage] = useState(0)
   const [detail, setDetail] = useState(null)
@@ -23,13 +24,15 @@ export default function Units({ data, records, navigate }) {
     [data]
   )
   const wilayahList = useMemo(() => uniq(all.map((u) => u.wilayah)).filter(Boolean).sort(), [all])
+  const jenisList = useMemo(() => uniq(all.map((u) => u.unit)).filter(Boolean).sort(), [all])
   const latest = useMemo(() => latestByUnit(records), [records])
 
   const rows = useMemo(() => {
     let r = all
     if (tipe !== 'Semua') r = r.filter((u) => u.tipe === tipe)
-    if (wilayah) r = r.filter((u) => u.wilayah === wilayah)
-    if (status) r = r.filter((u) => u.status === status)
+    if (wilayahSel.length) r = r.filter((u) => wilayahSel.includes(u.wilayah))
+    if (statusSel.length) r = r.filter((u) => statusSel.includes(u.status))
+    if (jenisSel.length) r = r.filter((u) => jenisSel.includes(u.unit))
     const qq = q.trim().toLowerCase()
     if (qq) r = r.filter((u) => [u.kode, u.spec, u.unit, u.pompa, u.nozzle, u.wilayah].filter(Boolean).join(' ').toLowerCase().includes(qq))
     const cmp = {
@@ -39,14 +42,20 @@ export default function Units({ data, records, navigate }) {
       c: (a, b) => b.c - a.c || b.b - a.b,
     }[sort]
     return [...r].sort(cmp)
-  }, [all, tipe, wilayah, status, q, sort])
+  }, [all, tipe, wilayahSel, statusSel, jenisSel, q, sort])
+
+  useEffect(() => { setPage(0) }, [tipe, q, sort, wilayahSel, statusSel, jenisSel])
+
+  const wilayahCount = useMemo(() => all.reduce((m, u) => { const k = u.wilayah || '—'; m[k] = (m[k] || 0) + 1; return m }, {}), [all])
+  const statusCount = useMemo(() => all.reduce((m, u) => { const k = u.status || '—'; m[k] = (m[k] || 0) + 1; return m }, {}), [all])
+  const jenisCount = useMemo(() => all.reduce((m, u) => { const k = u.unit || '—'; m[k] = (m[k] || 0) + 1; return m }, {}), [all])
 
   const pages = Math.max(1, Math.ceil(rows.length / PAGE))
   const view = rows.slice(page * PAGE, page * PAGE + PAGE)
 
   const exportCsv = () => {
     const head = ['Tipe', 'Kode', 'Wilayah', 'Spec/Unit', 'Status', 'A', 'B', 'C', 'Total', 'Skor', 'Kondisi']
-    const body = rows.map((u) => [u.tipe, u.kode, u.wilayah, u.spec || u.unit, u.status, u.a, u.b, u.c, u.total, u.score, kondisiOf(u.score)])
+    const body = rows.map((u) => [u.tipe, u.kode, u.wilayah, u.spec || u.unit, u.status, u.a, u.b, u.c, u.total, u.score, kondisiOf(u.score, u.status)])
     const csv = [head, ...body].map((r) => r.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
     const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
@@ -67,32 +76,87 @@ export default function Units({ data, records, navigate }) {
             { value: 'Irrigator', label: 'Irrigator' },
           ]}
         />
-        <div className="relative min-w-[180px] flex-1 sm:max-w-xs">
+
+        <div className="relative min-w-[150px] flex-1 sm:max-w-[240px]">
           <IconSearch size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
-          <input value={q} onChange={(e) => { setQ(e.target.value); setPage(0) }} placeholder="Cari kode / spec…" className="input !py-2 !pl-9 !text-[12px]" />
+          <input
+            value={q}
+            onChange={(e) => { setQ(e.target.value); setPage(0) }}
+            placeholder="Cari kode / spec…"
+            className="input !py-2 !pl-9 !text-[12px]"
+          />
         </div>
-        <Select value={wilayah} onChange={(v) => { setWilayah(v); setPage(0) }} placeholder="Semua wilayah" options={wilayahList} className="min-w-[130px]" />
-        <Select value={status} onChange={(v) => { setStatus(v); setPage(0) }} placeholder="Semua status" options={['Terpasang', 'Standby', 'Rusak']} className="min-w-[130px]" />
-        <Select
-          value={sort}
-          onChange={(v) => setSort(v)}
-          options={[
-            { value: 'skor-asc', label: 'Skor terendah' },
-            { value: 'skor-desc', label: 'Skor tertinggi' },
-            { value: 'c', label: 'Temuan C terbanyak' },
-            { value: 'kode', label: 'Kode A-Z' },
-          ]}
-          className="min-w-[140px]"
-        />
-        <button onClick={exportCsv} className="btn-ghost !py-2 !text-[12px]">
-          <IconDownload size={14} /> CSV
-        </button>
+
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:ml-auto">
+          <MultiSelect
+            label="Wilayah"
+            placeholder="Semua wilayah"
+            options={wilayahList}
+            value={wilayahSel}
+            onChange={(v) => { setWilayahSel(v); setPage(0) }}
+            counts={wilayahCount}
+            className="min-w-[136px] flex-1 sm:flex-none"
+          />
+          <MultiSelect
+            label="Status"
+            placeholder="Semua status"
+            options={['Terpasang', 'Standby', 'Rusak']}
+            value={statusSel}
+            onChange={(v) => { setStatusSel(v); setPage(0) }}
+            counts={statusCount}
+            className="min-w-[126px] flex-1 sm:flex-none"
+          />
+          <MultiSelect
+            label="Jenis"
+            placeholder="Semua jenis"
+            options={jenisList}
+            value={jenisSel}
+            onChange={(v) => { setJenisSel(v); setPage(0) }}
+            counts={jenisCount}
+            searchable
+            className="min-w-[118px] flex-1 sm:flex-none"
+          />
+
+          <div className="relative min-w-[150px] flex-1 sm:flex-none">
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="input appearance-none !py-2 !pl-3 !pr-8 !text-[12px]"
+            >
+              <option value="skor-asc" className="bg-ink-800">Skor terendah</option>
+              <option value="skor-desc" className="bg-ink-800">Skor tertinggi</option>
+              <option value="c" className="bg-ink-800">Temuan C terbanyak</option>
+              <option value="kode" className="bg-ink-800">Kode A-Z</option>
+            </select>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
+              className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500">
+              <path d="m6 9 6 6 6-6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+
+          {(wilayahSel.length > 0 || statusSel.length > 0 || jenisSel.length > 0 || tipe !== 'Semua' || q) && (
+            <button
+              onClick={() => { setWilayahSel([]); setStatusSel([]); setJenisSel([]); setTipe('Semua'); setQ(''); setPage(0) }}
+              className="btn-ghost !border-rose-500/30 !py-2 !text-[11.5px] !text-rose-300"
+              title="Bersihkan semua filter"
+            >
+              <IconX size={13} /> Reset
+            </button>
+          )}
+          <button onClick={exportCsv} className="btn-ghost !py-2 !text-[12px]" title="Ekspor hasil filter ke CSV">
+            <IconDownload size={14} /> CSV
+          </button>
+        </div>
       </div>
 
       <Card className="overflow-hidden">
         <CardHeader
           title="Master Aset"
-          sub={`${rows.length} unit ditampilkan dari ${all.length} unit`}
+          sub={`${rows.length} unit ditampilkan dari ${all.length} unit${
+            wilayahSel.length || statusSel.length || jenisSel.length
+              ? ` · filter: ${[...wilayahSel, ...statusSel, ...jenisSel].join(', ')}`
+              : ''
+          }`}
           right={<span className="chip">tb_mesin + tb_irrigator</span>}
         />
         <div className="mt-3 overflow-x-auto">

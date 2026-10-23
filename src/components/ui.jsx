@@ -1,7 +1,7 @@
-import React from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { cx } from '../lib/analytics'
 import { gradeMeta, kondisiMeta, statusUnitMeta } from '../lib/config'
-import { IconAlert, IconChevronDown } from './icons'
+import { IconAlert, IconChevronDown, IconCheck, IconSearch, IconX } from './icons'
 
 export const Card = ({ className = '', children, ...p }) => (
   <div className={cx('card', className)} {...p}>
@@ -200,6 +200,166 @@ export function Segmented({ value, onChange, options, size = 'md' }) {
           {o.label}
         </button>
       ))}
+    </div>
+  )
+}
+
+/* ------------------------- MultiSelect ------------------------- */
+/**
+ * Dropdown filter model checklist: bisa pilih lebih dari satu nilai.
+ * value: array of string. Array kosong = "semua".
+ */
+export function MultiSelect({
+  label,
+  options = [],
+  value = [],
+  onChange,
+  placeholder = 'Semua',
+  counts = null,
+  searchable,
+  className = '',
+}) {
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const boxRef = useRef(null)
+
+  useEffect(() => {
+    if (!open) return
+    const onDoc = (e) => { if (boxRef.current && !boxRef.current.contains(e.target)) setOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDoc)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onDoc)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [open])
+
+  const withSearch = searchable ?? options.length > 8
+  const shown = useMemo(() => {
+    const qq = q.trim().toLowerCase()
+    return qq ? options.filter((o) => String(o).toLowerCase().includes(qq)) : options
+  }, [options, q])
+
+  const toggle = (opt) =>
+    onChange(value.includes(opt) ? value.filter((v) => v !== opt) : [...value, opt])
+
+  const active = value.length > 0
+
+  return (
+    <div ref={boxRef} className={cx('relative', className)}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className={cx(
+          'flex w-full items-center gap-2 rounded-xl border px-3 py-2 text-left text-[12px] transition',
+          active
+            ? 'border-brand/50 bg-brand/10 text-slate-100'
+            : 'border-white/10 bg-ink-900/80 text-slate-300 hover:border-white/20'
+        )}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        title={label}
+      >
+        <span className="min-w-0 flex-1 truncate">
+          {active ? (
+            <span className="flex items-center gap-1.5">
+              <span className="rounded-md bg-brand/20 px-1.5 py-0.5 font-mono text-[10px] font-bold text-brand">{value.length}</span>
+              <span className="truncate text-slate-200">{value.length === 1 ? value[0] : `${label} dipilih`}</span>
+            </span>
+          ) : (
+            <span className="text-slate-500">{placeholder}</span>
+          )}
+        </span>
+        {active && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => { e.stopPropagation(); onChange([]) }}
+            onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); onChange([]) } }}
+            className="rounded p-0.5 text-slate-500 hover:text-rose-300"
+            title="Bersihkan filter"
+          >
+            <IconX size={12} />
+          </span>
+        )}
+        <IconChevronDown size={14} className={cx('shrink-0 text-slate-500 transition', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute left-0 z-40 mt-1.5 w-full min-w-[210px] animate-fade-up overflow-hidden rounded-xl border border-white/10 bg-ink-850 shadow-2xl">
+          <div className="flex items-center justify-between gap-2 border-b border-white/[0.06] px-2.5 py-1.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</span>
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => onChange([...options])}
+                className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-brand hover:bg-brand/10"
+              >
+                Semua
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange([])}
+                className="rounded px-1.5 py-0.5 text-[10px] font-semibold text-slate-400 hover:bg-white/5"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          {withSearch && (
+            <div className="relative border-b border-white/[0.06] p-1.5">
+              <IconSearch size={12} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                autoFocus
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Cari…"
+                className="w-full rounded-lg border border-white/10 bg-ink-900 px-2 py-1 pl-7 text-[11px] text-slate-200 placeholder:text-slate-600 focus:border-brand/50 focus:outline-none"
+              />
+            </div>
+          )}
+
+          <div className="max-h-56 overflow-y-auto py-1" role="listbox" aria-multiselectable="true">
+            {shown.map((opt) => {
+              const checked = value.includes(opt)
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  role="option"
+                  aria-selected={checked}
+                  onClick={() => toggle(opt)}
+                  className={cx(
+                    'flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-[11.5px] transition',
+                    checked ? 'bg-brand/10 text-slate-100' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                  )}
+                >
+                  <span
+                    className={cx(
+                      'flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded-[4px] border transition',
+                      checked ? 'border-brand bg-brand text-ink-950' : 'border-white/25 bg-transparent'
+                    )}
+                  >
+                    {checked && <IconCheck size={10} strokeWidth={3} />}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate">{opt || '—'}</span>
+                  {counts && <span className="shrink-0 font-mono text-[10px] text-slate-500">{counts[opt] ?? 0}</span>}
+                </button>
+              )
+            })}
+            {!shown.length && <p className="px-3 py-3 text-center text-[11px] text-slate-500">Tidak ada pilihan</p>}
+          </div>
+
+          <div className="flex items-center justify-between border-t border-white/[0.06] px-2.5 py-1.5">
+            <span className="text-[10px] text-slate-500">{value.length ? `${value.length} dipilih` : 'Semua data'}</span>
+            <button type="button" onClick={() => setOpen(false)} className="rounded px-2 py-0.5 text-[10px] font-semibold text-slate-300 hover:bg-white/5">
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
