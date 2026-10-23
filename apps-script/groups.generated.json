@@ -1,0 +1,169 @@
+{
+  "groups": {
+    "mesin": [
+      {
+        "id": "kelistrikan",
+        "label": "Kelistrikan & Baterai",
+        "icon": "bolt",
+        "items": [
+          "Accu",
+          "Kabel Accu",
+          "Klem Accu",
+          "Kunci Kontak Batery",
+          "Kunci Kontak Starter",
+          "Dinamo Start",
+          "Dinamo Charge",
+          "V Belt Altenator",
+          "Kabel Intalasi",
+          "Tombol Emergency Stop"
+        ]
+      },
+      {
+        "id": "instrumen",
+        "label": "Instrumen & Monitoring",
+        "icon": "gauge",
+        "items": [
+          "Amper Meter",
+          "Hour Meter",
+          "Oil Presure Meter",
+          "RPM Meter",
+          "Water Temp Meter",
+          "Amper Charge",
+          "Temp Air"
+        ]
+      },
+      {
+        "id": "bahanbakar",
+        "label": "Sistem Bahan Bakar",
+        "icon": "fuel",
+        "items": [
+          "Feed Pump",
+          "Injeksi Pump",
+          "Filter Solar",
+          "Tangki Solar",
+          "Selang Nozle",
+          "Pengukur Volum Solar",
+          "Stik Oil",
+          "Tutup Oil",
+          "Air Cleaner"
+        ]
+      },
+      {
+        "id": "pendingin",
+        "label": "Sistem Pendingin",
+        "icon": "temp",
+        "items": [
+          "Radiator",
+          "Hose radiator Atas",
+          "Hose radiator Bawah",
+          "Kipas Radiator",
+          "Tutup Radiator",
+          "V Belt Radiator",
+          "Water Pump",
+          "Oil Cooler",
+          "Knalpot"
+        ]
+      },
+      {
+        "id": "power",
+        "label": "Engine & Transmisi",
+        "icon": "engine",
+        "items": [
+          "Mesin",
+          "Prodo",
+          "Perpak clynder head",
+          "Perpak oil Pan",
+          "Turbo Charger",
+          "Coupling Assy",
+          "Joint Couple",
+          "Selenoid Transmisi"
+        ]
+      },
+      {
+        "id": "sasis",
+        "label": "Sasis & Body",
+        "icon": "body",
+        "items": [
+          "Chasis",
+          "Ban",
+          "Pintu",
+          "Category"
+        ]
+      }
+    ],
+    "irrigator": [
+      {
+        "id": "turbin",
+        "label": "Turbin & Transmisi",
+        "icon": "engine",
+        "items": [
+          "Turbin",
+          "As Turbin",
+          "V belt Turbin ( Bauer )",
+          "Pulley Turbin ( Bauer )",
+          "Rantai Besar ( Bauer )",
+          "Rantai Kecil",
+          "Sproket Wheel",
+          "Assembly Bearing",
+          "Bearing Molen",
+          "Gear Box / Transmisi",
+          "Pengatur Kecepatan"
+        ]
+      },
+      {
+        "id": "hose",
+        "label": "Hose & Hose Drum",
+        "icon": "hose",
+        "items": [
+          "Fleksible Hose 3\"",
+          "Fleksible Hose 5\"",
+          "Hose Drum",
+          "Seal Hose Drum",
+          "Mekanik Seal",
+          "Bearing Hose Drum"
+        ]
+      },
+      {
+        "id": "gun",
+        "label": "Gun, Troli & Bandul",
+        "icon": "gun",
+        "items": [
+          "Nozle Gun",
+          "Roda trolley Gun",
+          "Stoper/Putaran Gun",
+          "Bandul Pada Troli",
+          "Gandengan / Drawbar"
+        ]
+      },
+      {
+        "id": "kaki",
+        "label": "Rangka & Kaki",
+        "icon": "body",
+        "items": [
+          "Jack / Kaki  Depan",
+          "Jack / Kaki  Belakang",
+          "Ban Irigator"
+        ]
+      },
+      {
+        "id": "hidro",
+        "label": "Hidrolik & Instrumen",
+        "icon": "gauge",
+        "items": [
+          "Hydrolik",
+          "Pressure Gauge"
+        ]
+      },
+      {
+        "id": "lain",
+        "label": "Spesifikasi & Lain-lain",
+        "icon": "spark",
+        "items": [
+          "PE",
+          "Helically",
+          "Category"
+        ]
+      }
+    ]
+  }
+}

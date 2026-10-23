@@ -1,0 +1,219 @@
+# FS Inspection — Dashboard Inspeksi Mesin & Irrigator
+
+Dashboard inspeksi berkala untuk aset **unit mesin** dan **unit irrigator**.
+Checklist komponen, input inspeksi langsung dari web, dan hasilnya otomatis
+masuk ke Google Sheets **“Update ZPAS637” ▸ sheet `Data Inspeksi`**.
+
+> **Data master** diambil dari spreadsheet *Draft Dashboard*:
+> sheet `Mesin` (**tb_mesin** — 151 unit, 47 komponen) dan
+> sheet `Irrigator` (**tb_irrigator** — 123 unit, 30 komponen).
+
+---
+
+## ✨ Fitur
+
+| Modul | Isi |
+|---|---|
+| **Dashboard** | 6 KPI, tren inspeksi (harian/mingguan/bulanan), donut status unit, bar komponen bermasalah, radar kondisi per sistem, kondisi per wilayah, distribusi skor, aktivitas petugas, unit prioritas perbaikan, inspeksi terbaru |
+| **Inspeksi** | Pilih unit → checklist per kelompok komponen (A / B / C) → catatan → kirim. Ada “tandai semua A/B/C” per kelompok, progres realtime, skor otomatis, perbandingan dengan inspeksi sebelumnya |
+| **Data Unit** | Tabel master 274 unit, filter tipe/wilayah/status, pencarian, urut skor, detail per komponen + riwayat, ekspor CSV |
+| **Riwayat** | Semua sesi inspeksi, filter petugas/tipe/kata kunci, expand detail komponen, tren & komposisi temuan, ekspor CSV |
+| **Pengaturan** | Endpoint Apps Script, uji koneksi, tarik data dari sheet, kirim antrean lokal, mode demo |
+
+Arti nilai komponen:
+
+| Nilai | Arti | Skor |
+|---|---|---|
+| **A** | Baik / normal, layak operasi | 100 |
+| **B** | Perlu perhatian — ada gejala, pantau/perbaikan ringan | 60 |
+| **C** | Rusak — tidak berfungsi, harus diperbaiki | 0 |
+
+**Skor kondisi unit** = `(A×100 + B×60 + C×0) ÷ total komponen`
+→ `≥90 Baik` · `70–89 Perlu Perhatian` · `<70 Kritis`.
+
+---
+
+## 🧱 Teknologi
+
+- **React 18 + Vite 5** — SPA statis, tanpa server
+- **Tailwind CSS** — tema gelap, responsif (mobile friendly)
+- **Recharts** — grafik interaktif (area, bar, donut, radar, composed)
+- **Google Apps Script Web App** — satu-satunya backend, menulis ke spreadsheet
+- **GitHub Pages** — hosting gratis + domain kustom
+
+Tidak ada API key di browser. Endpoint Apps Script berjalan atas nama pemilik
+spreadsheet dan akses dibatasi ke sheet yang ditentukan.
+
+---
+
+## 🚀 Menjalankan lokal
+
+```bash
+npm install
+npm run dev          # http://localhost:5173
+```
+
+Produksi:
+
+```bash
+npm run build         # hasil di folder dist/
+npm run preview       # cek hasil build
+```
+
+Perbarui snapshot data master dari Google Sheets (opsional):
+
+```bash
+npm run sync          # membaca tb_mesin & tb_irrigator → src/data/assets.json
+```
+
+---
+
+## 🔌 Menyambungkan ke Google Sheets (wajib untuk menyimpan hasil)
+
+### 1. Pasang Apps Script
+
+1. Buka spreadsheet **Update ZPAS637**
+   → menu **Extensions ▸ Apps Script**.
+2. Hapus isi `Code.gs`, tempel seluruh isi
+   [`apps-script/Code.gs`](apps-script/Code.gs), lalu **Save**.
+3. Jalankan fungsi **`setup`** sekali (Run ▸ setup) → izinkan akses.
+   Sheet `Data Inspeksi` dibuat dengan header rapi (94 kolom) dan format tabel.
+4. **Deploy ▸ New deployment ▸ Web app**
+   - Execute as: **Me**
+   - Who has access: **Anyone**
+   - Salin URL yang berakhiran `/exec`.
+
+> Setiap kali `Code.gs` diubah: **Deploy ▸ Manage deployments ▸ Edit ▸ Version: New version**,
+> agar URL `/exec` memakai kode terbaru.
+
+### 2. Hubungkan dashboard
+
+**Cara A — tanpa build ulang (paling praktis):**
+buka dashboard ▸ **Pengaturan** ▸ tempel URL `/exec` ▸ **Simpan** ▸ **Uji Koneksi**.
+Endpoint tersimpan di `localStorage` browser.
+
+**Cara B — default untuk semua perangkat:**
+buat file `.env` di root:
+
+```env
+VITE_APPS_SCRIPT_URL=https://script.google.com/macros/s/XXXXXXXX/exec
+```
+
+lalu `npm run build`. Untuk GitHub Pages, isi juga **Repository secret**
+`VITE_APPS_SCRIPT_URL` (Settings ▸ Secrets and variables ▸ Actions) —
+workflow deploy sudah memakainya.
+
+### 3. Mode tanpa koneksi
+
+Bila endpoint belum diatur, inspeksi tetap bisa dilakukan: data masuk
+**antrean lokal** browser (`localStorage`). Setelah endpoint diisi, tekan
+**Sinkron** (atau *Kirim antrean lokal* di Pengaturan) untuk mengirim semuanya
+ke sheet.
+
+---
+
+## 📄 Skema sheet `Data Inspeksi`
+
+Dibuat otomatis oleh Apps Script. Satu baris = satu sesi inspeksi.
+
+| Kelompok | Kolom |
+|---|---|
+| Identitas | `ID Inspeksi`, `Tanggal`, `Timestamp`, `Tipe Aset`, `Kode Unit`, `Wilayah`, `Jenis Unit`, `Spesifikasi`, `Status Unit`, `Petugas` |
+| Rekap | `A`, `B`, `C`, `Total`, `Skor`, `Kondisi` |
+| Komponen mesin (47) | `Accu`, `Kabel Accu`, … `Chasis`, `Ban`, `Pintu`, `Category` |
+| Komponen irrigator (30) | `Turbin`, `As Turbin`, … `PE`, `Helically`, `Category (Irr)` |
+| Catatan | `Catatan` |
+
+Kolom komponen yang tidak berlaku untuk tipe aset dibiarkan kosong, sehingga
+satu sheet bisa memuat mesin & irrigator sekaligus (mudah difilter pivot).
+
+API yang tersedia pada Web App:
+
+| Action | Fungsi |
+|---|---|
+| `ping` | cek koneksi + jumlah baris |
+| `history` | ambil semua baris (dipakai dashboard) |
+| `submit` | tulis satu sesi inspeksi |
+| `setup` | siapkan/perbaiki header sheet |
+
+---
+
+## 📦 Deploy ke GitHub Pages
+
+1. Push repo ini ke `wahyudp76/FS-Inspection` (branch `main`).
+2. **Settings ▸ Pages ▸ Source: GitHub Actions.**
+3. Push ke `main` → workflow `.github/workflows/deploy.yml` build & deploy otomatis.
+4. URL: `https://wahyudp76.github.io/FS-Inspection/`
+
+### Domain kustom
+
+1. Tambahkan domain Anda di **Settings ▸ Pages ▸ Custom domain**.
+2. Buat file `public/CNAME` berisi satu baris domain, contoh:
+
+   ```
+   inspection.domainanda.com
+   ```
+
+3. Di DNS registrar, buat record:
+
+   | Tipe | Nama | Nilai |
+   |---|---|---|
+   | CNAME | `inspection` (subdomain) | `wahyudp76.github.io` |
+   | A | `@` (domain utama) | `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` |
+
+4. Centang **Enforce HTTPS** (sertifikat otomatis, ±10 menit).
+
+> Aplikasi memakai *hash routing* (`/#/inspeksi`), jadi tidak perlu konfigurasi
+> rewrite/404 di hosting apa pun.
+
+---
+
+## 🗂 Struktur proyek
+
+```
+.
+├── apps-script/
+│   └── Code.gs               # backend Google Apps Script (paste ke editor)
+├── scripts/
+│   └── build-data.mjs        # tarik tb_mesin & tb_irrigator → assets.json
+├── public/
+│   └── assets-snapshot.json  # snapshot data master
+├── src/
+│   ├── components/
+│   │   ├── charts.jsx        # semua grafik Recharts
+│   │   ├── icons.jsx         # ikon SVG inline
+│   │   ├── Shell.jsx         # sidebar + topbar
+│   │   └── ui.jsx            # Card, KPI, Pill, Bar, ScoreRing, Toast…
+│   ├── data/assets.json      # data master (hasil npm run sync)
+│   ├── lib/
+│   │   ├── analytics.js      # skor, agregasi, tren, periode
+│   │   ├── api.js            # komunikasi Apps Script + antrean lokal
+│   │   ├── config.js         # endpoint, grade A/B/C, sheet tujuan
+│   │   └── demo.js           # generator data demo
+│   ├── pages/
+│   │   ├── Dashboard.jsx  ├── Inspect.jsx  ├── Units.jsx
+│   │   └── History.jsx    └── Settings.jsx
+│   ├── App.jsx
+│   ├── index.css
+│   └── main.jsx
+└── .github/workflows/deploy.yml
+```
+
+---
+
+## 🧪 Catatan operasional
+
+- **Skor master** dihitung dari kolom komponen pada spreadsheet sumber (kondisi
+  terakhir yang dicatat), sedangkan **skor riwayat** berasal dari sesi inspeksi
+  di dashboard. Keduanya ditampilkan terpisah agar tidak tertukar.
+- Nilai selain A/B/C pada sumber diabaikan (dianggap belum dinilai).
+- Nama komponen `Category` ada di mesin **dan** irrigator; pada sheet, versi
+  irrigator memakai kolom `Category (Irr)`.
+- Mode **Demo** (Pengaturan) mengisi grafik dengan ±90 sesi contoh tanpa
+  menyentuh Google Sheets — berguna untuk presentasi sebelum data terkumpul.
+- Data inspeksi disimpan permanen di Google Sheets; `localStorage` hanya cache
+  dan antrean.
+
+---
+
+© 2026 — FS Inspection · Inspeksi Engine & Service
