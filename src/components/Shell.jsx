@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { cx, relativeTime } from '../lib/analytics'
 import {
   IconLogo, IconGauge, IconClipboard, IconList, IconHistory, IconSettings, IconMenu, IconX,
-  IconCloud, IconCloudOff, IconExternal, IconRefresh,
+  IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
 
@@ -134,13 +134,27 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               </h1>
               <p className="truncate text-[10.5px] text-slate-500">{current.desc}</p>
             </div>
+            <button
+              onClick={() => {
+                navigate('inspeksi')
+                // kalau sedang di tab Inspeksi (mis. masih di form), kembalikan ke daftar pilih unit
+                window.dispatchEvent(new CustomEvent('fsi:new-inspection'))
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              className="btn-primary !px-2.5 !py-1.5"
+              title="Tambah inspeksi baru"
+              aria-label="Tambah Inspeksi"
+            >
+              <IconPlus size={15} />
+              <span className="hidden sm:inline">Tambah Inspeksi</span>
+            </button>
             <button onClick={onSync} className="btn-ghost !px-2.5 !py-1.5" title="Sinkronkan riwayat inspeksi">
               <IconRefresh size={14} className={sync?.syncing ? 'animate-spin' : ''} />
               <span className="hidden md:inline">Sinkron</span>
             </button>
-            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-primary !px-2.5 !py-1.5" title="Buka Google Sheets">
+            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost !px-2.5 !py-1.5" title="Buka Google Sheets">
               <IconExternal size={14} />
-              <span className="hidden sm:inline">Buka Sheet</span>
+              <span className="hidden md:inline">Buka Sheet</span>
             </a>
           </div>
         </header>

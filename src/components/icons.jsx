@@ -43,6 +43,7 @@ export const IconSpark = (p) => (<S {...p}><path d="m12 3 1.8 4.8L18.6 9.6l-4.8 
 export const IconSearch = (p) => (<S {...p}><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></S>)
 export const IconCheck = (p) => (<S {...p}><path d="m20 6-11 11-5-5" /></S>)
 export const IconX = (p) => (<S {...p}><path d="M18 6 6 18M6 6l12 12" /></S>)
+export const IconPlus = (p) => (<S {...p}><path d="M12 5v14M5 12h14" /></S>)
 export const IconRefresh = (p) => (<S {...p}><path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 3v6h-6" /></S>)
 export const IconDownload = (p) => (<S {...p}><path d="M12 3v12" /><path d="m7 12 5 5 5-5" /><path d="M5 21h14" /></S>)
 export const IconAlert = (p) => (<S {...p}><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></S>)

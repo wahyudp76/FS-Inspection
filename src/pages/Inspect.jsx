@@ -36,6 +36,16 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const [mode, setMode] = useState(initial?.kode ? 'form' : 'pick')
   const topRef = useRef(null)
 
+  /* tombol "Tambah Inspeksi" di header → kembali ke daftar pilih unit */
+  useEffect(() => {
+    const reset = () => {
+      setResult(null); setGrades({}); setCatatan(''); setKode(''); setQuery('')
+      setDivisiSel([]); setJenisSel([]); setPage(0); setMode('pick')
+    }
+    window.addEventListener('fsi:new-inspection', reset)
+    return () => window.removeEventListener('fsi:new-inspection', reset)
+  }, [])
+
   const groups = tipe === 'Mesin' ? data.groups.mesin : data.groups.irrigator
   const pool = tipe === 'Mesin' ? data.mesin : data.irrigator
   const allComponents = useMemo(() => groups.flatMap((g) => g.items), [groups])
