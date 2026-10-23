@@ -416,31 +416,46 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
               {divisiSel.length > 0 && <span className="chip !py-0.5 !text-[10px]">Divisi: {divisiSel.join(', ')}</span>}
               {jenisSel.length > 0 && <span className="chip !py-0.5 !text-[10px]">Jenis: {jenisSel.join(', ')}</span>}
             </div>
-            <div className="grid gap-2 sm:grid-cols-2">
+            <div className="flex flex-col gap-1.5">
               {halamanUnit.map((u) => {
                 const rec = latestByUnit(records).get(`${tipe}:${u.kode}`)
                 return (
                   <button
                     key={u.kode}
                     onClick={() => { setKode(u.kode); setMode('form') }}
-                    className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-left transition hover:border-brand/40 hover:bg-white/[0.06]"
+                    className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-left transition hover:border-brand/40 hover:bg-white/[0.06]"
                   >
-                    <ScoreRing score={rec?.skor ?? u.score} size={38} stroke={4} />
+                    <ScoreRing score={rec?.skor ?? u.score} size={34} stroke={4} />
                     <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-mono text-[12px] font-bold text-white">{u.kode}</span>
-                        <span className="truncate text-[10px] text-slate-500">{u.spec || u.unit}</span>
+                      {/* baris 1: kode + spesifikasi (+ meta di layar lebar) */}
+                      <div className="flex items-center gap-2">
+                        <span className="w-[72px] shrink-0 font-mono text-[12px] font-bold text-white">{u.kode}</span>
+                        <span className="min-w-0 flex-1 truncate text-[10.5px] text-slate-400">{u.spec || u.unit}</span>
+                        <span className="hidden shrink-0 rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-400 sm:inline-block">
+                          {u.wilayah}
+                        </span>
+                        <span className="hidden shrink-0 sm:inline-flex"><StatusPill status={u.status} /></span>
+                        <span className="hidden w-[148px] shrink-0 truncate text-right text-[9.5px] text-slate-500 sm:inline-block">
+                          {rec ? `inspeksi ${rec.tanggal}` : 'belum pernah diinspeksi'}
+                        </span>
                       </div>
-                      <p className="truncate text-[10.5px] text-slate-500">
-                        {u.wilayah} · {u.status} {rec ? `· diinspeksi ${rec.tanggal}` : '· belum pernah diinspeksi'}
-                      </p>
+                      {/* baris 2 (khusus HP) */}
+                      <div className="mt-1 flex items-center gap-1.5 sm:hidden">
+                        <span className="rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9px] text-slate-400">
+                          {u.wilayah}
+                        </span>
+                        <StatusPill status={u.status} />
+                        <span className="min-w-0 flex-1 truncate text-right text-[9px] text-slate-500">
+                          {rec ? `inspeksi ${rec.tanggal}` : 'belum pernah diinspeksi'}
+                        </span>
+                      </div>
                     </div>
                     <IconChevron size={14} className="shrink-0 text-slate-600 transition group-hover:text-brand" />
                   </button>
                 )
               })}
               {!filtered.length && (
-                <div className="sm:col-span-2">
+                <div>
                   <Empty title="Unit tidak ditemukan" desc="Coba kata kunci lain, atau periksa tipe aset yang dipilih." icon={<IconSearch size={20} />} />
                 </div>
               )}
