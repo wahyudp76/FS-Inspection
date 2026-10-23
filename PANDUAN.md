@@ -64,6 +64,24 @@ npm run dev      # buka http://localhost:5173
 
 ---
 
+## Bagian 2b · Saat input inspeksi baru — sinkron ke sheet "Mesin"
+
+Ada tiga cara; **cara 1 sudah aktif secara default**.
+
+| # | Cara | Kapan dipakai |
+|---|---|---|
+| **1** | **Otomatis** — setiap tekan **Kirim Inspeksi**, dashboard langsung memanggil `syncmaster` sehingga kolom inspeksi terakhir di sheet Mesin/Irrigator ikut diperbarui. Layar hasil menampilkan `Mesin: 151/151 · Irrigator: 123/123 unit diperbarui`. | pemakaian sehari-hari |
+| **2** | **Tombol di dashboard** — **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator** (memproses semua unit sekaligus). | setelah input massal / koreksi manual |
+| **3** | **Menu spreadsheet** — reload spreadsheet → menu **FS Inspection ▸ 3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator**. | tanpa membuka dashboard |
+| **4** | **Terjadwal** — jalankan sekali `installTriggers` di Apps Script → sinkron otomatis tiap hari ±01.00 WIB. | jaring pengaman |
+
+Mematikan/menyalakan cara 1: **Pengaturan ▸ centang "Sinkron otomatis ke sheet Mesin & Irrigator"**.
+
+> Syarat: endpoint `/exec` sudah diisi **dan** deployment memakai **versi terbaru**
+> (`Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version`). Kalau inspeksi
+> tersimpan sebagai antrean lokal (offline), sinkron master otomatis dilewati —
+> kirim antrean dulu lewat **Pengaturan ▸ Kirim antrean lokal**.
+
 ## Bagian 3 · Push ke GitHub
 
 ```bash

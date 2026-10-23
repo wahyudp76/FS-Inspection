@@ -139,8 +139,13 @@ TGL INSPEKSI TERAKHIR | JAM | SKOR | KONDISI | A | B | C | PETUGAS | TEMUAN (B/C
 - `TEMUAN (B/C)` berisi daftar komponen bermasalah, contoh `Radiator:B · Mesin:C`.
 - Baris yang belum pernah diinspeksi dibiarkan kosong, jadi mudah difilter.
 
-> Dari dashboard, tombol **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator** memanggil
-> fungsi yang sama lewat API (action `syncmaster`).
+Sinkronisasi bisa dijalankan dengan empat cara:
+
+1. **Otomatis (default)** — setiap kali inspeksi dikirim dari dashboard, aplikasi
+   langsung memanggil action `syncmaster`. Bisa dimatikan di **Pengaturan**.
+2. **Manual dari dashboard** — **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator**.
+3. **Dari spreadsheet** — menu **FS Inspection ▸ Sinkronkan hasil terakhir…**.
+4. **Terjadwal** — `installTriggers()` menjalankan sinkron tiap hari ±01.00 WIB.
 
 ### Urutan pemasangan (sekali saja)
 

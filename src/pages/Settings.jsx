@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
-import { getEndpoint, setEndpoint, isConfigured, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
+import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
 import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster } from '../lib/api'
 import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark } from '../components/icons'
 import { cx } from '../lib/analytics'
@@ -18,6 +18,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
   const [toast, setToast] = useState(null)
   const [status, setStatus] = useState(null)
   const [tglAwal, setTglAwal] = useState('2026-03-05')
+  const [autoMaster, setAutoMaster] = useState(() => getAutoSyncMaster())
   const [busyAwal, setBusyAwal] = useState(false)
 
   const save = () => {
@@ -194,6 +195,21 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
               Sinkron ke Mesin &amp; Irrigator
             </button>
           </div>
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={autoMaster}
+              onChange={(e) => { setAutoMaster(e.target.checked); setAutoSyncMaster(e.target.checked) }}
+              className="mt-0.5 h-3.5 w-3.5 accent-sky-400"
+            />
+            <span className="text-[11.5px] leading-relaxed text-slate-300">
+              <span className="font-semibold text-slate-100">Sinkron otomatis ke sheet Mesin &amp; Irrigator</span>
+              <span className="block text-slate-500">
+                Setiap selesai kirim inspeksi dari dashboard, kolom inspeksi terakhir di sheet master langsung diperbarui.
+                Matikan bila ingin sinkron manual saja.
+              </span>
+            </span>
+          </label>
           <p className="text-[11px] leading-relaxed text-slate-500">
             Menyalin kondisi seluruh unit master (±274 baris) sebagai inspeksi awal. Aman dijalankan berulang —
             baris yang sudah ada tidak diduplikasi. Unit berstatus <span className="font-semibold text-rose-300">Rusak</span>{' '}

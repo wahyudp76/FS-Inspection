@@ -5,6 +5,7 @@
  *  2. Menu "Pengaturan" di dashboard (tersimpan di localStorage browser)
  */
 const LS_ENDPOINT = 'fsi:endpoint'
+const LS_AUTO_MASTER = 'fsi:auto-master'
 const LS_CACHE = 'fsi:history-cache'
 
 export const BUILD_ENV_ENDPOINT = import.meta.env.VITE_APPS_SCRIPT_URL || ''
@@ -21,6 +22,24 @@ export const setEndpoint = (url) => {
   try {
     if (url) localStorage.setItem(LS_ENDPOINT, url.trim())
     else localStorage.removeItem(LS_ENDPOINT)
+  } catch {
+    /* ignore */
+  }
+}
+
+/* ---- sinkron otomatis ke sheet Mesin & Irrigator setelah inspeksi ----
+   Default: AKTIF (bisa dimatikan di Pengaturan) */
+export const getAutoSyncMaster = () => {
+  try {
+    const v = localStorage.getItem(LS_AUTO_MASTER)
+    return v === null ? true : v === '1'
+  } catch {
+    return true
+  }
+}
+export const setAutoSyncMaster = (on) => {
+  try {
+    localStorage.setItem(LS_AUTO_MASTER, on ? '1' : '0')
   } catch {
     /* ignore */
   }

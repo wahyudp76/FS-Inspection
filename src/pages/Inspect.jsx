@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { cx, scoreOf, kondisiOf, pct, groupOfComponent, fmtDateTime, latestByUnit, clamp } from '../lib/analytics'
-import { GRADES, gradeMeta, isConfigured, TARGET_SHEET, kondisiMeta } from '../lib/config'
-import { submitInspection } from '../lib/api'
+import { GRADES, gradeMeta, isConfigured, getAutoSyncMaster, TARGET_SHEET, kondisiMeta } from '../lib/config'
+import { submitInspection, syncMaster } from '../lib/api'
 import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, ScoreRing, Empty, Segmented, Toast } from '../components/ui'
 import {
   IconSearch, IconCheck, IconX, IconClipboard, IconChevronDown, IconChevron, IconAlert, IconExternal,
@@ -116,14 +116,28 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
     }
     try {
       const rec = await submitInspection(payload)
-      setResult({ payload, record: rec, offline: !isConfigured() })
+      const offline = !isConfigured()
+      let masterResult = null
+
+      /* sinkron otomatis ke sheet Mesin & Irrigator */
+      if (!offline && getAutoSyncMaster()) {
+        try {
+          masterResult = await syncMaster()
+        } catch {
+          masterResult = null
+        }
+      }
+
+      setResult({ payload, record: rec, offline, masterSynced: !!masterResult, masterResult })
       const merged = { ...payload, ...rec }
       onSubmitted?.(merged)
       setToast({
-        type: isConfigured() ? 'success' : 'info',
-        message: isConfigured()
-          ? 'Inspeksi tersimpan ke sheet "Data Inspeksi".'
-          : 'Tersimpan lokal (antrean). Atur endpoint Apps Script agar masuk ke Google Sheets.',
+        type: offline ? 'info' : 'success',
+        message: offline
+          ? 'Tersimpan lokal (antrean). Atur endpoint Apps Script agar masuk ke Google Sheets.'
+          : masterResult
+          ? `Inspeksi tersimpan · sheet Mesin & Irrigator diperbarui (${masterResult.join(' · ')})`
+          : 'Inspeksi tersimpan ke sheet "Data Inspeksi". (Sinkron ke sheet master dilewati/gagal — bisa dijalankan manual di Pengaturan.)',
       })
     } catch (e) {
       setToast({ type: 'error', message: `Gagal menyimpan: ${e.message}` })
@@ -170,6 +184,31 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
                 ? 'Data disimpan di perangkat ini (antrean lokal). Hubungkan Apps Script di menu Pengaturan lalu tekan "Sinkron" untuk mengirim ke Google Sheets.'
                 : 'Baris baru berhasil ditambahkan ke tabel inspeksi di sheet "Data Inspeksi".'}
             </div>
+
+            {!result.offline && (
+              <div
+                className={cx(
+                  'rounded-xl border px-3 py-2.5 text-[11.5px] leading-relaxed',
+                  result.masterSynced
+                    ? 'border-sky-500/25 bg-sky-500/[0.08] text-sky-200'
+                    : 'border-white/10 bg-white/[0.03] text-slate-400'
+                )}
+              >
+                {result.masterSynced ? (
+                  <>
+                    <span className="font-semibold">Sheet master diperbarui.</span>{' '}
+                    Kolom <span className="font-mono text-[10.5px]">TGL INSPEKSI TERAKHIR · SKOR · KONDISI · A/B/C · PETUGAS · TEMUAN</span>{' '}
+                    pada unit <span className="font-mono font-semibold">{result.payload.kode}</span> kini berisi hasil inspeksi ini.
+                    {result.masterResult?.length ? <span className="block mt-0.5 text-[10.5px] text-sky-300/80">{result.masterResult.join(' · ')}</span> : null}
+                  </>
+                ) : (
+                  <>
+                    Sinkron ke sheet <span className="font-semibold">Mesin &amp; Irrigator</span> belum dijalankan. Tekan tombol di bawah
+                    atau buka <span className="font-semibold">Pengaturan ▸ Sinkron ke Mesin &amp; Irrigator</span>.
+                  </>
+                )}
+              </div>
+            )}
             <div className="grid grid-cols-2 gap-2">
               <button className="btn-ghost" onClick={() => { setResult(null); setKode(''); setMode('pick'); setQuery('') }}>
                 <IconClipboard size={14} /> Unit lain
@@ -184,6 +223,27 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
                 <IconSheet size={14} /> Buka sheet
               </a>
             </div>
+            {!result.offline && !result.masterSynced && (
+              <button
+                className="btn-ghost w-full !border-sky-500/30 !text-[12px] !text-sky-300"
+                onClick={async (e) => {
+                  const btn = e.currentTarget
+                  btn.disabled = true
+                  btn.textContent = 'Menyinkronkan…'
+                  try {
+                    const r = await syncMaster()
+                    setResult((prev) => ({ ...prev, masterSynced: true, masterResult: r }))
+                    setToast({ type: 'success', message: `Sheet master diperbarui: ${r.join(' · ')}` })
+                  } catch (err) {
+                    setToast({ type: 'error', message: `Gagal: ${err.message}` })
+                    btn.disabled = false
+                    btn.textContent = 'Sinkronkan ke sheet Mesin & Irrigator'
+                  }
+                }}
+              >
+                Sinkronkan ke sheet Mesin &amp; Irrigator
+              </button>
+            )}
           </div>
         </Card>
         <Card>
