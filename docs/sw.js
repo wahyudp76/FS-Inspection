@@ -2,7 +2,7 @@
    Navigasi: network-first (selalu coba versi terbaru, fallback ke cache saat offline)
    Aset ber-hash & ikon: cache-first
    Permintaan ke Google (Apps Script / Sheets) TIDAK pernah di-cache. */
-const CACHE = 'fsi-v1'
+const CACHE = 'fsi-v2'
 const PRECACHE = [
   './',
   './index.html',
@@ -47,7 +47,22 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  const isAsset = /\/assets\//.test(url.pathname) || /\.(?:png|svg|ico|webmanifest|woff2?|json)$/.test(url.pathname)
+  /* ikon: network-first, supaya logo baru langsung terpakai (cache hanya untuk offline) */
+  const isIcon = /\.(?:png|svg|ico|webmanifest)$/.test(url.pathname)
+  if (isIcon) {
+    event.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone()
+          caches.open(CACHE).then((c) => c.put(req, copy))
+          return res
+        })
+        .catch(() => caches.match(req))
+    )
+    return
+  }
+
+  const isAsset = /\/assets\//.test(url.pathname) || /\.(?:woff2?|json)$/.test(url.pathname)
   if (isAsset) {
     event.respondWith(
       caches.match(req).then(
