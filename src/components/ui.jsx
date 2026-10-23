@@ -146,49 +146,68 @@ export const Skeleton = ({ className = '' }) => (
   <div className={cx('animate-pulse rounded-lg bg-white/[0.06]', className)} />
 )
 
-export const Toast = ({ toast, onClose }) => {
+export const Toast = ({ toast, onClose, duration }) => {
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
+  const timerRef = useRef(null)
+  const startRef = useRef(0)
+  const remainRef = useRef(0)
+  const [paused, setPaused] = useState(false)
+
+  // durasi tampil: error lebih lama supaya sempat dibaca
+  const ms = duration ?? (toast?.type === 'error' ? 7000 : 4000)
+
+  useEffect(() => {
+    if (!toast) return undefined
+    remainRef.current = ms
+    startRef.current = Date.now()
+    setPaused(false)
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => closeRef.current?.(), ms)
+    return () => clearTimeout(timerRef.current)
+  }, [toast, ms])
+
+  // jeda saat kursor di atas notifikasi (biar tidak hilang ketika mau dibaca)
+  const pause = () => {
+    if (!toast) return
+    clearTimeout(timerRef.current)
+    remainRef.current = Math.max(800, remainRef.current - (Date.now() - startRef.current))
+    setPaused(true)
+  }
+  const resume = () => {
+    if (!toast) return
+    startRef.current = Date.now()
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => closeRef.current?.(), remainRef.current)
+    setPaused(false)
+  }
+
   if (!toast) return null
   const type = toast.type || 'info'
   const tones = {
-    success: {
-      ring: 'border-emerald-400/45',
-      accent: 'bg-emerald-400',
-      chip: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30',
-      title: 'text-emerald-100',
-      icon: 'M20 6 9 17l-5-5',
-    },
-    error: {
-      ring: 'border-rose-400/45',
-      accent: 'bg-rose-400',
-      chip: 'bg-rose-400/15 text-rose-300 border-rose-400/30',
-      title: 'text-rose-100',
-      icon: 'M12 8v5M12 16.5v.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
-    },
-    info: {
-      ring: 'border-sky-400/45',
-      accent: 'bg-sky-400',
-      chip: 'bg-sky-400/15 text-sky-300 border-sky-400/30',
-      title: 'text-sky-100',
-      icon: 'M12 16v-5M12 8v.01M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z',
-    },
+    success: { ring: 'border-emerald-400/45', accent: 'bg-emerald-400', chip: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30', title: 'text-emerald-100', icon: 'M20 6 9 17l-5-5' },
+    error: { ring: 'border-rose-400/45', accent: 'bg-rose-400', chip: 'bg-rose-400/15 text-rose-300 border-rose-400/30', title: 'text-rose-100', icon: 'M12 8v5M12 16.5v.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z' },
+    info: { ring: 'border-sky-400/45', accent: 'bg-sky-400', chip: 'bg-sky-400/15 text-sky-300 border-sky-400/30', title: 'text-sky-100', icon: 'M12 16v-5M12 8v.01M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z' },
   }
   const t = tones[type] || tones.info
   const label = { success: 'Berhasil', error: 'Gagal', info: 'Informasi' }[type] || 'Informasi'
 
   return createPortal(
-    // portal ke body: lepas dari ancestor ber-transform (animate-fade-up) yang merusak posisi fixed
     <div className="no-print pointer-events-none fixed inset-x-0 bottom-4 z-[80] flex justify-center px-4 sm:bottom-6 lg:pl-[268px] lg:pr-8">
       <div
         role="status"
         aria-live="polite"
+        onMouseEnter={pause}
+        onMouseLeave={resume}
+        onFocus={pause}
+        onBlur={resume}
         className={cx(
           'pointer-events-auto relative flex w-full max-w-[26rem] items-start gap-3 overflow-hidden rounded-2xl border',
-          'bg-[#0d1524]/[0.97] px-3.5 py-3 pr-2.5 text-[12px] text-slate-200',
+          'bg-[#0d1524]/[0.97] px-3.5 pb-4 pt-3 pr-2.5 text-[12px] text-slate-200',
           'shadow-[0_24px_60px_-18px_rgba(0,0,0,0.95),0_2px_10px_-2px_rgba(0,0,0,0.7)] ring-1 ring-white/[0.04] backdrop-blur-xl',
           t.ring
         )}
       >
-        {/* aksen kiri, bukan transparan */}
         <span className={cx('absolute inset-y-0 left-0 w-[3px]', t.accent)} />
         <span className={cx('mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg border', t.chip)}>
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -206,6 +225,11 @@ export const Toast = ({ toast, onClose }) => {
         >
           <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.4" fill="none" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
+        {/* bilah waktu: menyusut selama notifikasi tampil */}
+        <span
+          className={cx('toast-bar absolute bottom-0 left-0 h-[2px] w-full', t.accent)}
+          style={{ animationDuration: `${ms}ms`, animationPlayState: paused ? 'paused' : 'running', opacity: 0.75 }}
+        />
       </div>
     </div>,
     document.body

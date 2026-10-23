@@ -88,3 +88,12 @@ body {
   body { background: #fff; color: #000; }
   .no-print { display: none !important; }
 }
+
+/* notifikasi: bilah waktu mundur */
+@keyframes toastbar { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+.toast-bar {
+  transform-origin: left center;
+  animation-name: toastbar;
+  animation-timing-function: linear;
+  animation-fill-mode: forwards;
+}

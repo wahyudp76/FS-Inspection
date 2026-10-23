@@ -4,6 +4,10 @@ Checklist singkat. Detail lengkap ada di [`README.md`](README.md).
 
 ---
 
+## Notifikasi
+
+Notifikasi di bawah layar (hasil sinkron, simpan inspeksi, error) **hilang otomatis**: 4 detik untuk berhasil/informasi, 7 detik untuk error. Arahkan kursor ke notifikasi untuk menahan agar tidak hilang, atau klik **×** untuk menutup langsung.
+
 ## Bagian 1 · Siapkan spreadsheet tujuan (5 menit)
 
 1. Buka **Update ZPAS637**
