@@ -35,7 +35,7 @@ function NavItem({ item, active, onClick }) {
   )
 }
 
-export default function Shell({ children, route, navigate, sync, onSync, offline, demo }) {
+export default function Shell({ children, route, navigate, sync, onSync, offline, demo, onAddInspect }) {
   const [open, setOpen] = useState(false)
   const current = NAV.find((n) => n.id === route) || NAV[0]
 
@@ -104,7 +104,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
   )
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen overflow-x-hidden">
       {/* sidebar desktop */}
       <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[236px] border-r border-white/[0.06] bg-ink-900/70 backdrop-blur-xl lg:block">
         {SidebarInner}
@@ -135,14 +135,9 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               <p className="truncate text-[10.5px] text-slate-500">{current.desc}</p>
             </div>
             <button
-              onClick={() => {
-                navigate('inspeksi')
-                // kalau sedang di tab Inspeksi (mis. masih di form), kembalikan ke daftar pilih unit
-                window.dispatchEvent(new CustomEvent('fsi:new-inspection'))
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-              }}
+              onClick={() => onAddInspect?.()}
               className="btn-primary !px-2.5 !py-1.5"
-              title="Tambah inspeksi baru"
+              title="Tambah inspeksi baru (pop-up)"
               aria-label="Tambah Inspeksi"
             >
               <IconPlus size={15} />

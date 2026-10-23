@@ -16,7 +16,7 @@ const todayISO = () => {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
-export default function Inspect({ data, records, onSubmitted, navigate, initial }) {
+export default function Inspect({ data, records, onSubmitted, navigate, initial, embedded = false, onExit, onNavigate }) {
   const [tipe, setTipe] = useState(initial?.tipe || 'Mesin')
   const [kode, setKode] = useState(initial?.kode || '')
   const [query, setQuery] = useState('')
@@ -36,15 +36,13 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const [mode, setMode] = useState(initial?.kode ? 'form' : 'pick')
   const topRef = useRef(null)
 
-  /* tombol "Tambah Inspeksi" di header → kembali ke daftar pilih unit */
-  useEffect(() => {
-    const reset = () => {
-      setResult(null); setGrades({}); setCatatan(''); setKode(''); setQuery('')
-      setDivisiSel([]); setJenisSel([]); setPage(0); setMode('pick')
-    }
-    window.addEventListener('fsi:new-inspection', reset)
-    return () => window.removeEventListener('fsi:new-inspection', reset)
-  }, [])
+  /* dipakai saat form ditampilkan di dalam pop-up ("Tambah Inspeksi") */
+  const goPick = () => {
+    setResult(null); setGrades({}); setCatatan('')
+    if (embedded) { onExit?.(); return }
+    setKode(''); setQuery(''); setMode('pick')
+  }
+  const goNav = (id) => (embedded ? onNavigate?.(id) : navigate(id))
 
   const groups = tipe === 'Mesin' ? data.groups.mesin : data.groups.irrigator
   const pool = tipe === 'Mesin' ? data.mesin : data.irrigator
@@ -277,7 +275,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
               </div>
             )}
             <div className="grid grid-cols-2 gap-2">
-              <button className="btn-ghost" onClick={() => { setResult(null); setKode(''); setMode('pick'); setQuery('') }}>
+              <button className="btn-ghost" onClick={goPick}>
                 <IconClipboard size={14} /> Unit lain
               </button>
               <button className="btn-primary" onClick={() => { setResult(null); setGrades({}); setCatatan(''); }}>
@@ -285,7 +283,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
               </button>
             </div>
             <div className="grid grid-cols-2 gap-2">
-              <button className="btn-ghost !text-[12px]" onClick={() => navigate('riwayat')}>Lihat riwayat</button>
+              <button className="btn-ghost !text-[12px]" onClick={() => goNav('riwayat')}>Lihat riwayat</button>
               <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost !text-[12px]">
                 <IconSheet size={14} /> Buka sheet
               </a>
@@ -526,7 +524,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   /* ------------------------------- FORM ------------------------------- */
   const km = kondisiMeta(stats.kondisi)
   return (
-    <div className="space-y-4 pb-24" ref={topRef}>
+    <div className={cx('space-y-4', embedded ? 'px-3 pb-2 pt-3 sm:px-4' : 'pb-24')} ref={topRef}>
       {/* unit header */}
       <Card className="overflow-hidden">
         <div className="flex flex-wrap items-center gap-4 border-b border-white/[0.06] bg-gradient-to-r from-brand/[0.08] via-transparent to-transparent px-4 py-4 sm:px-5">
@@ -550,7 +548,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
               <p className="font-mono text-[13px] font-semibold text-slate-200">{stats.score.toFixed(1)}</p>
             </div>
             <ScoreRing score={complete ? stats.score : unit.score} size={48} stroke={5} />
-            <button className="btn-ghost !px-2 !py-1.5" onClick={() => { setKode(''); setMode('pick') }} title="Ganti unit">
+            <button className="btn-ghost !px-2 !py-1.5" onClick={goPick} title="Ganti unit">
               <IconRefresh size={14} />
             </button>
           </div>
@@ -710,7 +708,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
       </Card>
 
       {/* sticky bar */}
-      <div className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-ink-950/90 backdrop-blur-xl lg:left-[236px]">
+      <div className={cx('border-t border-white/10 bg-ink-950/95 backdrop-blur-xl', embedded ? 'sticky bottom-0 z-20 rounded-b-2xl' : 'fixed inset-x-0 bottom-0 z-40 lg:left-[236px]')}>
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-3">
             <ScoreRing score={complete ? stats.score : stats.score || 0} size={40} stroke={4} />
@@ -725,7 +723,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
           </div>
           <div className="ml-auto flex items-center gap-2">
             {!isConfigured() && (
-              <button onClick={() => navigate('pengaturan')} className="hidden items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[10.5px] font-semibold text-amber-300 sm:flex">
+              <button onClick={() => goNav('pengaturan')} className="hidden items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[10.5px] font-semibold text-amber-300 sm:flex">
                 <IconAlert size={12} /> Endpoint belum diatur
               </button>
             )}

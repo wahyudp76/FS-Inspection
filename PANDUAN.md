@@ -167,7 +167,7 @@ secret `VITE_APPS_SCRIPT_URL` bisa dipakai untuk mengisi endpoint otomatis.
 
 | Rutin | Aksi |
 |---|---|
-| Harian | Petugas klik tombol **+ Tambah Inspeksi** di header (dari halaman mana pun) atau buka menu **Inspeksi** → pilih **Divisi** & **Jenis Engine/Irrigator** (bisa banyak sekaligus) atau cari kode → daftar unit tampil **20 per halaman** (navigasi « ‹ › »), urut **jenis lalu nomor** (default; bisa diganti: *nomor terkecil*, *skor terendah/tertinggi*) → isi checklist → kirim |
+| Harian | Petugas klik tombol **+ Tambah Inspeksi** di header (dari halaman mana pun) → **pop-up Tambah Inspeksi** muncul: pilih **Mesin/Irrigator**, cari & pilih unit, **data pendukung tampil otomatis** (divisi, spesifikasi, power/pompa atau nozzle, status, jumlah komponen, sebaran A/B/C, inspeksi terakhir) → **Mulai Inspeksi** membuka checklist di pop-up yang sama. Alternatif: buka menu **Inspeksi** → pilih **Divisi** & **Jenis Engine/Irrigator** (bisa banyak sekaligus) atau cari kode → daftar unit tampil **20 per halaman** (navigasi « ‹ › »), urut **jenis lalu nomor** (default; bisa diganti: *nomor terkecil*, *skor terendah/tertinggi*) → isi checklist → kirim |
 | Mingguan | **Sinkron** di dashboard untuk menarik data terbaru dari sheet |
 | Bulanan | Dashboard → filter periode **Bulanan** → baca tren & unit prioritas |
 | Perubahan master aset | Edit sheet *Draft Dashboard* → `npm run sync` → commit → push |

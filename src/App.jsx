@@ -10,6 +10,7 @@ import { fetchHistory, readLocalHistory, flushQueue } from './lib/api'
 import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
+import QuickInspect from './components/QuickInspect'
 
 const readHash = () => {
   const h = (window.location.hash || '').replace(/^#\/?/, '')
@@ -27,6 +28,7 @@ export default function App() {
   const [sync, setSync] = useState({ syncing: false, syncedAt: null, offline: !getEndpoint() })
   const [demo, setDemoOn] = useState(() => getDemo())
   const [toast, setToast] = useState(null)
+  const [quickOpen, setQuickOpen] = useState(false)
 
   const navigate = useCallback((r, p) => {
     const qs = p?.kode ? `?tipe=${encodeURIComponent(p.tipe || 'Mesin')}&kode=${encodeURIComponent(p.kode)}` : ''
@@ -121,8 +123,16 @@ export default function App() {
   }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted])
 
   return (
-    <Shell route={route} navigate={navigate} sync={sync} onSync={() => doSync()} offline={sync.offline} demo={demo}>
+    <Shell route={route} navigate={navigate} sync={sync} onSync={() => doSync()} offline={sync.offline} demo={demo} onAddInspect={() => setQuickOpen(true)}>
       <div key={route + (params?.kode || '')} className="animate-fade-up">{page}</div>
+      <QuickInspect
+        open={quickOpen}
+        data={data}
+        records={allRecords}
+        onClose={() => setQuickOpen(false)}
+        onSubmitted={handleSubmitted}
+        navigate={navigate}
+      />
       <Toast toast={toast} onClose={() => setToast(null)} />
     </Shell>
   )
