@@ -154,7 +154,11 @@ Sinkronisasi bisa dijalankan dengan empat cara:
 2. **Manual dari dashboard** — **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator**.
    Hasilnya ditampilkan, mis. `Mesin: 1/151 unit diperbarui, 47 sel komponen terisi`.
 3. **Dari spreadsheet** — menu **FS Inspection ▸ Sinkronkan hasil terakhir…**.
-4. **Terjadwal** — `installTriggers()` menjalankan sinkron tiap hari ±01.00 WIB.
+4. **Terjadwal (server)** — `installTriggers()` menjalankan `syncLatestToMaster` tiap hari ±01.00 WIB,
+   langsung di Google, tanpa perlu ada yang membuka dashboard.
+
+Selain itu dashboard punya **auto-refresh**: menarik ulang isi sheet `Data Inspeksi` setiap
+5 menit dan saat tab kembali aktif (Pengaturan ▸ Sinkronisasi Otomatis).
 
 ### Urutan pemasangan (sekali saja)
 

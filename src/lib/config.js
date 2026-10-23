@@ -6,6 +6,10 @@
  */
 const LS_ENDPOINT = 'fsi:endpoint'
 const LS_AUTO_MASTER = 'fsi:auto-master'
+const LS_AUTO_REFRESH = 'fsi:auto-refresh'
+
+/* interval muat ulang data dari sheet di dashboard (default 5 menit) */
+export const REFRESH_MS = 5 * 60 * 1000
 const LS_CACHE = 'fsi:history-cache'
 
 export const BUILD_ENV_ENDPOINT = import.meta.env.VITE_APPS_SCRIPT_URL || ''
@@ -40,6 +44,23 @@ export const getAutoSyncMaster = () => {
 export const setAutoSyncMaster = (on) => {
   try {
     localStorage.setItem(LS_AUTO_MASTER, on ? '1' : '0')
+  } catch {
+    /* ignore */
+  }
+}
+
+/* ---- muat ulang otomatis data terbaru dari sheet ke dashboard ---- */
+export const getAutoRefresh = () => {
+  try {
+    const v = localStorage.getItem(LS_AUTO_REFRESH)
+    return v === null ? true : v === '1'
+  } catch {
+    return true
+  }
+}
+export const setAutoRefresh = (on) => {
+  try {
+    localStorage.setItem(LS_AUTO_REFRESH, on ? '1' : '0')
   } catch {
     /* ignore */
   }

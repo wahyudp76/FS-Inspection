@@ -73,9 +73,19 @@ Ada tiga cara; **cara 1 sudah aktif secara default**.
 | **1** | **Otomatis** — setiap tekan **Kirim Inspeksi**, dashboard langsung memanggil `syncmaster` sehingga kolom inspeksi terakhir di sheet Mesin/Irrigator ikut diperbarui. Layar hasil menampilkan `Mesin: 151/151 · Irrigator: 123/123 unit diperbarui`. | pemakaian sehari-hari |
 | **2** | **Tombol di dashboard** — **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator** (memproses semua unit sekaligus). | setelah input massal / koreksi manual |
 | **3** | **Menu spreadsheet** — reload spreadsheet → menu **FS Inspection ▸ 3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator**. | tanpa membuka dashboard |
-| **4** | **Terjadwal** — jalankan sekali `installTriggers` di Apps Script → sinkron otomatis tiap hari ±01.00 WIB. | jaring pengaman |
+| **4** | **Terjadwal (server)** — jalankan sekali `installTriggers` di Apps Script → tiap hari ±01.00 WIB `syncLatestToMaster` menulis hasil terbaru ke sheet Mesin/Irrigator, tanpa perlu ada yang membuka web. | jaring pengaman |
 
-Mematikan/menyalakan cara 1: **Pengaturan ▸ centang "Sinkron otomatis ke sheet Mesin & Irrigator"**.
+Mematikan/menyalakan cara 1: **Pengaturan ▸ Sinkronisasi Otomatis ▸ "Sinkron otomatis ke sheet Mesin & Irrigator"**.
+
+### Bedanya trigger vs web
+
+| | Arah | Kapan |
+|---|---|---|
+| **Trigger harian** (`installTriggers`) | `Data Inspeksi` → sheet **Mesin/Irrigator** | tiap hari ±01.00 WIB, jalan di server Google (web tidak perlu dibuka) |
+| **Auto-refresh web** | sheet `Data Inspeksi` → **dashboard** | setiap **5 menit** + saat tab kembali aktif (bisa dimatikan di Pengaturan) |
+
+Jadi trigger **tidak** memperbarui tampilan web — web selalu menarik data sendiri dari sheet
+`Data Inspeksi` (saat dibuka, setiap 5 menit, saat tab aktif kembali, atau lewat tombol **Sinkron**).
 
 > Syarat: endpoint `/exec` sudah diisi **dan** deployment memakai **versi terbaru**
 > (`Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version`). Kalau inspeksi

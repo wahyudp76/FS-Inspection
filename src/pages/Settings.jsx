@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
-import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
+import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, getAutoRefresh, setAutoRefresh, REFRESH_MS, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
 import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster } from '../lib/api'
 import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark } from '../components/icons'
 import { cx } from '../lib/analytics'
@@ -19,6 +19,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
   const [status, setStatus] = useState(null)
   const [tglAwal, setTglAwal] = useState('2026-03-05')
   const [autoMaster, setAutoMaster] = useState(() => getAutoSyncMaster())
+  const [autoRefresh, setAutoRefreshState] = useState(() => getAutoRefresh())
   const [busyAwal, setBusyAwal] = useState(false)
 
   const save = () => {
@@ -220,6 +221,27 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
             baris yang sudah ada tidak diduplikasi. Unit berstatus <span className="font-semibold text-rose-300">Rusak</span>{' '}
             otomatis dinilai <span className="font-semibold text-rose-300">Kritis</span>.
           </p>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader title="Sinkronisasi Otomatis" sub="Kapan data ditarik dan ditulis" icon={<IconRefresh size={15} />} />
+        <div className="card-pad space-y-2.5 pt-3">
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+            <input
+              type="checkbox"
+              checked={autoRefresh}
+              onChange={(e) => { setAutoRefreshState(e.target.checked); setAutoRefresh(e.target.checked) }}
+              className="mt-0.5 h-3.5 w-3.5 accent-sky-400"
+            />
+            <span className="text-[11.5px] leading-relaxed text-slate-300">
+              <span className="font-semibold text-slate-100">Muat ulang data terbaru dari sheet</span>
+              <span className="block text-slate-500">
+                Dashboard menarik ulang isi sheet “Data Inspeksi” setiap {Math.round(REFRESH_MS / 60000)} menit dan
+                setiap kali tab kembali aktif — jadi hasil inspeksi petugas lain langsung terlihat tanpa klik Sinkron.
+              </span>
+            </span>
+          </label>
         </div>
       </Card>
 

@@ -7,7 +7,7 @@ import History from './pages/History'
 import Settings from './pages/Settings'
 import assetsData from './data/assets.json'
 import { fetchHistory, readLocalHistory, flushQueue } from './lib/api'
-import { getEndpoint } from './lib/config'
+import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
 
@@ -62,6 +62,30 @@ export default function App() {
 
   useEffect(() => {
     doSync({ silent: true })
+  }, [doSync])
+
+  /* ---- muat ulang otomatis: tiap 5 menit + saat tab kembali aktif ---- */
+  useEffect(() => {
+    if (!getAutoRefresh() || !getEndpoint()) return
+    let last = Date.now()
+
+    const refresh = (force = false) => {
+      if (document.visibilityState !== 'visible') return
+      if (!force && Date.now() - last < 5000) return // hindari panggilan dobel saat focus + visibilitychange
+      last = Date.now()
+      doSync({ silent: true })
+    }
+
+    const timer = setInterval(() => refresh(), REFRESH_MS)
+    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('focus', onVisible)
+
+    return () => {
+      clearInterval(timer)
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('focus', onVisible)
+    }
   }, [doSync])
 
   const handleSubmitted = useCallback((rec) => {
