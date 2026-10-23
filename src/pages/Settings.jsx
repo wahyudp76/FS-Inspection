@@ -38,8 +38,8 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
     try {
       const r = await ping()
       const v = r.version || '1.0.0 (lama)'
-      const peringatan = String(r.version || '').localeCompare('1.2.0', undefined, { numeric: true }) < 0
-        ? ' · ⚠ deployment masih versi lama, fitur sinkron master belum tersedia di endpoint ini'
+      const peringatan = String(r.version || '').localeCompare('1.3.0', undefined, { numeric: true }) < 0
+        ? ' · ⚠ deployment masih versi lama (min. 1.3.0) — struktur kolom terbaru belum dipakai endpoint ini'
         : ''
       setStatus({ ok: true, message: `Terhubung · sheet "${r.sheet || 'Data Inspeksi'}" · ${r.records ?? 0} baris · versi ${v}${peringatan}` })
       setToast({ type: 'success', message: 'Koneksi ke Apps Script berhasil.' })

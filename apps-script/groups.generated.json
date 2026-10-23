@@ -86,8 +86,7 @@
         "items": [
           "Chasis",
           "Ban",
-          "Pintu",
-          "Category"
+          "Pintu"
         ]
       }
     ],
@@ -160,8 +159,7 @@
         "icon": "spark",
         "items": [
           "PE",
-          "Helically",
-          "Category"
+          "Helically"
         ]
       }
     ]

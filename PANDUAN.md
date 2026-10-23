@@ -17,7 +17,7 @@ Notifikasi di bawah layar (hasil sinkron, simpan inspeksi, error) **hilang otoma
    `apps-script/Code.gs` dari repo ini → **Save** (ikon disket).
 4. Pilih fungsi **`setup`** pada dropdown → **Run** → **Review permissions**
    → pilih akun → *Advanced* → *Go to project (unsafe)* → **Allow**.
-   → Sheet **`Data Inspeksi`** terbuat dengan 94 kolom header.
+   → Sheet **`Data Inspeksi`** terbuat dengan 92 kolom header.
 5. **Deploy ▸ New deployment** → ikon gerigi → **Web app**
    - Description: `FS Inspection API`
    - **Execute as: Me**
@@ -183,11 +183,12 @@ hasil tetap tersimpan di antrean lokal browser; setelah online → **Sinkron**.
 | Gejala | Penyebab & solusi |
 |---|---|
 | **Kolom komponen (Accu, Klem Accu, …) di sheet Mesin kosong** | Dua sebab: ① Unit itu memang belum pernah diinspeksi lewat dashboard → jalankan **`syncLatestToMaster`** (versi ≥1.2.0) yang kini **menulis A/B/C ke kolom komponen**. ② Endpoint masih deployment lama → update `Version: New version`. Cek hasil: muncul `… , N sel komponen terisi`. |
-| **Inspeksi masuk ke "Data Inspeksi", tapi sheet Mesin/Irrigator tidak berubah** | ① Deployment Apps Script masih **versi lama** (belum punya `syncmaster`). Perbaiki: **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy**. Cek di **Pengaturan ▸ Uji Koneksi** — harus muncul `versi 1.2.0`. ② Atau jalankan **`syncLatestToMaster`** langsung dari editor Apps Script (paling cepat, tanpa menunggu deploy). ③ Pastikan kolom ringkasan sudah pernah dibuat — kalau belum, fungsi itu juga yang membuatnya. |
+| **Inspeksi masuk ke "Data Inspeksi", tapi sheet Mesin/Irrigator tidak berubah** | ① Deployment Apps Script masih **versi lama** (belum punya `syncmaster`). Perbaiki: **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy**. Cek di **Pengaturan ▸ Uji Koneksi** — harus muncul `versi 1.3.0`. ② Atau jalankan **`syncLatestToMaster`** langsung dari editor Apps Script (paling cepat, tanpa menunggu deploy). ③ Pastikan kolom ringkasan sudah pernah dibuat — kalau belum, fungsi itu juga yang membuatnya. |
 | Sheet `Data Inspeksi` masih kosong | Kode hanya **disimpan**, belum **dijalankan**. Jalankan fungsi `backfillDariMaster` di editor (Run ▸ pilih fungsi), atau dari dashboard ▸ Pengaturan ▸ **Isi inspeksi awal**. Cek dengan fungsi `cekStatus`. |
 | `Respon server bukan JSON` | Deployment belum "Anyone", atau URL bukan `/exec`. |
 | Data tidak muncul di dashboard | Tekan **Sinkron**; pastikan endpoint terisi. |
 | Grafik kosong padahal sudah inspeksi | Sama seperti di atas, atau inspeksi masih di **antrean lokal** (Pengaturan ▸ Kirim antrean lokal). |
 | Skor unit di master beda dengan riwayat | Master = kondisi terakhir di sheet sumber; riwayat = sesi inspeksi dashboard. Unit berstatus **Rusak** selalu **Kritis**. |
 | Ingin grafik terisi untuk presentasi | Pengaturan ▸ **Mode Demo** (data contoh, tidak dikirim ke sheet). |
-| `Category` muncul 2× | Kolom irrigator otomatis dinamai `Category (Irr)` |
+| Masih ada kolom `Category` di `Data Inspeksi` | Kolom itu sudah dihapus dari master (v1.3.0). Jalankan menu **FS Inspection ▸ 4. Bersihkan kolom Category lama**, lalu **Deploy ▸ New version**. |
+| Komponen jadi 46 (mesin) / 29 (irrigator) | Benar — kolom `Category` sudah dihapus dari sheet Mesin & Irrigator. Klik **Sinkron** di dashboard agar data master dimuat ulang. |

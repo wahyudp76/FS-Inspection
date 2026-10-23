@@ -34,7 +34,7 @@ const MESIN_META = {
   komoditi: 'Komoditi',
   keterangan: 'Keterangan',
 }
-const MESIN_TAIL = ['Mesin', 'Prodo', 'Category'] // komponen di blok akhir
+const MESIN_TAIL = ['Mesin', 'Prodo'] // komponen di blok akhir (kolom "Category" sudah dihapus dari sheet)
 
 const IRR_META = {
   no: 'NO',
@@ -44,7 +44,7 @@ const IRR_META = {
   nozzle: 'Nozzle',
   status: 'Status',
 }
-const IRR_TAIL = ['PE', 'Helically', 'Category']
+const IRR_TAIL = ['PE', 'Helically']
 
 /* ---------------- grup komponen (dipakai UI & Apps Script) ---------------- */
 const GRUP_MESIN = [
@@ -53,7 +53,7 @@ const GRUP_MESIN = [
   { id: 'bahanbakar', label: 'Sistem Bahan Bakar', icon: 'fuel', items: ['Feed Pump', 'Injeksi Pump', 'Filter Solar', 'Tangki Solar', 'Selang Nozle', 'Pengukur Volum Solar', 'Stik Oil', 'Tutup Oil', 'Air Cleaner'] },
   { id: 'pendingin', label: 'Sistem Pendingin', icon: 'temp', items: ['Radiator', 'Hose radiator Atas', 'Hose radiator Bawah', 'Kipas Radiator', 'Tutup Radiator', 'V Belt Radiator', 'Water Pump', 'Oil Cooler', 'Knalpot'] },
   { id: 'power', label: 'Engine & Transmisi', icon: 'engine', items: ['Mesin', 'Prodo', 'Perpak clynder head', 'Perpak oil Pan', 'Turbo Charger', 'Coupling Assy', 'Joint Couple', 'Selenoid Transmisi'] },
-  { id: 'sasis', label: 'Sasis & Body', icon: 'body', items: ['Chasis', 'Ban', 'Pintu', 'Category'] },
+  { id: 'sasis', label: 'Sasis & Body', icon: 'body', items: ['Chasis', 'Ban', 'Pintu'] },
 ]
 
 const GRUP_IRR = [
@@ -62,7 +62,7 @@ const GRUP_IRR = [
   { id: 'gun', label: 'Gun, Troli & Bandul', icon: 'gun', items: ['Nozle Gun', 'Roda trolley Gun', 'Stoper/Putaran Gun', 'Bandul Pada Troli', 'Gandengan / Drawbar'] },
   { id: 'kaki', label: 'Rangka & Kaki', icon: 'body', items: ['Jack / Kaki  Depan', 'Jack / Kaki  Belakang', 'Ban Irigator'] },
   { id: 'hidro', label: 'Hidrolik & Instrumen', icon: 'gauge', items: ['Hydrolik', 'Pressure Gauge'] },
-  { id: 'lain', label: 'Spesifikasi & Lain-lain', icon: 'spark', items: ['PE', 'Helically', 'Category'] },
+  { id: 'lain', label: 'Spesifikasi & Lain-lain', icon: 'spark', items: ['PE', 'Helically'] },
 ]
 
 /* ---------------- helper ---------------- */

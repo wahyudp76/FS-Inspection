@@ -5,8 +5,11 @@ Checklist komponen, input inspeksi langsung dari web, dan hasilnya otomatis
 masuk ke Google Sheets **“Update ZPAS637” ▸ sheet `Data Inspeksi`**.
 
 > **Data master** diambil dari spreadsheet *Draft Dashboard*:
-> sheet `Mesin` (**tb_mesin** — 151 unit, 47 komponen) dan
-> sheet `Irrigator` (**tb_irrigator** — 123 unit, 30 komponen).
+> sheet `Mesin` (**tb_mesin** — 151 unit, 46 komponen) dan
+> sheet `Irrigator` (**tb_irrigator** — 123 unit, 29 komponen).
+>
+> Kolom **`Category`** sudah **dihapus** dari kedua sheet (versi 1.3.0+), jadi
+> kolom itu tidak lagi muncul di dashboard maupun di checklist inspeksi.
 
 ---
 
@@ -81,7 +84,7 @@ npm run sync          # membaca tb_mesin & tb_irrigator → src/data/assets.json
 2. Hapus isi `Code.gs`, tempel seluruh isi
    [`apps-script/Code.gs`](apps-script/Code.gs), lalu **Save**.
 3. Jalankan fungsi **`setup`** sekali (Run ▸ setup) → izinkan akses.
-   Sheet `Data Inspeksi` dibuat dengan header rapi (94 kolom) dan format tabel.
+   Sheet `Data Inspeksi` dibuat dengan header rapi (92 kolom) dan format tabel.
 4. **Deploy ▸ New deployment ▸ Web app**
    - Execute as: **Me**
    - Who has access: **Anyone**
@@ -152,7 +155,7 @@ Sinkronisasi bisa dijalankan dengan empat cara:
 1. **Otomatis (default)** — setiap kali inspeksi dikirim dari dashboard, aplikasi
    langsung memanggil action `syncmaster`. Bisa dimatikan di **Pengaturan**.
 2. **Manual dari dashboard** — **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator**.
-   Hasilnya ditampilkan, mis. `Mesin: 1/151 unit diperbarui, 47 sel komponen terisi`.
+   Hasilnya ditampilkan, mis. `Mesin: 1/151 unit diperbarui, 46 sel komponen terisi`.
 3. **Dari spreadsheet** — menu **FS Inspection ▸ Sinkronkan hasil terakhir…**.
 4. **Terjadwal (server)** — `installTriggers()` menjalankan `syncLatestToMaster` tiap hari ±01.00 WIB,
    langsung di Google, tanpa perlu ada yang membuka dashboard.
@@ -177,8 +180,8 @@ Dibuat otomatis oleh Apps Script. Satu baris = satu sesi inspeksi.
 |---|---|
 | Identitas | `ID Inspeksi`, `Tanggal`, `Timestamp`, `Tipe Aset`, `Kode Unit`, `Wilayah`, `Jenis Unit`, `Spesifikasi`, `Status Unit`, `Petugas` |
 | Rekap | `A`, `B`, `C`, `Total`, `Skor`, `Kondisi` |
-| Komponen mesin (47) | `Accu`, `Kabel Accu`, … `Chasis`, `Ban`, `Pintu`, `Category` |
-| Komponen irrigator (30) | `Turbin`, `As Turbin`, … `PE`, `Helically`, `Category (Irr)` |
+| Komponen mesin (46) | `Accu`, `Kabel Accu`, … `Chasis`, `Ban`, `Pintu` |
+| Komponen irrigator (29) | `Turbin`, `As Turbin`, … `PE`, `Helically` |
 | Catatan | `Catatan` |
 
 Kolom komponen yang tidak berlaku untuk tipe aset dibiarkan kosong, sehingga
@@ -298,8 +301,9 @@ bash scripts/publish-pages.sh
   terakhir yang dicatat), sedangkan **skor riwayat** berasal dari sesi inspeksi
   di dashboard. Keduanya ditampilkan terpisah agar tidak tertukar.
 - Nilai selain A/B/C pada sumber diabaikan (dianggap belum dinilai).
-- Nama komponen `Category` ada di mesin **dan** irrigator; pada sheet, versi
-  irrigator memakai kolom `Category (Irr)`.
+- Kolom `Category` pada sheet Mesin & Irrigator **sudah dihapus** (v1.3.0).
+  Bila sheet `Data Inspeksi` lama masih menyisakan kolom `Category`, jalankan
+  menu **FS Inspection ▸ 4. Bersihkan kolom Category lama** sekali.
 - Mode **Demo** (Pengaturan) mengisi grafik dengan ±90 sesi contoh tanpa
   menyentuh Google Sheets — berguna untuk presentasi sebelum data terkumpul.
 - Data inspeksi disimpan permanen di Google Sheets; `localStorage` hanya cache

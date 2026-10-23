@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.2.0'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.3.0'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -60,7 +60,7 @@ var KOMPONEN_MESIN = [
   'Tutup Radiator', 'V Belt Radiator', 'Water Pump', 'Oil Cooler', 'Knalpot',
   'Mesin', 'Prodo', 'Perpak clynder head', 'Perpak oil Pan', 'Turbo Charger',
   'Coupling Assy', 'Joint Couple', 'Selenoid Transmisi',
-  'Chasis', 'Ban', 'Pintu', 'Category'
+  'Chasis', 'Ban', 'Pintu'
 ];
 
 var KOMPONEN_IRRIGATOR = [
@@ -73,7 +73,7 @@ var KOMPONEN_IRRIGATOR = [
   'Gandengan / Drawbar',
   'Jack / Kaki  Depan', 'Jack / Kaki  Belakang', 'Ban Irigator',
   'Hydrolik', 'Pressure Gauge',
-  'PE', 'Helically', 'Category'
+  'PE', 'Helically'
 ];
 
 /* Kolom identitas (urutan tetap di sheet) */
@@ -153,6 +153,32 @@ function setup() {
   SpreadsheetApp.getActiveSpreadsheet().toast('Sheet "Data Inspeksi" siap digunakan.', 'FS Inspection', 5);
 }
 
+/**
+ * Hapus kolom "Category" / "Category (Irr)" yang sudah tidak dipakai
+ * dari sheet "Data Inspeksi" (sisa struktur lama). Jalankan sekali setelah
+ * kolom Category dihapus dari sheet Mesin & Irrigator.
+ */
+function hapusKolomCategory() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var sh = ensureSheet_(false);
+    var last = sh.getLastColumn();
+    if (!last) return 'Sheet "' + SHEET_NAME + '" masih kosong.';
+    var header = sh.getRange(1, 1, 1, last).getValues()[0].map(function (v) { return String(v).trim(); });
+    var target = [];
+    for (var i = header.length - 1; i >= 0; i--) {   // kanan → kiri agar indeks tidak bergeser
+      if (/^category(\s*\(irr\))?$/i.test(header[i])) target.push(i + 1);
+    }
+    if (!target.length) return 'Tidak ada kolom Category di sheet "' + SHEET_NAME + '".';
+    for (var t = 0; t < target.length; t++) sh.deleteColumn(target[t]);
+    return 'Dihapus ' + target.length + ' kolom Category dari "' + SHEET_NAME + '". Sekarang ' +
+      (last - target.length) + ' kolom.';
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function onOpen() {
   try {
     SpreadsheetApp.getUi()
@@ -161,6 +187,7 @@ function onOpen() {
       .addSeparator()
       .addItem('2. Isi inspeksi awal dari master (5 Mar 2026)', 'backfillDariMaster')
       .addItem('3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator', 'syncLatestToMaster')
+      .addItem('4. Bersihkan kolom Category lama (Data Inspeksi)', 'hapusKolomCategory')
       .addSeparator()
       .addItem('Cek status sheet (diagnostik)', 'cekStatus')
       .addSeparator()
