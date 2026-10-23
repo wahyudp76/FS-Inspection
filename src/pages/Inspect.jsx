@@ -32,6 +32,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const [divisiSel, setDivisiSel] = useState([])
   const [jenisSel, setJenisSel] = useState([])
   const [page, setPage] = useState(0)
+  const [sort, setSort] = useState('nomor')
   const [mode, setMode] = useState(initial?.kode ? 'form' : 'pick')
   const topRef = useRef(null)
 
@@ -55,8 +56,22 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
         [u.kode, u.wilayah, u.spec, u.unit, u.status, u.pompa, u.nozzle].filter(Boolean).join(' ').toLowerCase().includes(q)
       )
     }
-    return list
-  }, [pool, query, divisiSel, jenisSel])
+    /* ---- urutan ---- */
+    const nomor = (kode) => {
+      const m = String(kode || '').match(/(\d+)/)
+      return m ? parseInt(m[1], 10) : Number.MAX_SAFE_INTEGER
+    }
+    const cmp = {
+      // nomor unit terkecil lebih dulu (0004, 0012, 0018, … )
+      nomor: (a, b) => nomor(a.kode) - nomor(b.kode) || String(a.kode).localeCompare(String(b.kode)),
+      // kode A→Z (natural: SPC0002 sebelum SPC0018)
+      kode: (a, b) =>
+        String(a.kode).localeCompare(String(b.kode), undefined, { numeric: true, sensitivity: 'base' }),
+      'skor-asc': (a, b) => (a.score || 0) - (b.score || 0),
+      'skor-desc': (a, b) => (b.score || 0) - (a.score || 0),
+    }[sort]
+    return [...list].sort(cmp)
+  }, [pool, query, divisiSel, jenisSel, sort])
 
   const adaFilter = divisiSel.length > 0 || jenisSel.length > 0 || !!query.trim()
 
@@ -67,7 +82,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const sampai = Math.min(mulai + PER_PAGE, filtered.length)
   const halamanUnit = filtered.slice(mulai, sampai)
 
-  useEffect(() => { setPage(0) }, [query, divisiSel, jenisSel, tipe])
+  useEffect(() => { setPage(0) }, [query, divisiSel, jenisSel, tipe, sort])
 
   const unit = useMemo(() => pool.find((u) => u.kode === kode) || null, [pool, kode])
 
@@ -365,6 +380,21 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
                 counts={jenisCount}
                 className="min-w-[150px]"
               />
+              <div className="relative min-w-[150px]">
+                <select
+                  value={sort}
+                  onChange={(e) => setSort(e.target.value)}
+                  className="input appearance-none !py-2.5 !pl-3 !pr-8 !text-[12px]"
+                  title="Urutan daftar unit"
+                >
+                  <option value="nomor" className="bg-ink-800">Nomor terkecil</option>
+                  <option value="kode" className="bg-ink-800">Jenis, lalu nomor</option>
+                  <option value="skor-asc" className="bg-ink-800">Skor terendah</option>
+                  <option value="skor-desc" className="bg-ink-800">Skor tertinggi</option>
+                </select>
+                <IconChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              </div>
+
               {(adaFilter) && (
                 <button
                   className="btn-ghost !py-2 !text-[11.5px] !border-rose-500/30 !text-rose-300"
