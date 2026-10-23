@@ -150,6 +150,7 @@ hasil tetap tersimpan di antrean lokal browser; setelah online → **Sinkron**.
 
 | Gejala | Penyebab & solusi |
 |---|---|
+| Sheet `Data Inspeksi` masih kosong | Kode hanya **disimpan**, belum **dijalankan**. Jalankan fungsi `backfillDariMaster` di editor (Run ▸ pilih fungsi), atau dari dashboard ▸ Pengaturan ▸ **Isi inspeksi awal**. Cek dengan fungsi `cekStatus` → muncul jumlah baris di Execution log. |
 | `Respon server bukan JSON` | Deployment belum "Anyone", atau URL bukan `/exec` |
 | Data tidak muncul di sheet | Kode diubah tapi belum **New version** pada deployment |
 | Grafik kosong padahal sudah inspeksi | Tekan **Sinkron**; atau endpoint belum diisi |

@@ -223,9 +223,10 @@ export default function History({ records, data, navigate, onSync, syncing }) {
             desc="Kirim inspeksi pertama dari menu Inspeksi, atau tarik data dari sheet Data Inspeksi."
             icon={<IconClipboard size={20} />}
             action={
-              <div className="mt-1 flex gap-2">
+              <div className="mt-1 flex flex-wrap justify-center gap-2">
                 <button className="btn-primary" onClick={() => navigate('inspeksi')}>Mulai Inspeksi</button>
                 <button className="btn-ghost" onClick={onSync}>Tarik dari Sheet</button>
+                <button className="btn-ghost" onClick={() => navigate('pengaturan')}>Isi inspeksi awal dari master</button>
               </div>
             }
           />

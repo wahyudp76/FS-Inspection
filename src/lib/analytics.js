@@ -17,7 +17,19 @@ export function scoreOf(components = {}) {
   return { a, b, c, total, score, kondisi: kondisiOf(score) }
 }
 
-export const kondisiOf = (score) => (score >= 90 ? 'Baik' : score >= 70 ? 'Perlu Perhatian' : 'Kritis')
+/**
+ * Kondisi unit dari skor komponen.
+ * ATURAN KHUSUS: unit dengan Status "Rusak" SELALU dianggap "Kritis",
+ * berapa pun skor komponennya.
+ */
+export const kondisiOf = (score, statusUnit) => {
+  if (String(statusUnit || '').trim().toLowerCase() === 'rusak') return 'Kritis'
+  return score >= 90 ? 'Baik' : score >= 70 ? 'Perlu Perhatian' : 'Kritis'
+}
+
+/** Kondisi sebuah unit aset (memperhitungkan status master) */
+export const kondisiUnit = (unit) =>
+  kondisiOf(unit?.score ?? 0, unit?.status ?? unit?.statusUnit)
 
 export const GRADE_COLOR = Object.fromEntries(GRADES.map((g) => [g.value, g.color]))
 export const KONDISI_COLOR = { Baik: '#22c55e', 'Perlu Perhatian': '#f59e0b', Kritis: '#f43f5e' }

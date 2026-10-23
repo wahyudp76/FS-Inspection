@@ -111,7 +111,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
       c: s.c,
       total: s.total,
       skor: s.score,
-      kondisi: s.kondisi,
+      kondisi: kondisiOf(s.score, unit.status),
       clientId: `FSI-${Date.now()}`,
     }
     try {
@@ -136,7 +136,8 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   /* ------------------------------- RESULT ------------------------------- */
   if (result) {
     const s = scoreOf(result.payload.komponen)
-    const km = kondisiMeta(s.kondisi)
+    const kondisiFinal = kondisiOf(s.score, result.payload.statusUnit)
+    const km = kondisiMeta(kondisiFinal)
     return (
       <div className="mx-auto max-w-2xl animate-fade-up space-y-4" ref={topRef}>
         <Card className="overflow-hidden">
@@ -151,7 +152,10 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
             <div className="mt-4 flex items-center justify-center gap-6">
               <ScoreRing score={s.score} size={72} stroke={7} />
               <div className="text-left">
-                <KondisiPill kondisi={s.kondisi} />
+                <KondisiPill kondisi={kondisiFinal} />
+                {String(result.payload.statusUnit).toLowerCase() === 'rusak' && s.score >= 70 && (
+                  <p className="mt-1 text-[9.5px] leading-tight text-rose-300/80">status unit Rusak → otomatis Kritis</p>
+                )}
                 <p className="mt-1.5 font-mono text-[11px] text-slate-400">
                   <span className="text-emerald-400">{s.a} A</span> · <span className="text-amber-400">{s.b} B</span> ·{' '}
                   <span className="text-rose-400">{s.c} C</span>

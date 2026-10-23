@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
 import { getEndpoint, setEndpoint, isConfigured, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
-import { ping, flushQueue, pendingCount, fetchHistory, syncMaster } from '../lib/api'
+import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster } from '../lib/api'
 import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark } from '../components/icons'
 import { cx } from '../lib/analytics'
 
@@ -17,6 +17,8 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
   const [testing, setTesting] = useState(false)
   const [toast, setToast] = useState(null)
   const [status, setStatus] = useState(null)
+  const [tglAwal, setTglAwal] = useState('2026-03-05')
+  const [busyAwal, setBusyAwal] = useState(false)
 
   const save = () => {
     if (url && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(url.trim())) {
@@ -141,6 +143,64 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
           </div>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader
+          title="Inspeksi Awal dari Master"
+          sub="Isi sheet “Data Inspeksi” dengan kondisi tb_mesin & tb_irrigator saat ini"
+          icon={<IconSpark size={15} />}
+          right={<span className="chip">{'idempoten'}</span>}
+        />
+        <div className="card-pad space-y-3 pt-3">
+          <div className="flex flex-wrap items-end gap-2">
+            <div className="w-[170px]">
+              <label className="label">Tanggal inspeksi awal</label>
+              <input type="date" value={tglAwal} onChange={(e) => setTglAwal(e.target.value)} className="input" />
+            </div>
+            <button
+              className="btn-primary"
+              disabled={busyAwal || !isConfigured()}
+              onClick={async () => {
+                setBusyAwal(true)
+                try {
+                  const r = await backfillMaster(tglAwal)
+                  setToast({
+                    type: 'success',
+                    message: `${r.inserted ?? 0} baris inspeksi awal dimasukkan (${r.tanggal || tglAwal})` +
+                      (r.skipped ? ` · ${r.skipped} baris dilewati (sudah ada)` : ''),
+                  })
+                  onSync?.()
+                } catch (e) {
+                  setToast({ type: 'error', message: `Gagal: ${e.message}` })
+                } finally {
+                  setBusyAwal(false)
+                }
+              }}
+            >
+              {busyAwal ? 'Mengisi…' : 'Isi inspeksi awal'}
+            </button>
+            <button
+              className="btn-ghost"
+              disabled={!isConfigured()}
+              onClick={async () => {
+                try {
+                  const r = await syncMaster()
+                  setToast({ type: 'success', message: `Sheet master diperbarui: ${r.join(' · ')}` })
+                } catch (e) {
+                  setToast({ type: 'error', message: `Gagal: ${e.message}` })
+                }
+              }}
+            >
+              Sinkron ke Mesin &amp; Irrigator
+            </button>
+          </div>
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            Menyalin kondisi seluruh unit master (±274 baris) sebagai inspeksi awal. Aman dijalankan berulang —
+            baris yang sudah ada tidak diduplikasi. Unit berstatus <span className="font-semibold text-rose-300">Rusak</span>{' '}
+            otomatis dinilai <span className="font-semibold text-rose-300">Kritis</span>.
+          </p>
+        </div>
+      </Card>
 
       <Card>
         <CardHeader title="Panduan Deploy Apps Script" sub="Sekali setup, ± 3 menit" icon={<IconSpark size={15} />} />

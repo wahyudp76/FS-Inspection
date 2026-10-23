@@ -129,6 +129,12 @@ export function readLocalHistory() {
   return { records: c.records || [], syncedAt: c.syncedAt, offline: true }
 }
 
+/** Isi sheet "Data Inspeksi" dengan inspeksi awal dari master (idempoten) */
+export async function backfillMaster(tanggal = '2026-03-05') {
+  const json = await post({ action: 'backfill', payload: { tanggal } }, 120000)
+  return json.result || {}
+}
+
 /** Minta Apps Script menulis hasil inspeksi terakhir ke sheet master Mesin & Irrigator */
 export async function syncMaster() {
   const json = await post({ action: 'syncmaster' }, 45000)

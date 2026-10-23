@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
-import { cx, kondisiOf } from '../lib/analytics'
+import { cx, kondisiUnit } from '../lib/analytics'
 import { GradePill, KondisiPill, StatusPill, ScoreRing } from '../components/ui'
 import { IconX, IconAlert, IconClipboard, IconTruck, IconDroplet } from '../components/icons'
 import { GROUP_ICON } from '../components/icons'
@@ -71,7 +71,12 @@ export default function DetailDrawer({ unit, data, records, onClose, navigate })
               ))}
             </div>
             <div className="flex gap-2 sm:w-auto">
-              <KondisiPill kondisi={kondisiOf(unit.score)} />
+              <KondisiPill kondisi={kondisiUnit(unit)} />
+              {String(unit.status).toLowerCase() === 'rusak' && unit.score >= 70 && (
+                <span className="text-[10px] text-rose-300/80" title="Aturan: unit berstatus Rusak otomatis dinilai Kritis">
+                  status Rusak → Kritis
+                </span>
+              )}
               {unit.komoditi && <span className="chip">{unit.komoditi}</span>}
             </div>
           </div>

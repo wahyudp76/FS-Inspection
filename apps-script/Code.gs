@@ -153,6 +153,8 @@ function onOpen() {
       .addItem('2. Isi inspeksi awal dari master (5 Mar 2026)', 'backfillDariMaster')
       .addItem('3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator', 'syncLatestToMaster')
       .addSeparator()
+      .addItem('Cek status sheet (diagnostik)', 'cekStatus')
+      .addSeparator()
       .addItem('Pasang jadwal otomatis harian', 'installTriggers')
       .addItem('Hapus jadwal otomatis', 'removeTriggers')
       .addToUi();
@@ -293,7 +295,7 @@ function writeInspection_(p) {
       'C': num_(p.c),
       'Total': num_(p.total),
       'Skor': num_(p.skor),
-      'Kondisi': p.kondisi || '',
+      'Kondisi': kondisiDari_(num_(p.skor), p.statusUnit) || p.kondisi || '',
       'Catatan': p.catatan || ''
     };
 
@@ -403,6 +405,32 @@ function countRecords_() {
   return Math.max(0, sh.getLastRow() - 1);
 }
 
+/**
+ * DIAGNOSTIK — jalankan kalau sheet "Data Inspeksi" terlihat kosong.
+ * Hasilnya muncul di Execution log (View ▸ Logs).
+ */
+function cekStatus() {
+  var out = [];
+  var sh = ensureSheet_(false);
+  out.push('Sheet tujuan      : "' + sh.getName() + '"');
+  out.push('Jumlah kolom      : ' + sh.getLastColumn());
+  out.push('Baris data        : ' + Math.max(0, sh.getLastRow() - 1));
+  if (sh.getLastRow() > 1) {
+    var last = sh.getRange(sh.getLastRow(), 1, 1, Math.min(6, sh.getLastColumn())).getValues()[0];
+    out.push('Baris terakhir    : ' + last.join(' | '));
+  }
+  try {
+    var src = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
+    out.push('Master Mesin      : ' + (src.getSheetByName('Mesin') ? src.getSheetByName('Mesin').getLastRow() - 1 + ' unit' : 'TIDAK ADA'));
+    out.push('Master Irrigator  : ' + (src.getSheetByName('Irrigator') ? src.getSheetByName('Irrigator').getLastRow() - 1 + ' unit' : 'TIDAK ADA'));
+  } catch (err) {
+    out.push('Gagal buka master : ' + err);
+  }
+  Logger.log(out.join('\n'));
+  try { SpreadsheetApp.getActiveSpreadsheet().toast('Lihat Execution log (View ▸ Logs)', 'FS Inspection', 6); } catch (e) {}
+  return out.join(' | ');
+}
+
 /* ====================== UTIL ====================== */
 function num_(v) {
   var n = Number(v);
@@ -488,7 +516,7 @@ function backfillDariMaster(tanggal) {
         var id = 'FSI-INIT-' + tipe + '-' + a.kode;
         if (existing[id]) { skipped++; continue; }
 
-        var rekap = rekap_(a.components, tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR);
+        var rekap = rekap_(a.components, tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR, a.status);
         var jam = 7 + Math.floor((n % 8));
         var menit = (n * 7) % 60;
 
@@ -509,7 +537,8 @@ function backfillDariMaster(tanggal) {
           'Total': rekap.total,
           'Skor': rekap.skor,
           'Kondisi': rekap.kondisi,
-          'Catatan': 'Inspeksi awal — hasil tarikan kondisi master per ' + tgl
+          'Catatan': 'Inspeksi awal — hasil tarikan kondisi master per ' + tgl +
+            (String(a.status || '').toLowerCase() === 'rusak' ? ' · status unit RUSAK (otomatis Kritis)' : '')
         };
 
         rows.push(composeRow_(map, compIdx, cols, meta, a.components));
@@ -594,6 +623,8 @@ function syncLatestToMaster() {
 
     /* baca kolom kode */
     var kodeVals = sh.getRange(2, kodeCol, lastRow - 1, 1).getValues();
+    var statusCol = indexOfHeader_(header, cfg.status);
+    var statusVals = statusCol > 0 ? sh.getRange(2, statusCol, lastRow - 1, 1).getValues() : [];
     var out = [];
     var terisi = 0;
 
@@ -604,6 +635,8 @@ function syncLatestToMaster() {
       for (var c = 0; c < sumCount; c++) rowVals.push('');
       if (rec) {
         terisi++;
+        var statusUnit = statusVals[r] ? String(statusVals[r][0] || '').trim() : '';
+        var kondisiFinal = kondisiDari_(rec.skor || 0, statusUnit);
         var temuan = listTemuan_(rec.komponen, tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR);
         var values = {
           'TGL INSPEKSI TERAKHIR': rec.tanggal || '',
@@ -611,7 +644,7 @@ function syncLatestToMaster() {
             ? Utilities.formatDate(new Date(rec.timestamp), 'Asia/Jakarta', 'HH:mm')
             : (String(rec.timestamp || '').split(' ')[1] || '').slice(0, 5),
           'SKOR': rec.skor || 0,
-          'KONDISI': rec.kondisi || '',
+          'KONDISI': kondisiFinal,
           'A': rec.a || 0,
           'B': rec.b || 0,
           'C': rec.c || 0,
@@ -742,8 +775,17 @@ function composeRow_(map, compIdx, cols, meta, komponen) {
   return row;
 }
 
+/**
+ * Kondisi unit. ATURAN: status "Rusak" selalu → "Kritis",
+ * berapa pun skor komponennya.
+ */
+function kondisiDari_(skor, status) {
+  if (String(status || '').trim().toLowerCase() === 'rusak') return 'Kritis';
+  return skor >= 90 ? 'Baik' : skor >= 70 ? 'Perlu Perhatian' : 'Kritis';
+}
+
 /** Rekap A/B/C → skor & kondisi */
-function rekap_(komponen, list) {
+function rekap_(komponen, list, status) {
   var a = 0, b = 0, c = 0;
   for (var i = 0; i < list.length; i++) {
     var v = komponen[list[i]];
@@ -751,7 +793,7 @@ function rekap_(komponen, list) {
   }
   var total = a + b + c;
   var skor = total ? Math.round(((a * 100 + b * 60) / total) * 10) / 10 : 0;
-  var kondisi = skor >= 90 ? 'Baik' : skor >= 70 ? 'Perlu Perhatian' : 'Kritis';
+  var kondisi = kondisiDari_(skor, status);
   return { a: a, b: b, c: c, total: total, skor: skor, kondisi: kondisi };
 }
 

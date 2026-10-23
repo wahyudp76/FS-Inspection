@@ -31,6 +31,10 @@ Arti nilai komponen:
 **Skor kondisi unit** = `(A×100 + B×60 + C×0) ÷ total komponen`
 → `≥90 Baik` · `70–89 Perlu Perhatian` · `<70 Kritis`.
 
+> **Aturan status:** unit dengan `Status = Rusak` **selalu** dinilai **Kritis**,
+> berapa pun skor komponennya. Berlaku di dashboard, di sheet `Data Inspeksi`,
+> dan pada kolom `KONDISI` di sheet Mesin/Irrigator.
+
 ---
 
 ## 🧱 Teknologi
