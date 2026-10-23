@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom'
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { cx } from '../lib/analytics'
 import { gradeMeta, kondisiMeta, statusUnitMeta } from '../lib/config'
@@ -147,20 +148,67 @@ export const Skeleton = ({ className = '' }) => (
 
 export const Toast = ({ toast, onClose }) => {
   if (!toast) return null
-  const tone = {
-    success: 'border-emerald-500/40 bg-emerald-500/12 text-emerald-200',
-    error: 'border-rose-500/40 bg-rose-500/12 text-rose-200',
-    info: 'border-sky-500/40 bg-sky-500/12 text-sky-200',
-  }[toast.type || 'info']
-  return (
-    <div className="fixed bottom-4 left-1/2 z-[80] w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 animate-fade-up sm:bottom-6">
-      <div className={cx('flex items-start gap-2 rounded-xl border px-3.5 py-3 text-[12px] shadow-2xl backdrop-blur-md', tone)}>
-        <p className="flex-1 leading-relaxed">{toast.message}</p>
-        <button onClick={onClose} className="text-current/70 hover:text-current" aria-label="Tutup">
-          <svg width="14" height="14" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" fill="none"><path d="M18 6 6 18M6 6l12 12" /></svg>
+  const type = toast.type || 'info'
+  const tones = {
+    success: {
+      ring: 'border-emerald-400/45',
+      accent: 'bg-emerald-400',
+      chip: 'bg-emerald-400/15 text-emerald-300 border-emerald-400/30',
+      title: 'text-emerald-100',
+      icon: 'M20 6 9 17l-5-5',
+    },
+    error: {
+      ring: 'border-rose-400/45',
+      accent: 'bg-rose-400',
+      chip: 'bg-rose-400/15 text-rose-300 border-rose-400/30',
+      title: 'text-rose-100',
+      icon: 'M12 8v5M12 16.5v.01M10.3 3.9 2.6 17a2 2 0 0 0 1.7 3h15.4a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z',
+    },
+    info: {
+      ring: 'border-sky-400/45',
+      accent: 'bg-sky-400',
+      chip: 'bg-sky-400/15 text-sky-300 border-sky-400/30',
+      title: 'text-sky-100',
+      icon: 'M12 16v-5M12 8v.01M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18Z',
+    },
+  }
+  const t = tones[type] || tones.info
+  const label = { success: 'Berhasil', error: 'Gagal', info: 'Informasi' }[type] || 'Informasi'
+
+  return createPortal(
+    // portal ke body: lepas dari ancestor ber-transform (animate-fade-up) yang merusak posisi fixed
+    <div className="no-print pointer-events-none fixed inset-x-0 bottom-4 z-[80] flex justify-center px-4 sm:bottom-6 lg:pl-[268px] lg:pr-8">
+      <div
+        role="status"
+        aria-live="polite"
+        className={cx(
+          'pointer-events-auto relative flex w-full max-w-[26rem] items-start gap-3 overflow-hidden rounded-2xl border',
+          'bg-[#0d1524]/[0.97] px-3.5 py-3 pr-2.5 text-[12px] text-slate-200',
+          'shadow-[0_24px_60px_-18px_rgba(0,0,0,0.95),0_2px_10px_-2px_rgba(0,0,0,0.7)] ring-1 ring-white/[0.04] backdrop-blur-xl',
+          t.ring
+        )}
+      >
+        {/* aksen kiri, bukan transparan */}
+        <span className={cx('absolute inset-y-0 left-0 w-[3px]', t.accent)} />
+        <span className={cx('mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg border', t.chip)}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d={t.icon} />
+          </svg>
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className={cx('text-[10px] font-bold uppercase tracking-[0.14em]', t.title)}>{label}</p>
+          <p className="mt-0.5 leading-relaxed text-slate-200">{toast.message}</p>
+        </div>
+        <button
+          onClick={onClose}
+          aria-label="Tutup notifikasi"
+          className="-mr-0.5 shrink-0 rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-slate-400 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.4" fill="none" strokeLinecap="round"><path d="M18 6 6 18M6 6l12 12" /></svg>
         </button>
       </div>
-    </div>
+    </div>,
+    document.body
   )
 }
 
