@@ -318,7 +318,7 @@ bash scripts/publish-pages.sh
 
 ## Logo & ikon PWA
 
-Mark: centang tebal di atas squircle gradien cyan → biru (selaras tema gelap aplikasi).
+Mark: **perisai + centang** di atas squircle gradien cyan → biru — perisai = unit terjamin sudah diperiksa, centang = hasil inspeksi. Huruf/teks tidak dipakai agar tetap tajam dari 16 px sampai 512 px.
 
 | Berkas | Fungsi |
 |---|---|

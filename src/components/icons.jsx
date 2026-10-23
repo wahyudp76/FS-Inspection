@@ -70,16 +70,24 @@ export const IconLogo = ({ size = 28, id = 'fsi' }) => (
         <stop offset="1" stopColor="#2563eb" />
       </linearGradient>
       <linearGradient id={`${id}-sh`} x1="12" y1="6" x2="44" y2="46" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#ffffff" stopOpacity="0.28" />
+        <stop stopColor="#ffffff" stopOpacity="0.26" />
         <stop offset="0.65" stopColor="#ffffff" stopOpacity="0" />
       </linearGradient>
     </defs>
     <rect width="64" height="64" rx="16" fill={`url(#${id}-bg)`} />
     <rect width="64" height="64" rx="16" fill={`url(#${id}-sh)`} />
+    {/* perisai = jaminan sudah diperiksa, centang = hasil inspeksi */}
     <path
-      d="M18.5 33.2 28 43l17.5-21.5"
+      d="M32 12.5 17 18.2v12.6c0 9.6 6.1 17 15 20.2 8.9-3.2 15-10.6 15-20.2V18.2Z"
       stroke="#04121d"
-      strokeWidth="7.4"
+      strokeWidth="5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <path
+      d="M25.4 32.4 30 37.6l9.2-11.4"
+      stroke="#04121d"
+      strokeWidth="5"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
