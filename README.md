@@ -123,13 +123,21 @@ Dua fungsi di `apps-script/Code.gs` (tersedia juga di menu **FS Inspection** pad
 | Menu | Fungsi | Kegunaan |
 |---|---|---|
 | **2. Isi inspeksi awal dari master** | `backfillDariMaster()` | Menyalin kondisi tb_mesin (151) & tb_irrigator (123) menjadi **274 baris** di sheet `Data Inspeksi`, tanggal **5 Maret 2026**, petugas `Inspeksi Awal (Master)`. Aman dijalankan berulang — baris dengan ID `FSI-INIT-…` dilewati. |
-| **3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator** | `syncLatestToMaster()` | Mengambil inspeksi **terbaru per unit** dari `Data Inspeksi` lalu menuliskannya ke sheet master. |
+| **3. Sinkronkan hasil terakhir ke sheet Mesin & Irrigator** | `syncLatestToMaster()` | Mengambil inspeksi **terbaru per unit** dari `Data Inspeksi`, lalu menulis nilai **A/B/C ke kolom komponen** master + 9 kolom ringkasan. |
 | **Pasang jadwal otomatis harian** | `installTriggers()` | Menjalankan `syncLatestToMaster` otomatis tiap hari (±01.00 WIB). |
 | **Hapus jadwal otomatis** | `removeTriggers()` | Mematikan trigger harian. |
 
-### Kolom yang ditambahkan ke sheet Mesin & Irrigator
+### Apa yang ditulis ke sheet Mesin & Irrigator
 
-Diletakkan **setelah kolom terakhir** (kolom asli tidak diubah sama sekali):
+`syncLatestToMaster()` melakukan **dua hal** untuk setiap unit yang punya inspeksi:
+
+1. **Menimpa kolom komponen** yang sudah ada (`Accu`, `Klem Accu`, `Radiator`, `Turbin`, …)
+   dengan nilai **A/B/C dari inspeksi terbaru** — termasuk unit yang kolom komponennya
+   masih kosong di master (mis. `SPC0018`: 44 kolom kosong → terisi setelah inspeksi).
+   Unit yang belum pernah diinspeksi **tidak diubah**.
+2. Menambahkan/mengisi **9 kolom ringkasan** di kanan tabel.
+
+Kolom ringkasan diletakkan **setelah kolom terakhir** (kolom identitas asli tidak diubah):
 
 ```
 TGL INSPEKSI TERAKHIR | JAM | SKOR | KONDISI | A | B | C | PETUGAS | TEMUAN (B/C)
@@ -144,6 +152,7 @@ Sinkronisasi bisa dijalankan dengan empat cara:
 1. **Otomatis (default)** — setiap kali inspeksi dikirim dari dashboard, aplikasi
    langsung memanggil action `syncmaster`. Bisa dimatikan di **Pengaturan**.
 2. **Manual dari dashboard** — **Pengaturan ▸ Sinkron ke sheet Mesin & Irrigator**.
+   Hasilnya ditampilkan, mis. `Mesin: 1/151 unit diperbarui, 47 sel komponen terisi`.
 3. **Dari spreadsheet** — menu **FS Inspection ▸ Sinkronkan hasil terakhir…**.
 4. **Terjadwal** — `installTriggers()` menjalankan sinkron tiap hari ±01.00 WIB.
 

@@ -168,6 +168,7 @@ hasil tetap tersimpan di antrean lokal browser; setelah online → **Sinkron**.
 
 | Gejala | Penyebab & solusi |
 |---|---|
+| **Kolom komponen (Accu, Klem Accu, …) di sheet Mesin kosong** | Dua sebab: ① Unit itu memang belum pernah diinspeksi lewat dashboard → jalankan **`syncLatestToMaster`** (versi ≥1.2.0) yang kini **menulis A/B/C ke kolom komponen**. ② Endpoint masih deployment lama → update `Version: New version`. Cek hasil: muncul `… , N sel komponen terisi`. |
 | **Inspeksi masuk ke "Data Inspeksi", tapi sheet Mesin/Irrigator tidak berubah** | ① Deployment Apps Script masih **versi lama** (belum punya `syncmaster`). Perbaiki: **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy**. Cek di **Pengaturan ▸ Uji Koneksi** — harus muncul `versi 1.2.0`. ② Atau jalankan **`syncLatestToMaster`** langsung dari editor Apps Script (paling cepat, tanpa menunggu deploy). ③ Pastikan kolom ringkasan sudah pernah dibuat — kalau belum, fungsi itu juga yang membuatnya. |
 | Sheet `Data Inspeksi` masih kosong | Kode hanya **disimpan**, belum **dijalankan**. Jalankan fungsi `backfillDariMaster` di editor (Run ▸ pilih fungsi), atau dari dashboard ▸ Pengaturan ▸ **Isi inspeksi awal**. Cek dengan fungsi `cekStatus`. |
 | `Respon server bukan JSON` | Deployment belum "Anyone", atau URL bukan `/exec`. |

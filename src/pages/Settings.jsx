@@ -209,7 +209,8 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
             <span className="text-[11.5px] leading-relaxed text-slate-300">
               <span className="font-semibold text-slate-100">Sinkron otomatis ke sheet Mesin &amp; Irrigator</span>
               <span className="block text-slate-500">
-                Setiap selesai kirim inspeksi dari dashboard, kolom inspeksi terakhir di sheet master langsung diperbarui.
+                Setiap selesai kirim inspeksi, sheet master diperbarui: nilai <span className="font-mono text-[10.5px]">A/B/C</span> ditulis ke
+                kolom komponen (Accu, Klem Accu, Radiator, …) <em>dan</em> kolom ringkasan di kanan (tanggal, skor, kondisi, temuan).
                 Matikan bila ingin sinkron manual saja.
               </span>
             </span>

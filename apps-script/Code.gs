@@ -38,6 +38,9 @@ var TANGGAL_INSPEKSI_AWAL = '2026-03-05';
 var PETUGAS_INSPEKSI_AWAL = 'Inspeksi Awal (Master)';
 
 /* Kolom ringkasan yang ditulis balik ke sheet Mesin & Irrigator */
+/* Tulis juga nilai A/B/C terbaru ke kolom komponen master (Accu, Klem Accu, …) */
+var TULIS_KOMPONEN_KE_MASTER = true;
+
 var MASTER_SUMMARY_HEADERS = [
   'TGL INSPEKSI TERAKHIR', 'JAM', 'SKOR', 'KONDISI',
   'A', 'B', 'C', 'PETUGAS', 'TEMUAN (B/C)'
@@ -666,6 +669,40 @@ function syncLatestToMaster() {
       out.push(rowVals);
     }
 
+    /* ---------- tulis nilai A/B/C terbaru ke kolom komponen master ---------- */
+    var selKomponen = 0;
+    if (TULIS_KOMPONEN_KE_MASTER) {
+      var komponenList = tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR;
+      var compCols = {};
+      var minCol = 0, maxCol = 0;
+      for (var ci = 0; ci < komponenList.length; ci++) {
+        var cCol = indexOfHeader_(header, komponenList[ci]);
+        if (cCol < 1) continue;
+        compCols[komponenList[ci]] = cCol;
+        if (!minCol || cCol < minCol) minCol = cCol;
+        if (cCol > maxCol) maxCol = cCol;
+      }
+      if (minCol && maxCol) {
+        var width = maxCol - minCol + 1;
+        var blok = sh.getRange(2, minCol, kodeVals.length, width).getValues();
+        for (var rk = 0; rk < kodeVals.length; rk++) {
+          var kodeK = String(kodeVals[rk][0]).trim();
+          var recK = kodeK ? latest[tipe + '|' + kodeK] : null;
+          if (!recK || !recK.komponen) continue;
+          for (var nama in compCols) {
+            var nilai = recK.komponen[nama];
+            if (!nilai) continue;
+            var pos = compCols[nama] - minCol;
+            if (pos >= 0 && pos < width) {
+              blok[rk][pos] = nilai;
+              selKomponen++;
+            }
+          }
+        }
+        sh.getRange(2, minCol, blok.length, width).setValues(blok);
+      }
+    }
+
     if (out.length) {
       sh.getRange(2, sumStart, out.length, sumCount).setValues(out);
       /* warna kolom KONDISI + format tanggal */
@@ -685,7 +722,8 @@ function syncLatestToMaster() {
       if (terisi) sh.getRange(2, sumStart, out.length, sumCount).setFontSize(10);
     }
 
-    hasil.push(tipe + ': ' + terisi + '/' + kodeVals.length + ' unit diperbarui');
+    hasil.push(tipe + ': ' + terisi + '/' + kodeVals.length + ' unit diperbarui' +
+      (selKomponen ? ', ' + selKomponen + ' sel komponen terisi' : ''));
   }
 
   var msg = hasil.join(' · ');
