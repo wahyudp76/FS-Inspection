@@ -1,9 +1,8 @@
 import React, { useMemo, useState } from 'react'
-import { pct, kondisiOf, latestByUnit, fmtDateTime, cx, uniq } from '../lib/analytics'
-import { GRADES } from '../lib/config'
-import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, ScoreRing, Empty, Segmented, Select } from '../components/ui'
-import { IconSearch, IconTruck, IconDroplet, IconX, IconClipboard, IconDownload, IconChevron, IconAlert } from '../components/icons'
-import { GROUP_ICON } from '../components/icons'
+import { kondisiOf, latestByUnit, fmtDateTime, cx, uniq } from '../lib/analytics'
+import { Card, CardHeader, Bar, StatusPill, Empty, Segmented, Select } from '../components/ui'
+import { IconSearch, IconTruck, IconDroplet, IconDownload } from '../components/icons'
+import DetailDrawer from './UnitsDetail'
 
 const PAGE = 20
 
@@ -173,104 +172,6 @@ export default function Units({ data, records, navigate }) {
       </Card>
 
       {detail && <DetailDrawer unit={detail} data={data} records={records} onClose={() => setDetail(null)} navigate={navigate} />}
-    </div>
-  )
-}
-
-function DetailDrawer({ unit, data, records, onClose, navigate }) {
-  const groups = unit.tipe === 'Mesin' ? data.groups.mesin : data.groups.irrigator
-  const history = records.filter((r) => r.tipe === unit.tipe && r.kode === unit.kode).slice(0, 4)
-  return (
-    <div className="fixed inset-0 z-[60] flex justify-end">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative h-full w-full max-w-md animate-fade-up overflow-y-auto border-l border-white/10 bg-ink-900 shadow-2xl">
-        <div className="sticky top-0 z-10 flex items-start gap-3 border-b border-white/[0.06] bg-ink-900/95 px-4 py-3 backdrop-blur">
-          <ScoreRing score={unit.score} size={46} stroke={5} />
-          <div className="min-w-0 flex-1">
-            <p className="font-mono text-[14px] font-bold text-white">{unit.kode}</p>
-            <p className="truncate text-[11px] text-slate-400">{unit.tipe} · {unit.spec || unit.unit} · {unit.wilayah}</p>
-          </div>
-          <button onClick={onClose} className="rounded-lg p-1 text-slate-500 hover:text-white"><IconX size={16} /></button>
-        </div>
-
-        <div className="space-y-3 p-4">
-          <div className="flex flex-wrap gap-1.5">
-            <StatusPill status={unit.status} />
-            <KondisiPill kondisi={kondisiOf(unit.score)} />
-            {unit.power && <span className="chip">Power {unit.power}</span>}
-            {unit.pompa && <span className="chip">{unit.pompa}</span>}
-            {unit.nozzle && <span className="chip">Nozzle {unit.nozzle}</span>}
-            {unit.komoditi && <span className="chip">{unit.komoditi}</span>}
-          </div>
-
-          {unit.keterangan && (
-            <div className="rounded-xl border border-amber-500/25 bg-amber-500/[0.08] px-3 py-2 text-[11.5px] leading-relaxed text-amber-100/90">
-              <span className="mb-0.5 flex items-center gap-1 font-semibold text-amber-300"><IconAlert size={12} /> Keterangan master</span>
-              {unit.keterangan}
-            </div>
-          )}
-
-          <div className="flex gap-2">
-            <button className="btn-primary flex-1 !py-2 !text-[12px]" onClick={() => navigate('inspeksi', { tipe: unit.tipe, kode: unit.kode })}>
-              <IconClipboard size={14} /> Inspeksi unit ini
-            </button>
-          </div>
-
-          <div className="grid grid-cols-4 gap-1.5">
-            {[{ k: 'A', v: unit.a, c: 'text-emerald-400' }, { k: 'B', v: unit.b, c: 'text-amber-400' }, { k: 'C', v: unit.c, c: 'text-rose-400' }, { k: 'Total', v: unit.total, c: 'text-slate-300' }].map((x) => (
-              <div key={x.k} className="rounded-lg border border-white/[0.06] bg-white/[0.02] py-1.5 text-center">
-                <p className="text-[9.5px] uppercase tracking-wider text-slate-500">{x.k}</p>
-                <p className={cx('font-mono text-[14px] font-semibold', x.c)}>{x.v}</p>
-              </div>
-            ))}
-          </div>
-
-          {groups.map((g) => {
-            const Icon = GROUP_ICON[g.id] || IconClipboard
-            return (
-              <div key={g.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02]">
-                <div className="flex items-center gap-2 border-b border-white/[0.06] px-3 py-2">
-                  <Icon size={13} className="text-slate-500" />
-                  <span className="text-[11px] font-semibold text-slate-200">{g.label}</span>
-                  <span className="ml-auto font-mono text-[10px] text-slate-500">
-                    {g.items.filter((i) => unit.components?.[i] === 'A').length}/{g.items.length} A
-                  </span>
-                </div>
-                <div className="divide-y divide-white/[0.03]">
-                  {g.items.map((it) => (
-                    <div key={it} className="flex items-center gap-2 px-3 py-1.5">
-                      <span className="flex-1 text-[11.5px] text-slate-400">{it}</span>
-                      <GradePill value={unit.components?.[it]} size="xs" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )
-          })}
-
-          <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-500">Riwayat inspeksi</p>
-            {history.length ? (
-              <div className="space-y-1.5">
-                {history.map((h) => (
-                  <div key={h.id} className="flex items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                    <span className="font-mono text-[11px] text-slate-300">{h.tanggal}</span>
-                    <span className="truncate text-[10.5px] text-slate-500">{h.inspector}</span>
-                    <span className="ml-auto flex items-center gap-1.5">
-                      <KondisiPill kondisi={h.kondisi} />
-                      <span className="font-mono text-[11px] text-slate-300">{h.skor}</span>
-                    </span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="rounded-lg border border-dashed border-white/10 px-3 py-3 text-center text-[11px] text-slate-500">
-                Belum ada riwayat inspeksi untuk unit ini.
-              </p>
-            )}
-          </div>
-        </div>
-      </div>
     </div>
   )
 }
