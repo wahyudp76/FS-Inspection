@@ -32,7 +32,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const [divisiSel, setDivisiSel] = useState([])
   const [jenisSel, setJenisSel] = useState([])
   const [page, setPage] = useState(0)
-  const [sort, setSort] = useState('nomor')
+  const [sort, setSort] = useState('kode')
   const [mode, setMode] = useState(initial?.kode ? 'form' : 'pick')
   const topRef = useRef(null)
 
@@ -64,8 +64,10 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
     const cmp = {
       // nomor unit terkecil lebih dulu (0004, 0012, 0018, … )
       nomor: (a, b) => nomor(a.kode) - nomor(b.kode) || String(a.kode).localeCompare(String(b.kode)),
-      // kode A→Z (natural: SPC0002 sebelum SPC0018)
+      // jenis (prefix unit) A→Z, lalu nomor unit menaik — default
       kode: (a, b) =>
+        String(a.unit || '').localeCompare(String(b.unit || ''), undefined, { sensitivity: 'base' }) ||
+        nomor(a.kode) - nomor(b.kode) ||
         String(a.kode).localeCompare(String(b.kode), undefined, { numeric: true, sensitivity: 'base' }),
       'skor-asc': (a, b) => (a.score || 0) - (b.score || 0),
       'skor-desc': (a, b) => (b.score || 0) - (a.score || 0),
@@ -387,8 +389,8 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
                   className="input appearance-none !py-2.5 !pl-3 !pr-8 !text-[12px]"
                   title="Urutan daftar unit"
                 >
-                  <option value="nomor" className="bg-ink-800">Nomor terkecil</option>
                   <option value="kode" className="bg-ink-800">Jenis, lalu nomor</option>
+                  <option value="nomor" className="bg-ink-800">Nomor terkecil</option>
                   <option value="skor-asc" className="bg-ink-800">Skor terendah</option>
                   <option value="skor-desc" className="bg-ink-800">Skor tertinggi</option>
                 </select>
