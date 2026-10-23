@@ -1,8 +1,8 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { cx, relativeTime } from '../lib/analytics'
 import {
   IconLogo, IconGauge, IconClipboard, IconList, IconHistory, IconSettings, IconMenu, IconX,
-  IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus,
+  IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus, IconChevron,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
 
@@ -35,8 +35,44 @@ function NavItem({ item, active, onClick }) {
   )
 }
 
+/* tombol melayang: kembali ke paling atas */
+function BackToTop() {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const onScroll = () => setShow(window.scrollY > 320)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+  return (
+    <button
+      type="button"
+      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      aria-label="Kembali ke atas"
+      title="Kembali ke atas"
+      className={cx(
+        'no-print fixed bottom-5 right-4 z-[60] grid h-11 w-11 place-items-center rounded-full border sm:bottom-6 sm:right-6',
+        'border-brand/45 bg-ink-900/95 text-brand shadow-[0_10px_30px_-8px_rgba(0,0,0,0.9)] backdrop-blur',
+        'transition-all duration-200 hover:border-brand hover:bg-brand/15 hover:text-white',
+        show ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
+      )}
+    >
+      <IconChevron size={17} className="-rotate-90" />
+    </button>
+  )
+}
+
 export default function Shell({ children, route, navigate, sync, onSync, offline, demo, onAddInspect }) {
   const [open, setOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
+
+  /* header beku: beri bayangan saat halaman digulir agar jelas tetap di atas */
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
   const current = NAV.find((n) => n.id === route) || NAV[0]
 
   const SidebarInner = (
@@ -104,7 +140,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
   )
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="min-h-screen overflow-x-clip">
       {/* sidebar desktop */}
       <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[236px] border-r border-white/[0.06] bg-ink-900/70 backdrop-blur-xl lg:block">
         {SidebarInner}
@@ -122,7 +158,14 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
 
       <div className="lg:pl-[236px]">
         {/* topbar */}
-        <header className="no-print sticky top-0 z-30 border-b border-white/[0.06] bg-ink-950/80 backdrop-blur-xl">
+        <header
+          className={cx(
+            'no-print sticky top-0 z-30 border-b backdrop-blur-xl transition-colors',
+            scrolled
+              ? 'border-white/10 bg-ink-950/95 shadow-[0_10px_30px_-16px_rgba(0,0,0,0.95)]'
+              : 'border-white/[0.06] bg-ink-950/80'
+          )}
+        >
           <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
             <button className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-slate-300 lg:hidden" onClick={() => setOpen(true)} aria-label="Buka menu">
               <IconMenu size={16} />
@@ -155,6 +198,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
         </header>
 
         <main className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-6">{children}</main>
+        <BackToTop />
       </div>
     </div>
   )
