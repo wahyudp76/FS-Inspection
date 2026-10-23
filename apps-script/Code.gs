@@ -180,17 +180,17 @@ function buildHeader_() {
   var header = META_HEADERS.slice();
   var seen = {};
   var i;
-  for (i = 0; i < header.length; i++) seen[String(header[i]).toLowerCase()] = true;
+  for (i = 0; i < header.length; i++) seen[normKey_(header[i])] = true;
   for (i = 0; i < KOMPONEN_MESIN.length; i++) {
     var name = KOMPONEN_MESIN[i];
-    var key = String(name).toLowerCase();
+    var key = normKey_(name);
     if (seen[key]) continue;
     seen[key] = true;
     header.push(name);
   }
   for (i = 0; i < KOMPONEN_IRRIGATOR.length; i++) {
     var n2 = KOMPONEN_IRRIGATOR[i];
-    var k2 = String(n2).toLowerCase();
+    var k2 = normKey_(n2);
     if (seen[k2]) { header.push(n2 + ' (Irr)'); continue; } // hindari duplikat nama
     seen[k2] = true;
     header.push(n2);
@@ -251,7 +251,7 @@ function componentIndex_() {
   function add(list, tipe) {
     for (var i = 0; i < list.length; i++) {
       var name = list[i];
-      var k = String(name).toLowerCase();
+      var k = normKey_(name);
       if (seen[k]) {
         if (tipe === 'Irrigator') idx[name + ' (Irr)'] = { name: name, tipe: tipe };
         continue;
@@ -852,10 +852,19 @@ function listTemuan_(komponen, list) {
   return parts.join(' · ');
 }
 
+/** Kunci pembanding header: nbsp → spasi, spasi ganda dirapatkan, huruf kecil */
+function normKey_(s) {
+  return String(s == null ? '' : s)
+    .replace(/\u00a0/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
 function indexOfHeader_(header, name) {
-  var target = String(name || '').trim().toLowerCase().replace(/\u00a0/g, ' ');
+  var target = normKey_(name);
   for (var i = 0; i < header.length; i++) {
-    if (String(header[i]).trim().toLowerCase().replace(/\u00a0/g, ' ') === target) return i + 1;
+    if (normKey_(header[i]) === target) return i + 1;
   }
   return -1;
 }
