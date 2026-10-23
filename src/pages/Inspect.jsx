@@ -10,6 +10,7 @@ import {
 import { GROUP_ICON } from '../components/icons'
 
 const LS_INSPECTOR = 'fsi:inspector'
+const PER_PAGE = 20
 const todayISO = () => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
@@ -30,6 +31,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   const [onlyEmpty, setOnlyEmpty] = useState(false)
   const [divisiSel, setDivisiSel] = useState([])
   const [jenisSel, setJenisSel] = useState([])
+  const [page, setPage] = useState(0)
   const [mode, setMode] = useState(initial?.kode ? 'form' : 'pick')
   const topRef = useRef(null)
 
@@ -57,6 +59,15 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
   }, [pool, query, divisiSel, jenisSel])
 
   const adaFilter = divisiSel.length > 0 || jenisSel.length > 0 || !!query.trim()
+
+  /* ---- paging daftar unit ---- */
+  const totalHalaman = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
+  const halamanAman = Math.min(page, totalHalaman - 1)
+  const mulai = halamanAman * PER_PAGE
+  const sampai = Math.min(mulai + PER_PAGE, filtered.length)
+  const halamanUnit = filtered.slice(mulai, sampai)
+
+  useEffect(() => { setPage(0) }, [query, divisiSel, jenisSel, tipe])
 
   const unit = useMemo(() => pool.find((u) => u.kode === kode) || null, [pool, kode])
 
@@ -367,14 +378,16 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
 
             <div className="flex flex-wrap items-center gap-2 text-[10.5px] text-slate-500">
               <span>
-                Menampilkan <span className="font-mono font-semibold text-slate-300">{filtered.length}</span> dari{' '}
-                <span className="font-mono font-semibold text-slate-300">{pool.length}</span> unit {tipe.toLowerCase()}
+                Menampilkan{' '}
+                <span className="font-mono font-semibold text-slate-300">{filtered.length ? mulai + 1 : 0}–{sampai}</span> dari{' '}
+                <span className="font-mono font-semibold text-slate-300">{filtered.length}</span> unit
+                {adaFilter ? ` (total ${pool.length})` : ''}
               </span>
               {divisiSel.length > 0 && <span className="chip !py-0.5 !text-[10px]">Divisi: {divisiSel.join(', ')}</span>}
               {jenisSel.length > 0 && <span className="chip !py-0.5 !text-[10px]">Jenis: {jenisSel.join(', ')}</span>}
             </div>
-            <div className="grid max-h-[58vh] gap-2 overflow-y-auto pr-1 sm:grid-cols-2">
-              {filtered.map((u) => {
+            <div className="grid gap-2 sm:grid-cols-2">
+              {halamanUnit.map((u) => {
                 const rec = latestByUnit(records).get(`${tipe}:${u.kode}`)
                 return (
                   <button
@@ -402,6 +415,51 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
                 </div>
               )}
             </div>
+
+            {/* ---------- pager ---------- */}
+            {filtered.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                <span className="text-[10.5px] text-slate-500">
+                  Halaman <span className="font-mono font-semibold text-slate-300">{halamanAman + 1}</span> dari{' '}
+                  <span className="font-mono font-semibold text-slate-300">{totalHalaman}</span> · maks {PER_PAGE} unit/halaman
+                </span>
+                <div className="ml-auto flex items-center gap-1">
+                  <button
+                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    disabled={halamanAman === 0}
+                    onClick={() => setPage(0)}
+                    title="Halaman pertama"
+                  >
+                    «
+                  </button>
+                  <button
+                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    disabled={halamanAman === 0}
+                    onClick={() => setPage(halamanAman - 1)}
+                  >
+                    Sebelumnya
+                  </button>
+                  <span className="px-1 font-mono text-[11px] text-slate-400">
+                    {halamanAman + 1} / {totalHalaman}
+                  </span>
+                  <button
+                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    disabled={halamanAman >= totalHalaman - 1}
+                    onClick={() => setPage(halamanAman + 1)}
+                  >
+                    Berikutnya
+                  </button>
+                  <button
+                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    disabled={halamanAman >= totalHalaman - 1}
+                    onClick={() => setPage(totalHalaman - 1)}
+                    title="Halaman terakhir"
+                  >
+                    »
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
       </div>
