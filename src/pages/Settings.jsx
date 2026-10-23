@@ -36,7 +36,11 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
     setStatus(null)
     try {
       const r = await ping()
-      setStatus({ ok: true, message: `Terhubung · sheet "${r.sheet || 'Data Inspeksi'}" · ${r.records ?? 0} baris data inspeksi` })
+      const v = r.version || '1.0.0 (lama)'
+      const peringatan = String(r.version || '').localeCompare('1.2.0', undefined, { numeric: true }) < 0
+        ? ' · ⚠ deployment masih versi lama, fitur sinkron master belum tersedia di endpoint ini'
+        : ''
+      setStatus({ ok: true, message: `Terhubung · sheet "${r.sheet || 'Data Inspeksi'}" · ${r.records ?? 0} baris · versi ${v}${peringatan}` })
       setToast({ type: 'success', message: 'Koneksi ke Apps Script berhasil.' })
     } catch (e) {
       setStatus({ ok: false, message: e.message })
@@ -115,7 +119,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
             )}
           </div>
           {status && (
-            <div className={cx('rounded-xl border px-3 py-2 text-[11.5px]', status.ok ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-200' : 'border-rose-500/30 bg-rose-500/[0.08] text-rose-200')}>
+            <div className={cx('whitespace-pre-line rounded-xl border px-3 py-2 text-[11.5px] leading-relaxed', status.ok ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-200' : 'border-rose-500/30 bg-rose-500/[0.08] text-rose-200')}>
               <span className="flex items-center gap-1.5">{status.ok ? <IconCheck size={13} /> : <IconAlert size={13} />} {status.message}</span>
             </div>
           )}

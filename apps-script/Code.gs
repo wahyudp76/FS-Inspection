@@ -24,6 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
+var SCRIPT_VERSION = '1.2.0'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -83,7 +84,7 @@ var TAIL_HEADERS = ['Catatan'];
 /* ====================== ENTRY POINT ====================== */
 
 function doGet(e) {
-  var out = { ok: true, service: 'FS Inspection API', sheet: SHEET_NAME, version: '1.0.0' };
+  var out = { ok: true, service: 'FS Inspection API', sheet: SHEET_NAME, version: SCRIPT_VERSION };
   try {
     out.records = countRecords_();
   } catch (err) {
@@ -98,7 +99,7 @@ function doPost(e) {
     var action = body.action || 'ping';
 
     if (action === 'ping') {
-      return json_({ ok: true, sheet: SHEET_NAME, records: countRecords_(), ts: new Date().toISOString() });
+      return json_({ ok: true, sheet: SHEET_NAME, records: countRecords_(), version: SCRIPT_VERSION, ts: new Date().toISOString() });
     }
     if (action === 'history') {
       return json_({ ok: true, records: readHistory_() });
@@ -117,7 +118,12 @@ function doPost(e) {
       var sh = ensureSheet_(true);
       return json_({ ok: true, sheet: sh.getName(), columns: sh.getLastColumn() });
     }
-    return json_({ ok: false, error: 'Aksi tidak dikenal: ' + action });
+    return json_({
+      ok: false,
+      version: SCRIPT_VERSION,
+      error: 'Aksi tidak dikenal: "' + action + '". Deployment Web App masih versi lama — buka Apps Script ▸ ' +
+             'Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy, lalu coba lagi.'
+    });
   } catch (err) {
     return json_({ ok: false, error: String(err && err.message ? err.message : err) });
   }

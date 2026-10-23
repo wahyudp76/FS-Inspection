@@ -118,17 +118,18 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
       const rec = await submitInspection(payload)
       const offline = !isConfigured()
       let masterResult = null
+      let masterError = ''
 
       /* sinkron otomatis ke sheet Mesin & Irrigator */
       if (!offline && getAutoSyncMaster()) {
         try {
           masterResult = await syncMaster()
-        } catch {
-          masterResult = null
+        } catch (e) {
+          masterError = e?.message || 'Gagal menghubungi Apps Script'
         }
       }
 
-      setResult({ payload, record: rec, offline, masterSynced: !!masterResult, masterResult })
+      setResult({ payload, record: rec, offline, masterSynced: !!masterResult, masterResult, masterError })
       const merged = { ...payload, ...rec }
       onSubmitted?.(merged)
       setToast({
@@ -137,7 +138,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
           ? 'Tersimpan lokal (antrean). Atur endpoint Apps Script agar masuk ke Google Sheets.'
           : masterResult
           ? `Inspeksi tersimpan · sheet Mesin & Irrigator diperbarui (${masterResult.join(' · ')})`
-          : 'Inspeksi tersimpan ke sheet "Data Inspeksi". (Sinkron ke sheet master dilewati/gagal — bisa dijalankan manual di Pengaturan.)',
+          : `Inspeksi tersimpan, TAPI sinkron ke sheet master gagal: ${masterError || 'tidak dijalankan'}`, 
       })
     } catch (e) {
       setToast({ type: 'error', message: `Gagal menyimpan: ${e.message}` })
@@ -203,8 +204,23 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
                   </>
                 ) : (
                   <>
-                    Sinkron ke sheet <span className="font-semibold">Mesin &amp; Irrigator</span> belum dijalankan. Tekan tombol di bawah
-                    atau buka <span className="font-semibold">Pengaturan ▸ Sinkron ke Mesin &amp; Irrigator</span>.
+                    <p>
+                      Sinkron ke sheet <span className="font-semibold">Mesin &amp; Irrigator</span> belum berhasil.
+                      {' '}Data inspeksi unit <span className="font-mono font-semibold">{result.payload.kode}</span> sudah
+                      tersimpan di sheet “Data Inspeksi”.
+                    </p>
+                    {result.masterError && (
+                      <p className="mt-1 rounded-lg bg-rose-500/10 px-2 py-1 font-mono text-[10.5px] text-rose-300">
+                        {result.masterError}
+                      </p>
+                    )}
+                    {/tidak dikenal|versi lama/i.test(result.masterError || '') && (
+                      <p className="mt-1 text-amber-300">
+                        Perbaikan: buka Apps Script ▸ <span className="font-semibold">Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy</span>,
+                        lalu tekan tombol di bawah. Alternatif cepat: jalankan fungsi{' '}
+                        <span className="font-mono">syncLatestToMaster</span> langsung dari editor Apps Script.
+                      </p>
+                    )}
                   </>
                 )}
               </div>
@@ -236,6 +252,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial 
                     setToast({ type: 'success', message: `Sheet master diperbarui: ${r.join(' · ')}` })
                   } catch (err) {
                     setToast({ type: 'error', message: `Gagal: ${err.message}` })
+                    setResult((prev) => ({ ...prev, masterError: err.message }))
                     btn.disabled = false
                     btn.textContent = 'Sinkronkan ke sheet Mesin & Irrigator'
                   }

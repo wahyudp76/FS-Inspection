@@ -168,10 +168,11 @@ hasil tetap tersimpan di antrean lokal browser; setelah online → **Sinkron**.
 
 | Gejala | Penyebab & solusi |
 |---|---|
-| Sheet `Data Inspeksi` masih kosong | Kode hanya **disimpan**, belum **dijalankan**. Jalankan fungsi `backfillDariMaster` di editor (Run ▸ pilih fungsi), atau dari dashboard ▸ Pengaturan ▸ **Isi inspeksi awal**. Cek dengan fungsi `cekStatus` → muncul jumlah baris di Execution log. |
-| `Respon server bukan JSON` | Deployment belum "Anyone", atau URL bukan `/exec` |
-| Data tidak muncul di sheet | Kode diubah tapi belum **New version** pada deployment |
-| Grafik kosong padahal sudah inspeksi | Tekan **Sinkron**; atau endpoint belum diisi |
-| Skor unit di master beda dengan riwayat | Master = kondisi terakhir di sheet sumber; riwayat = sesi inspeksi dashboard |
-| Ingin grafik terisi untuk presentasi | Pengaturan → **Mode Demo** (data contoh, tidak dikirim ke sheet) |
+| **Inspeksi masuk ke "Data Inspeksi", tapi sheet Mesin/Irrigator tidak berubah** | ① Deployment Apps Script masih **versi lama** (belum punya `syncmaster`). Perbaiki: **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy**. Cek di **Pengaturan ▸ Uji Koneksi** — harus muncul `versi 1.2.0`. ② Atau jalankan **`syncLatestToMaster`** langsung dari editor Apps Script (paling cepat, tanpa menunggu deploy). ③ Pastikan kolom ringkasan sudah pernah dibuat — kalau belum, fungsi itu juga yang membuatnya. |
+| Sheet `Data Inspeksi` masih kosong | Kode hanya **disimpan**, belum **dijalankan**. Jalankan fungsi `backfillDariMaster` di editor (Run ▸ pilih fungsi), atau dari dashboard ▸ Pengaturan ▸ **Isi inspeksi awal**. Cek dengan fungsi `cekStatus`. |
+| `Respon server bukan JSON` | Deployment belum "Anyone", atau URL bukan `/exec`. |
+| Data tidak muncul di dashboard | Tekan **Sinkron**; pastikan endpoint terisi. |
+| Grafik kosong padahal sudah inspeksi | Sama seperti di atas, atau inspeksi masih di **antrean lokal** (Pengaturan ▸ Kirim antrean lokal). |
+| Skor unit di master beda dengan riwayat | Master = kondisi terakhir di sheet sumber; riwayat = sesi inspeksi dashboard. Unit berstatus **Rusak** selalu **Kritis**. |
+| Ingin grafik terisi untuk presentasi | Pengaturan ▸ **Mode Demo** (data contoh, tidak dikirim ke sheet). |
 | `Category` muncul 2× | Kolom irrigator otomatis dinamai `Category (Irr)` |
