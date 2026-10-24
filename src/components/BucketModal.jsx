@@ -1,7 +1,7 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cx, kondisiOf, pct, scoreColor, bucketAnalysis, unitsInRange } from '../lib/analytics'
-import { KondisiPill, StatusPill, Bar } from './ui'
+import { KondisiPill, StatusPill, Bar, Segmented } from './ui'
 import { IconTruck, IconDroplet, IconAlert, IconClipboard, IconChevron } from './icons'
 
 /**
@@ -14,14 +14,33 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
     return unitsInRange(src, range?.min ?? -1, range?.max ?? 101).sort((a, b) => a.score - b.score)
   }, [tipe, mesin, irrigator, range])
 
-  const [limit, setLimit] = useState(40)
-  useEffect(() => { setLimit(40) }, [range?.label, tipe])
+  /* paging daftar unit — default 10 per halaman agar pop-up tidak panjang */
+  const [page, setPage] = useState(0)
+  const [perPage, setPerPage] = useState(10)
+  useEffect(() => { setPage(0) }, [range?.label, tipe, perPage])
+  useEffect(() => { setPage(0) }, [open])
 
   const totalTipe = (tipe === 'Irrigator' ? irrigator : mesin).length
   const analisa = useMemo(
     () => bucketAnalysis(units, { range, tipe, totalTipe }),
     [units, range, tipe, totalTipe]
   )
+
+  const totalHalaman = Math.max(1, Math.ceil(units.length / perPage))
+  const halamanAman = Math.min(page, totalHalaman - 1)
+  const mulai = halamanAman * perPage
+  const halamanUnit = units.slice(mulai, mulai + perPage)
+
+  /* saat pindah halaman, gulirkan area isi ke awal daftar unit */
+  const bodyRef = useRef(null)
+  const listRef = useRef(null)
+  useEffect(() => {
+    const body = bodyRef.current
+    const list = listRef.current
+    if (!body || !list) return
+    const top = list.offsetTop - 8
+    if (body.scrollTop > top) body.scrollTo({ top, behavior: 'smooth' })
+  }, [halamanAman])
 
   useEffect(() => {
     if (!open) return
@@ -78,7 +97,7 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
           </button>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
+        <div ref={bodyRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-3">
           {/* ---------- ringkasan ---------- */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Stat label="Jumlah unit" value={analisa.n} unit="unit" accent={accent} />
@@ -130,15 +149,36 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
           </div>
 
           {/* ---------- daftar unit ---------- */}
-          <p className="mb-1.5 mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-            Daftar unit ({units.length}) — skor terendah lebih dulu
-          </p>
+          <div ref={listRef} className="mb-1.5 mt-3 flex flex-wrap items-center gap-x-2 gap-y-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+              Daftar unit ({units.length}) — skor terendah lebih dulu
+            </p>
+            {units.length > 0 && (
+              <span className="text-[10px] text-slate-600">
+                · menampilkan {mulai + 1}–{Math.min(mulai + perPage, units.length)}
+              </span>
+            )}
+            {units.length > 10 && (
+              <div className="ml-auto">
+                <Segmented
+                  value={String(perPage)}
+                  onChange={(v) => setPerPage(Number(v))}
+                  size="sm"
+                  options={[
+                    { value: '10', label: '10' },
+                    { value: '25', label: '25' },
+                    { value: '50', label: '50' },
+                  ]}
+                />
+              </div>
+            )}
+          </div>
           <div className="space-y-1.5">
-            {units.slice(0, limit).map((u) => {
+            {halamanUnit.map((u) => {
               const k = kondisiOf(u.score, u.status)
               return (
-                <div key={u.kode} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-2">
-                  <div className="flex items-center gap-2">
+                <div key={u.kode} className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-2.5 py-1.5">
+                  <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => onOpenUnit?.(u)}
                       className="tap min-w-0 justify-start font-mono text-[12.5px] font-bold text-white hover:text-brand"
@@ -148,23 +188,23 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
                     </button>
                     <StatusPill status={u.status} />
                     {k === 'Kritis' && (
-                      <span className="rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-rose-300">Kritis</span>
+                      <span className="shrink-0 rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-rose-300">Kritis</span>
                     )}
                     <span className="ml-auto shrink-0 font-mono text-[11.5px] text-slate-300">{Math.round(u.score)}</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="w-14 shrink-0 text-[10px] text-slate-500">{u.wilayah || '—'}</span>
-                    <p className="min-w-0 flex-1 truncate text-[10.5px] text-slate-400">{u.spec || u.unit}</p>
                     <button
                       onClick={() => onInspect?.(u)}
-                      className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                      className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2 text-[10px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
                     >
                       Inspeksi
                     </button>
                   </div>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <Bar value={u.score} color={scoreColor(u.score, u.status)} height={4} />
-                    <span className="shrink-0 font-mono text-[10px]">
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="shrink-0 font-mono text-[9.5px] text-slate-500">{u.wilayah || '—'}</span>
+                    <p className="min-w-0 flex-1 truncate text-[10px] text-slate-400" title={u.spec || u.unit}>{u.spec || u.unit}</p>
+                    <div className="w-12 shrink-0 sm:w-16">
+                      <Bar value={u.score} color={scoreColor(u.score, u.status)} height={4} />
+                    </div>
+                    <span className="shrink-0 font-mono text-[9.5px]">
                       <span className="text-emerald-400">{u.a}</span>
                       <span className="text-slate-600">/</span>
                       <span className="text-amber-400">{u.b}</span>
@@ -175,20 +215,36 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
                 </div>
               )
             })}
-            {units.length > limit && (
-              <button
-                onClick={() => setLimit((n) => n + 60)}
-                className="btn-ghost w-full !py-2 !text-[11.5px]"
-              >
-                Tampilkan {Math.min(60, units.length - limit)} unit lagi ({units.length - limit} tersisa)
-              </button>
-            )}
             {!units.length && (
               <p className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-6 text-center text-[11.5px] text-slate-500">
                 Tidak ada unit {isIrr ? 'irrigator' : 'mesin'} pada rentang ini.
               </p>
             )}
           </div>
+
+          {totalHalaman > 1 && (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] px-2 py-1.5">
+              <button
+                onClick={() => setPage(Math.max(0, halamanAman - 1))}
+                disabled={halamanAman === 0}
+                className="btn-ghost !px-2.5 !py-1 !text-[11px] max-sm:!min-h-10"
+                aria-label="Halaman sebelumnya"
+              >
+                ‹ Sebelumnya
+              </button>
+              <span className="shrink-0 font-mono text-[11px] text-slate-400">
+                {halamanAman + 1} / {totalHalaman}
+              </span>
+              <button
+                onClick={() => setPage(Math.min(totalHalaman - 1, halamanAman + 1))}
+                disabled={halamanAman >= totalHalaman - 1}
+                className="btn-ghost !px-2.5 !py-1 !text-[11px] max-sm:!min-h-10"
+                aria-label="Halaman berikutnya"
+              >
+                Berikutnya ›
+              </button>
+            </div>
+          )}
         </div>
 
         <div className="flex items-center gap-2 border-t border-white/[0.08] bg-ink-900/80 px-4 py-2.5">

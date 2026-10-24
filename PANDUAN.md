@@ -31,6 +31,8 @@ sebagai dua batang berdampingan pada tiap rentang skor (90-100, 80-89, 70-79, 50
   - sebaran status (Terpasang/Standby/Rusak) dan wilayah terbanyak;
   - komponen paling bermasalah (B/C) pada rentang itu;
   - **daftar unit** pada rentang tersebut (skor terendah lebih dulu) dengan tombol **Inspeksi** dan tautan ke detail unit.
+- Daftar unit memakai **paging: 10 unit per halaman** (bisa diubah ke 25/50), lengkap dengan penunjuk
+  *"menampilkan 1–10"* dan tombol **‹ Sebelumnya / Berikutnya ›** — jadi pop-up tidak perlu digulir panjang.
 - Di HP, batang grafik kecil sulit ditekan — tersedia **tombol per rentang** (Mesin / Irrigator) tepat di bawah grafik.
 - Pop-up bisa ditutup dengan tombol **Tutup**, tombol **✕**, tombol **Esc**, atau mengetuk area gelap di luar kartu.
 
