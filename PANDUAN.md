@@ -44,6 +44,12 @@ sebagai dua batang berdampingan pada tiap rentang skor (90-100, 80-89, 70-79, 50
 - **Header atas membeku (freeze)** — judul halaman, tombol **+ Tambah Inspeksi**, **Sinkron**, dan **Buka Sheet** tetap terlihat saat halaman digulir ke bawah; muncul bayangan halus sebagai penanda.
 - **Tombol ↑ (kembali ke atas)** muncul otomatis di kanan bawah setelah halaman digulir lebih dari ±320 px; sekali klik halaman meluncur kembali ke paling atas.
 
+## Urutan bagian di tab Riwayat
+
+Di HP, **Daftar Inspeksi** kini tampil **paling atas** (setelah kartu ringkasan), sehingga hasil inspeksi
+langsung terlihat tanpa harus melewati grafik. Grafik **Tren Inspeksi** dan **Komposisi Temuan**
+berada di bawah daftar. Di layar lebar susunannya tetap berdampingan seperti sebelumnya.
+
 ## Kecepatan & ketepatan sinkron (v1.4.0)
 
 - **Sinkron pertama** mengunduh seluruh riwayat (± 115 KB untuk 275 sesi — turun dari ± 300 KB karena kolom komponen dikirim sebagai satu kode ringkas).
@@ -70,8 +76,10 @@ di desktop pada kolom **Aksi**).
   Tombol **Simpan perubahan** baru aktif bila ada yang berubah.
 - **Hapus** → dialog konfirmasi (menyebut kode unit, tanggal, dan petugas) sebelum baris dihapus dari sheet.
   Penghapusan **tidak bisa dibatalkan**.
-- Kedua aksi menulis langsung ke sheet **Data Inspeksi** (aksi `update` / `delete`, butuh Apps Script v1.5.0)
-  dan daftar di layar langsung ikut berubah tanpa perlu **Sinkron**.
+- Kedua aksi menulis langsung ke sheet **Data Inspeksi** (aksi `update` / `delete`, butuh Apps Script v1.5.0),
+  lalu **otomatis menyinkronkan ke sheet Mesin & Irrigator** (`syncmaster`) dan menarik ulang riwayat —
+  daftar di layar langsung ikut berubah tanpa perlu menekan **Sinkron**.
+  Matikan bila tidak diinginkan di **Pengaturan ▸ Sinkron otomatis ke sheet Mesin & Irrigator**.
 - Sesi yang masih di **antrean lokal** (belum terkirim ke sheet) atau data **Mode Demo** tidak bisa
   diubah/dihapus — muncul notifikasi penjelasan.
 

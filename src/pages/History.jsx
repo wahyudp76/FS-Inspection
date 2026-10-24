@@ -4,8 +4,8 @@ import { GRADES } from '../lib/config'
 import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, Empty, Segmented, Select } from '../components/ui'
 import { TrendChart, GradeStack } from '../components/charts'
 import { IconDownload, IconSearch, IconHistory, IconChevronDown, IconClipboard, IconAlert, IconSheet, IconRefresh } from '../components/icons'
-import { TARGET_SHEET } from '../lib/config'
-import { updateInspection, deleteInspection } from '../lib/api'
+import { TARGET_SHEET, getAutoSyncMaster } from '../lib/config'
+import { updateInspection, deleteInspection, syncMaster } from '../lib/api'
 import EditInspectionModal, { ConfirmDelete } from '../components/EditInspectionModal'
 import { IconEdit, IconTrash } from '../components/icons'
 
@@ -48,13 +48,33 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
     setHapusRec(r)
   }
 
+  /* setelah ubah/hapus: tulis ulang ringkasan ke sheet Mesin & Irrigator lalu tarik ulang riwayat */
+  const sinkronSetelahPerubahan = async () => {
+    let masterOk = false
+    try {
+      if (getAutoSyncMaster()) {
+        await syncMaster()
+        masterOk = true
+      }
+    } catch {
+      /* master opsional — kegagalan tidak membatalkan perubahan di Data Inspeksi */
+    }
+    try { await onSync?.() } catch { /* abaikan */ }
+    return masterOk
+  }
+
   const simpanUbah = async (payload) => {
     setBusy(true)
     try {
       const rec = await updateInspection(payload)
       onUpdated?.(rec)
       setEditRec(null)
-      notify?.({ type: 'success', message: `Inspeksi ${rec.kode} berhasil diperbarui di sheet Data Inspeksi.` })
+      notify?.({ type: 'success', message: `Inspeksi ${rec.kode} diperbarui di sheet Data Inspeksi — menyinkronkan…` })
+      const masterOk = await sinkronSetelahPerubahan()
+      notify?.({
+        type: 'success',
+        message: `Inspeksi ${rec.kode} tersimpan${masterOk ? ' dan sudah disinkronkan ke sheet Mesin & Irrigator' : ''}.`,
+      })
     } catch (e) {
       notify?.({ type: 'error', message: `Gagal menyimpan perubahan: ${e.message}` })
     } finally {
@@ -68,7 +88,12 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
       await deleteInspection(rec.id)
       onDeleted?.(rec.id)
       setHapusRec(null)
-      notify?.({ type: 'success', message: `Sesi inspeksi ${rec.kode} (${rec.tanggal}) dihapus dari sheet.` })
+      notify?.({ type: 'success', message: `Sesi ${rec.kode} (${rec.tanggal}) dihapus — menyinkronkan…` })
+      const masterOk = await sinkronSetelahPerubahan()
+      notify?.({
+        type: 'success',
+        message: `Sesi ${rec.kode} (${rec.tanggal}) dihapus${masterOk ? ' dan sheet Mesin & Irrigator sudah diperbarui' : ''}.`,
+      })
     } catch (e) {
       notify?.({ type: 'error', message: `Gagal menghapus: ${e.message}` })
     } finally {
@@ -170,7 +195,8 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
         ))}
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-12">
+      <div className="flex flex-col gap-4">
+      <div className="order-2 grid gap-4 xl:grid-cols-12">
         <Card className="xl:col-span-7">
           <CardHeader
             title="Tren Inspeksi"
@@ -193,7 +219,7 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
         </Card>
       </div>
 
-      <Card className="overflow-hidden">
+      <Card className="order-1 overflow-hidden">
         <CardHeader
           title="Daftar Inspeksi"
           sub={`${filtered.length} sesi · sheet “${TARGET_SHEET.name}”`}
@@ -481,6 +507,7 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
       )}
 
       </Card>
+      </div>
 
       <EditInspectionModal
         key={editRec?.id || 'no-edit'}

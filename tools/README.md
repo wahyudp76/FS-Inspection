@@ -30,7 +30,7 @@ node tools/e2e.mjs
 
 # 6. uji ubah & hapus sesi inspeksi (tab Riwayat) — jalankan mockapi dulu
 node tools/mockapi.mjs &
-node tools/edittest.mjs
+node tools/edittest.mjs && node tools/syncedit.mjs
 
 # 7. uji pop-up Distribusi Skor (klik batang Mesin & Irrigator)
 node tools/mkseseed.mjs && node tools/buckettest.mjs && node tools/bucketnav.mjs
