@@ -14,3 +14,6 @@ npm-debug.log*
 # docs/ = hasil build untuk GitHub Pages (Deploy from a branch)
 # JANGAN di-ignore. Hanya cache di dalamnya yang dibuang.
 docs/.vite
+
+# berkas uji lokal (ekspor sheet asli & cache contoh)
+tools/seed-cache.json

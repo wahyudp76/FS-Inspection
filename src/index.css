@@ -57,6 +57,9 @@ body {
   .divider { @apply h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent; }
 
   .scroll-area { @apply overflow-auto overscroll-contain; }
+  /* ---- target sentuh di layar kecil / perangkat sentuh ---- */
+  .tap { @apply inline-flex min-h-9 min-w-9 items-center justify-center; }
+
 }
 
 .grad-text {
@@ -102,4 +105,26 @@ body {
 @media (max-height: 520px) {
   .sidebar-head { padding-top: 0.6rem; padding-bottom: 0.6rem; }
   .sidebar-ver { display: none; }
+}
+
+/* ==================================================================
+   Perbaikan ukuran sentuh (mobile) — WCAG 2.5.8 target minimum 24 px,
+   kita pakai 36–44 px agar nyaman di HP.
+   ================================================================== */
+@media (max-width: 639px), (pointer: coarse) {
+  .btn {
+    min-height: 40px;
+  }
+  .input,
+  select.input {
+    min-height: 42px;
+  }
+  .tap {
+    min-height: 36px;
+  }
+  /* tombol pager dan tombol kecil lain tetap lega tanpa memakan lebar */
+  .btn-ghost.\!py-1,
+  .btn-ghost.\!px-2 {
+    min-height: 38px;
+  }
 }

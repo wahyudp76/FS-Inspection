@@ -28,12 +28,14 @@ export function CardHeader({ title, sub, right, icon }) {
 
 /* ------------------------------- KPI ------------------------------- */
 export function Kpi({ label, value, unit, hint, icon, accent = '#38bdf8', trend, onClick, active }) {
+  /* Tanpa onClick kartu ini murni informasi — jangan dirender sebagai <button>,
+     supaya tidak jadi "tombol mati" yang bisa ditekan tanpa reaksi. */
+  const Tag = onClick ? 'button' : 'div'
   return (
-    <button
-      type="button"
-      onClick={onClick}
+    <Tag
+      {...(onClick ? { type: 'button', onClick, 'aria-label': `${label}: ${value}${unit ? ' ' + unit : ''}` } : {})}
       className={cx(
-        'card card-pad group relative overflow-hidden text-left transition',
+        'card card-pad group relative min-w-0 overflow-hidden text-left transition',
         onClick && 'hover:-translate-y-0.5 hover:border-white/15',
         active && 'ring-1 ring-brand/60'
       )}
@@ -58,7 +60,20 @@ export function Kpi({ label, value, unit, hint, icon, accent = '#38bdf8', trend,
           {trend >= 0 ? '▲' : '▼'} {Math.abs(trend)}%
         </span>
       )}
-    </button>
+      {onClick && (
+        <span className="absolute bottom-2.5 right-2.5 text-slate-600 transition group-hover:text-brand" aria-hidden="true">
+          <IconChevronRightMini />
+        </span>
+      )}
+    </Tag>
+  )
+}
+
+function IconChevronRightMini() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 6l6 6-6 6" />
+    </svg>
   )
 }
 
@@ -259,14 +274,15 @@ export function Select({ value, onChange, options, className = '', placeholder }
 
 export function Segmented({ value, onChange, options, size = 'md' }) {
   return (
-    <div className="inline-flex rounded-xl border border-white/10 bg-ink-900/70 p-0.5">
+    <div className="inline-flex max-w-full flex-wrap rounded-xl border border-white/10 bg-ink-900/70 p-0.5">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
           className={cx(
-            'rounded-[10px] font-semibold transition',
-            size === 'sm' ? 'px-2.5 py-1 text-[11px]' : 'px-3 py-1.5 text-[12px]',
+            'inline-flex items-center justify-center whitespace-nowrap rounded-[10px] font-semibold transition',
+            'max-sm:min-h-9',
+            size === 'sm' ? 'px-2.5 py-1.5 text-[11px]' : 'px-3 py-1.5 text-[12px]',
             value === o.value ? 'bg-white/10 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'
           )}
         >

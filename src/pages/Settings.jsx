@@ -38,8 +38,8 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
     try {
       const r = await ping()
       const v = r.version || '1.0.0 (lama)'
-      const peringatan = String(r.version || '').localeCompare('1.3.0', undefined, { numeric: true }) < 0
-        ? ' · ⚠ deployment masih versi lama (min. 1.3.0) — struktur kolom terbaru belum dipakai endpoint ini'
+      const peringatan = String(r.version || '').localeCompare('1.4.0', undefined, { numeric: true }) < 0
+        ? ' · ⚠ deployment masih versi lama (min. 1.4.0) — sinkron belum idempoten & selalu mengunduh data penuh'
         : ''
       setStatus({ ok: true, message: `Terhubung · sheet "${r.sheet || 'Data Inspeksi'}" · ${r.records ?? 0} baris · versi ${v}${peringatan}` })
       setToast({ type: 'success', message: 'Koneksi ke Apps Script berhasil.' })
@@ -133,7 +133,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
           <div className="card-pad pt-2">
             <p className="text-[12px] font-semibold text-slate-200">Update ZPAS637</p>
             <p className="mt-0.5 text-[11px] text-slate-500">Sheet: <span className="font-mono text-slate-400">Data Inspeksi</span> (tabel Mesin &amp; Irrigator)</p>
-            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost mt-3 !py-1.5 !text-[11.5px]">
+            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost mt-3 !py-1.5 !text-[11.5px] max-sm:!min-h-11">
               Buka spreadsheet <IconExternal size={12} />
             </a>
           </div>
@@ -143,7 +143,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
           <div className="card-pad pt-2">
             <p className="text-[12px] font-semibold text-slate-200">Draft Dashboard</p>
             <p className="mt-0.5 text-[11px] text-slate-500">Sheet: <span className="font-mono text-slate-400">Mesin</span> (tb_mesin) &amp; <span className="font-mono text-slate-400">Irrigator</span> (tb_irrigator)</p>
-            <a href={SOURCE_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost mt-3 !py-1.5 !text-[11.5px]">
+            <a href={SOURCE_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost mt-3 !py-1.5 !text-[11.5px] max-sm:!min-h-11">
               Buka spreadsheet <IconExternal size={12} />
             </a>
           </div>
@@ -205,7 +205,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
               type="checkbox"
               checked={autoMaster}
               onChange={(e) => { setAutoMaster(e.target.checked); setAutoSyncMaster(e.target.checked) }}
-              className="mt-0.5 h-3.5 w-3.5 accent-sky-400"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-sky-400"
             />
             <span className="text-[11.5px] leading-relaxed text-slate-300">
               <span className="font-semibold text-slate-100">Sinkron otomatis ke sheet Mesin &amp; Irrigator</span>
@@ -232,7 +232,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => { setAutoRefreshState(e.target.checked); setAutoRefresh(e.target.checked) }}
-              className="mt-0.5 h-3.5 w-3.5 accent-sky-400"
+              className="mt-0.5 h-5 w-5 shrink-0 accent-sky-400"
             />
             <span className="text-[11.5px] leading-relaxed text-slate-300">
               <span className="font-semibold text-slate-100">Muat ulang data terbaru dari sheet</span>

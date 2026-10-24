@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.3.0'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.4.0'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -102,10 +102,25 @@ function doPost(e) {
     var action = body.action || 'ping';
 
     if (action === 'ping') {
-      return json_({ ok: true, sheet: SHEET_NAME, records: countRecords_(), version: SCRIPT_VERSION, ts: new Date().toISOString() });
+      return json_({ ok: true, sheet: SHEET_NAME, records: countRecords_(), version: SCRIPT_VERSION, rev: revisiSaatIni_(ensureSheet_(false)), ts: new Date().toISOString() });
     }
     if (action === 'history') {
-      return json_({ ok: true, records: readHistory_() });
+      var payloadH = body.payload || {};
+      var shH = ensureSheet_(false);
+      var rev = revisiSaatIni_(shH);
+      /* Klien sudah punya versi ini → balas sangat kecil (ratusan byte, bukan ~300 KB) */
+      if (payloadH.rev && String(payloadH.rev) === rev) {
+        return json_({ ok: true, unchanged: true, rev: rev, count: Math.max(0, shH.getLastRow() - 1) });
+      }
+      var records = readHistory_();
+      if (payloadH.plain) {
+        return json_({ ok: true, records: records, rev: rev, count: records.length, version: SCRIPT_VERSION, compressed: false });
+      }
+      var pack = kompresiKomponen_(records);
+      return json_({
+        ok: true, records: pack.records, kmap: pack.kmap, rev: rev,
+        count: records.length, version: SCRIPT_VERSION, compressed: true
+      });
     }
     if (action === 'submit') {
       var rec = writeInspection_(body.payload || {});
@@ -311,14 +326,25 @@ function writeInspection_(p) {
     var cols = sh.getLastColumn();
     var row = new Array(cols);
 
+    /* ---- IDEMPOTEN: clientId yang sama tidak boleh menambah baris kedua ---- */
+    var clientId = String(p.clientId || '').trim();
+    if (clientId && map['ID Inspeksi']) {
+      var sudah = cariBaris_(sh, map['ID Inspeksi'], clientId);
+      if (sudah) {
+        var lama = bacaBaris_(sh, map, sudah);
+        lama.duplicate = true;
+        return lama;
+      }
+    }
+
     var now = new Date();
     var tanggal = p.tanggal || formatDate_(now);
     var ts = now.toISOString();
 
     var values = {
-      'ID Inspeksi': p.clientId || ('FSI-' + now.getTime()),
+      'ID Inspeksi': clientId || ('FSI-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8)),
       'Tanggal': tanggal,
-      'Timestamp': formatTs_(now),
+      'Timestamp': formatIso_(now),
       'Tipe Aset': p.tipe || '',
       'Kode Unit': p.kode || '',
       'Wilayah': p.wilayah || '',
@@ -359,9 +385,11 @@ function writeInspection_(p) {
     sh.appendRow(row);
     var rowIndex = sh.getLastRow();
 
+    bumpRev_();
     return {
       id: values['ID Inspeksi'],
-      timestamp: ts,
+      clientId: clientId,
+      timestamp: formatIso_(now),
       tanggal: tanggal,
       tipe: values['Tipe Aset'],
       kode: values['Kode Unit'],
@@ -385,6 +413,83 @@ function writeInspection_(p) {
   }
 }
 
+/**
+ * Ubah SATU baris sheet menjadi objek record. Dipakai bersama oleh
+ * readHistory_() dan bacaBaris_() agar bentuk data selalu identik
+ * (dulu submit mengembalikan ISO sementara history mengembalikan teks lokal
+ * sehingga urutan "terbaru" di layar bisa salah).
+ */
+function rowToRecord_(header, row, rowIndex, compIdx) {
+  var obj = { komponen: {} };
+  for (var c = 0; c < header.length; c++) {
+    var h = header[c];
+    var v = row[c];
+    if (!h) continue;
+    if (compIdx[h]) {
+      var g = normalizeGrade_(v);
+      if (g) obj.komponen[compIdx[h].name] = g;
+      continue;
+    }
+    switch (h) {
+      case 'ID Inspeksi': obj.id = String(v || ''); break;
+      case 'Tanggal': obj.tanggal = v instanceof Date ? formatDate_(v) : String(v || ''); break;
+      case 'Timestamp':
+        /* sel Date → ISO; teks lokal lama "2026-03-05 7:00:00" → ISO +07:00 */
+        obj.timestamp = (v instanceof Date) ? formatIso_(v) : isoDariTeks_(v);
+        break;
+      case 'Tipe Aset': if (v) obj.tipe = String(v); break;
+      case 'Kode Unit': if (v) obj.kode = String(v); break;
+      case 'Wilayah': if (v) obj.wilayah = String(v); break;
+      case 'Jenis Unit': if (v) obj.unitJenis = String(v); break;
+      case 'Spesifikasi': if (v) obj.spec = String(v); break;
+      case 'Status Unit': if (v) obj.statusUnit = String(v); break;
+      case 'Petugas': if (v) obj.inspector = String(v); break;
+      case 'A': obj.a = num_(v); break;
+      case 'B': obj.b = num_(v); break;
+      case 'C': obj.c = num_(v); break;
+      case 'Total': obj.total = num_(v); break;
+      case 'Skor': obj.skor = num_(v); break;
+      case 'Kondisi': if (v) obj.kondisi = String(v); break;
+      case 'Catatan': if (v) obj.catatan = String(v); break;
+    }
+  }
+  if (!obj.id) obj.id = 'ROW-' + rowIndex;
+  if (!obj.timestamp && obj.tanggal) obj.timestamp = obj.tanggal;
+  return obj;
+}
+
+/** "2026-03-05 7:00:00" / "2026-03-05T07:00:00" / "2026-03-05" → ISO +07:00 */
+function isoDariTeks_(v) {
+  var s = String(v == null ? '' : v).trim();
+  if (!s) return '';
+  if (/^\d{4}-\d{2}-\d{2}T.*(Z|[+-]\d{2}:?\d{2})$/.test(s)) return s; // sudah ISO berzona
+  var m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:[ T](\d{1,2}):(\d{2})(?::(\d{2}))?)?$/);
+  if (m) {
+    var z = function (n) { return ('0' + n).slice(-2); };
+    return m[1] + '-' + z(m[2]) + '-' + z(m[3]) + 'T' + z(m[4] || 0) + ':' + z(m[5] || 0) + ':' + z(m[6] || 0) + '+07:00';
+  }
+  var d = new Date(s);
+  return isNaN(d.getTime()) ? s : formatIso_(d);
+}
+
+/**
+ * Revisi isi sheet. Cukup murah (tanpa membaca 92 kolom penuh) dan berubah
+ * setiap kali baris ditambah / sel diubah.
+ */
+function revisiSaatIni_(sh) {
+  var segel = 0;
+  try {
+    segel = DriveApp.getFileById(ss_().getId()).getLastUpdated().getTime();
+  } catch (e) {
+    segel = 0;
+  }
+  return String(sh.getLastRow()) + ':' + String(sh.getLastColumn()) + ':' + String(segel);
+}
+
+function bumpRev_() {
+  try { CacheService.getScriptCache().remove('fsi:rev'); } catch (e) {}
+}
+
 function readHistory_() {
   var sh = ensureSheet_(false);
   var lastRow = sh.getLastRow();
@@ -397,48 +502,56 @@ function readHistory_() {
 
   for (var r = 0; r < values.length; r++) {
     var row = values[r];
-    var obj = { komponen: {} };
     if (!row[0] && !row[4]) continue; // kosong
-
-    for (var c = 0; c < header.length; c++) {
-      var h = header[c];
-      var v = row[c];
-      if (!h) continue;
-      if (compIdx[h]) {
-        var g = normalizeGrade_(v);
-        if (g) obj.komponen[compIdx[h].name] = g;
-        continue;
-      }
-      switch (h) {
-        case 'ID Inspeksi': obj.id = String(v || ''); break;
-        case 'Tanggal': obj.tanggal = v instanceof Date ? formatDate_(v) : String(v || ''); break;
-        case 'Timestamp': obj.timestamp = v instanceof Date ? v.toISOString() : String(v || ''); break;
-        case 'Tipe Aset': obj.tipe = String(v || ''); break;
-        case 'Kode Unit': obj.kode = String(v || ''); break;
-        case 'Wilayah': obj.wilayah = String(v || ''); break;
-        case 'Jenis Unit': obj.unitJenis = String(v || ''); break;
-        case 'Spesifikasi': obj.spec = String(v || ''); break;
-        case 'Status Unit': obj.statusUnit = String(v || ''); break;
-        case 'Petugas': obj.inspector = String(v || ''); break;
-        case 'A': obj.a = num_(v); break;
-        case 'B': obj.b = num_(v); break;
-        case 'C': obj.c = num_(v); break;
-        case 'Total': obj.total = num_(v); break;
-        case 'Skor': obj.skor = num_(v); break;
-        case 'Kondisi': obj.kondisi = String(v || ''); break;
-        case 'Catatan': obj.catatan = String(v || ''); break;
-      }
-    }
-    if (!obj.id) obj.id = 'ROW-' + (r + 2);
-    if (!obj.timestamp && obj.tanggal) obj.timestamp = obj.tanggal;
+    var obj = rowToRecord_(header, row, r + 2, compIdx);
+    /* payload ramping: buang komponen kosong supaya transfer lebih kecil */
+    if (!obj.komponen || Object.keys(obj.komponen).length === 0) delete obj.komponen;
     out.push(obj);
   }
-  return out.reverse(); // terbaru di atas
+  /* urutkan memakai waktu, bukan urutan baris sheet (baris bisa disisipkan manual) */
+  out.sort(function (x, y) {
+    var a = new Date(x.timestamp || x.tanggal || 0).getTime() || 0;
+    var b = new Date(y.timestamp || y.tanggal || 0).getTime() || 0;
+    if (a !== b) return b - a;
+    return String(y.id).localeCompare(String(x.id));
+  });
+  return out;
 }
 
 function countRecords_() {
   var sh = ensureSheet_(false);
   return Math.max(0, sh.getLastRow() - 1);
+}
+
+/**
+ * Kompresi kolom komponen untuk transfer.
+ * Nilai A/B/C/kosong per unit dipadatkan jadi satu string sepanjang daftar
+ * komponen tipe tersebut ("AAB-A..."). Ini memotong ~45% ukuran respon tanpa
+ * kehilangan data: nama kolom cukup dikirim sekali lewat `kmap`.
+ */
+function kompresiKomponen_(records) {
+  var kmap = { Mesin: KOMPONEN_MESIN, Irrigator: KOMPONEN_IRRIGATOR };
+  var out = [];
+  for (var i = 0; i < records.length; i++) {
+    var rec = records[i];
+    var komp = rec.komponen || null;
+    delete rec.komponen;
+    if (!komp) { out.push(rec); continue; }
+    var list = rec.tipe === 'Irrigator' ? KOMPONEN_IRRIGATOR : KOMPONEN_MESIN;
+    var s = '';
+    var sisa = {};
+    for (var j = 0; j < list.length; j++) {
+      var g = komp[list[j]];
+      s += (g === 'A' || g === 'B' || g === 'C') ? g : '-';
+    }
+    for (var name in komp) {
+      if (list.indexOf(name) === -1) sisa[name] = komp[name];
+    }
+    rec.k = s;
+    if (Object.keys(sisa).length) rec.kx = sisa;
+    out.push(rec);
+  }
+  return { records: out, kmap: kmap };
 }
 
 /**
@@ -468,6 +581,31 @@ function cekStatus() {
 }
 
 /* ====================== UTIL ====================== */
+/** ISO 8601 dengan offset WIB — bisa di-parse semua browser (termasuk Safari). */
+function formatIso_(d) {
+  var dt = d ? new Date(d) : new Date();
+  if (isNaN(dt.getTime())) dt = new Date();
+  return Utilities.formatDate(dt, 'Asia/Jakarta', "yyyy-MM-dd'T'HH:mm:ss'+07:00'");
+}
+
+/** Cari baris yang kolom ke-`col` nilainya sama dengan `value` (mulai baris 2). */
+function cariBaris_(sh, col, value) {
+  var lastRow = sh.getLastRow();
+  if (lastRow < 2) return 0;
+  var vals = sh.getRange(2, col, lastRow - 1, 1).getValues();
+  for (var i = 0; i < vals.length; i++) {
+    if (String(vals[i][0]).trim() === value) return i + 2;
+  }
+  return 0;
+}
+
+/** Baca satu baris sheet → objek record (bentuk sama dengan readHistory_). */
+function bacaBaris_(sh, map, rowIndex) {
+  var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+  var row = sh.getRange(rowIndex, 1, 1, header.length).getValues()[0];
+  return rowToRecord_(header, row, rowIndex, componentIndex_());
+}
+
 function num_(v) {
   var n = Number(v);
   return isNaN(n) ? 0 : n;

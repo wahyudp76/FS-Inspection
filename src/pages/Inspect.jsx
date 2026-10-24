@@ -473,14 +473,14 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
 
             {/* ---------- pager ---------- */}
             {filtered.length > 0 && (
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] py-2 pl-3 pr-16">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
                 <span className="whitespace-nowrap text-[10.5px] text-slate-500">
                   Halaman <span className="font-mono font-semibold text-slate-300">{halamanAman + 1}</span> dari{' '}
                   <span className="font-mono font-semibold text-slate-300">{totalHalaman}</span> · maks {PER_PAGE} unit/halaman
                 </span>
-                <div className="ml-auto flex items-center gap-1">
+                <div className="flex w-full flex-wrap items-center justify-between gap-1 sm:ml-auto sm:w-auto sm:justify-end">
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                     disabled={halamanAman === 0}
                     onClick={() => setPage(0)}
                     title="Halaman pertama"
@@ -488,7 +488,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                     «
                   </button>
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                     disabled={halamanAman === 0}
                     onClick={() => setPage(halamanAman - 1)}
                   >
@@ -498,14 +498,14 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                     {halamanAman + 1} / {totalHalaman}
                   </span>
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                     disabled={halamanAman >= totalHalaman - 1}
                     onClick={() => setPage(halamanAman + 1)}
                   >
                     Berikutnya
                   </button>
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px]"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                     disabled={halamanAman >= totalHalaman - 1}
                     onClick={() => setPage(totalHalaman - 1)}
                     title="Halaman terakhir"
@@ -709,7 +709,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
 
       {/* sticky bar */}
       <div className={cx('border-t border-white/10 bg-ink-950/95 backdrop-blur-xl', embedded ? 'sticky bottom-0 z-20 rounded-b-2xl' : 'fixed inset-x-0 bottom-0 z-40 lg:left-[236px]')}>
-        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 py-3 pl-4 pr-16 sm:pl-6 sm:pr-20">
+        <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 py-3 pl-4 pr-4 sm:pl-6 sm:pr-20">
           <div className="flex items-center gap-3">
             <ScoreRing score={complete ? stats.score : stats.score || 0} size={40} stroke={4} />
             <div>

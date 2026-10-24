@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { cx, fmtDateTime, trendByPeriod, periodKey, pct, kondisiOf } from '../lib/analytics'
+import { cx, fmtDateTime, trendByPeriod, periodKey, pct, kondisiOf, scoreColor } from '../lib/analytics'
 import { GRADES } from '../lib/config'
 import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, Empty, Segmented, Select } from '../components/ui'
 import { TrendChart, GradeStack } from '../components/charts'
@@ -139,7 +139,84 @@ export default function History({ records, data, navigate, onSync, syncing }) {
           right={<a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost !py-1 !text-[11px]"><IconSheet size={13} /> Buka sheet</a>}
         />
         {filtered.length ? (
-          <div className="mt-3 overflow-x-auto">
+          <>
+          {/* ---------- MOBILE: kartu, semua kolom terbaca tanpa geser ---------- */}
+          <div className="mt-3 space-y-2 sm:hidden">
+            {barisHalaman.map((r) => {
+              const key = r.id || `${r.kode}-${r.timestamp}`
+              const isOpen = expanded === key
+              const groups = groupFor(r.tipe)
+              const warna = scoreColor(r.skor, r.statusUnit)
+              return (
+                <div key={`m-${key}`} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                  <div className="flex items-start gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span className="font-mono text-[13px] font-bold text-white">{r.kode}</span>
+                        <span className="chip !py-0.5 !text-[9.5px]">{r.tipe}</span>
+                        <KondisiPill kondisi={r.kondisi} />
+                      </div>
+                      <p className="mt-0.5 truncate text-[10.5px] text-slate-500">
+                        {r.wilayah || '—'} · {r.inspector || 'Tanpa nama'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setExpanded(isOpen ? null : key)}
+                      className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400"
+                      aria-label={isOpen ? 'Tutup rincian' : 'Buka rincian'}
+                    >
+                      <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
+                    </button>
+                  </div>
+                  <div className="mt-2 flex items-center gap-2">
+                    <span className="shrink-0 font-mono text-[10.5px] text-slate-400">{r.tanggal}</span>
+                    <span className="shrink-0 text-[10px] text-slate-600">{fmtDateTime(r.timestamp).split('·')[1]}</span>
+                    <Bar value={r.skor} color={warna} height={5} />
+                    <span className="w-8 shrink-0 text-right font-mono text-[11px] text-slate-300">{Math.round(r.skor)}</span>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-2 text-[10.5px]">
+                    <span className="font-mono">
+                      <span className="text-emerald-400">{r.a}</span>
+                      <span className="text-slate-600">/</span>
+                      <span className="text-amber-400">{r.b}</span>
+                      <span className="text-slate-600">/</span>
+                      <span className="text-rose-400">{r.c}</span>
+                    </span>
+                    {r.pending && <span className="rounded bg-amber-500/15 px-1 text-[9px] font-semibold text-amber-300">antrean lokal</span>}
+                  </div>
+                  {isOpen && (
+                    <div className="mt-2 border-t border-white/[0.06] pt-2">
+                      <div className="grid gap-2">
+                        {groups.map((g) => {
+                          const items = g.items.filter((i) => r.komponen?.[i])
+                          if (!items.length) return null
+                          return (
+                            <div key={g.id}>
+                              <p className="mb-1 text-[10px] font-semibold text-slate-400">{g.label}</p>
+                              <div className="flex flex-wrap gap-1">
+                                {items.map((it) => (
+                                  <span key={it} className="inline-flex items-center gap-1 rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+                                    {it} <GradePill value={r.komponen[it]} size="xs" />
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )
+                        })}
+                      </div>
+                      {r.catatan && (
+                        <p className="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-[11px] text-slate-300">
+                          <span className="text-slate-500">Catatan: </span>{r.catatan}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          <div className="mt-3 hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[860px] text-left">
               <thead>
                 <tr className="border-y border-white/[0.06] text-[10px] uppercase tracking-wider text-slate-500">
@@ -179,13 +256,13 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                         </td>
                         <td className="px-2 py-2.5">
                           <div className="flex items-center gap-2">
-                            <Bar value={r.skor} color={r.skor >= 90 ? '#22c55e' : r.skor >= 70 ? '#f59e0b' : '#f43f5e'} height={5} />
+                            <Bar value={r.skor} color={scoreColor(r.skor, r.statusUnit)} height={5} />
                             <span className="w-8 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(r.skor)}</span>
                           </div>
                         </td>
                         <td className="px-2 py-2.5"><KondisiPill kondisi={r.kondisi} /></td>
                         <td className="px-4 py-2.5 text-right">
-                          <button onClick={() => setExpanded(isOpen ? null : key)} className="rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400 transition hover:text-brand">
+                          <button onClick={() => setExpanded(isOpen ? null : key)} className="tap rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400 transition hover:text-brand">
                             <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
                           </button>
                         </td>
@@ -225,8 +302,7 @@ export default function History({ records, data, navigate, onSync, syncing }) {
               </tbody>
             </table>
           </div>
-
-
+          </>
         ) : (
           <Empty
             title="Belum ada riwayat inspeksi"
@@ -270,7 +346,7 @@ export default function History({ records, data, navigate, onSync, syncing }) {
 
             <div className="ml-1 flex items-center gap-1">
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                 disabled={halamanAman === 0}
                 onClick={() => setPage(0)}
                 title="Halaman pertama"
@@ -278,7 +354,7 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                 «
               </button>
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                 disabled={halamanAman === 0}
                 onClick={() => setPage(halamanAman - 1)}
               >
@@ -288,14 +364,14 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                 {halamanAman + 1} / {totalHalaman}
               </span>
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                 disabled={halamanAman >= totalHalaman - 1}
                 onClick={() => setPage(halamanAman + 1)}
               >
                 Berikutnya
               </button>
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px]"
+                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
                 disabled={halamanAman >= totalHalaman - 1}
                 onClick={() => setPage(totalHalaman - 1)}
                 title="Halaman terakhir"

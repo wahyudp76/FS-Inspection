@@ -1,4 +1,5 @@
 import { GRADES } from './config'
+import { tsMs, recordMs, compareRecordsAsc, dayKeyWIB, daysAgoWIB } from './time'
 
 const SCORE_MAP = Object.fromEntries(GRADES.map((g) => [g.value, g.score]))
 
@@ -32,6 +33,9 @@ export const kondisiUnit = (unit) =>
   kondisiOf(unit?.score ?? 0, unit?.status ?? unit?.statusUnit)
 
 export const GRADE_COLOR = Object.fromEntries(GRADES.map((g) => [g.value, g.color]))
+
+/** Warna bar skor — mengikuti kondisi (bukan skor mentah) agar unit Rusak tidak tampil hijau. */
+export const scoreColor = (score, statusUnit) => KONDISI_COLOR[kondisiOf(score, statusUnit)] || '#38bdf8'
 export const KONDISI_COLOR = { Baik: '#22c55e', 'Perlu Perhatian': '#f59e0b', Kritis: '#f43f5e' }
 
 /* ------------------------------------------------------------------ */
@@ -143,19 +147,18 @@ export function unitTypeBreakdown(assets = []) {
 /*  Analitik riwayat inspeksi (sheet Data Inspeksi)                    */
 /* ------------------------------------------------------------------ */
 
-export const dayKey = (d) => {
-  const x = new Date(d)
-  if (Number.isNaN(x.getTime())) return ''
-  return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`
-}
+/** Kunci hari menurut kalender WIB (Asia/Jakarta) — konsisten untuk data campuran format. */
+export const dayKey = (d) => dayKeyWIB(d)
 
 export const monthKey = (d) => (dayKey(d) || '').slice(0, 7)
 
 /** Senin sebagai awal minggu (WIB) */
 export function weekKey(d) {
-  const x = new Date(d)
-  if (Number.isNaN(x.getTime())) return ''
-  const t = new Date(Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()))
+  const ms = tsMs(d)
+  if (Number.isNaN(ms)) return ''
+  /* geser ke kalender WIB sebelum mengambil komponen tanggal */
+  const wib = new Date(ms + 7 * 3600 * 1000)
+  const t = new Date(Date.UTC(wib.getUTCFullYear(), wib.getUTCMonth(), wib.getUTCDate()))
   const day = (t.getUTCDay() + 6) % 7
   t.setUTCDate(t.getUTCDate() - day)
   return `${t.getUTCFullYear()}-W${String(getISOWeek(t)).padStart(2, '0')}`
@@ -244,15 +247,25 @@ export function topInspectors(records = [], limit = 5) {
     .slice(0, limit)
 }
 
+/**
+ * Record terbaru per unit. Perbandingan memakai epoch ms (bukan string) supaya
+ * format "2026-03-05 9:14:00" vs "2026-03-05 10:00:00" tidak terbalik.
+ */
 export function latestByUnit(records = []) {
   const map = new Map()
   records.forEach((r) => {
     const k = `${r.tipe}:${r.kode}`
     const prev = map.get(k)
-    if (!prev || String(r.timestamp).localeCompare(String(prev.timestamp)) > 0) map.set(k, r)
+    if (!prev) { map.set(k, r); return }
+    const a = recordMs(r)
+    const b = recordMs(prev)
+    if (a > b || (a === b && String(r.id || '').localeCompare(String(prev.id || '')) > 0)) map.set(k, r)
   })
   return map
 }
+
+/** Urutkan record dari terbaru ke terlama (epoch ms, aman format campuran). */
+export const sortByNewest = (records = []) => [...records].sort((a, b) => compareRecordsAsc(b, a))
 
 export function problemComponentsFromHistory(records = [], limit = 10) {
   const map = new Map()
@@ -273,19 +286,19 @@ export function problemComponentsFromHistory(records = [], limit = 10) {
 /* ------------------------------------------------------------------ */
 
 export const fmtDate = (d) => {
-  const x = new Date(d)
-  if (Number.isNaN(x.getTime())) return '—'
-  return x.toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
+  const ms = tsMs(d)
+  if (Number.isNaN(ms)) return '—'
+  return new Date(ms).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })
 }
 export const fmtDateTime = (d) => {
-  const x = new Date(d)
-  if (Number.isNaN(x.getTime())) return '—'
-  return `${fmtDate(d)} · ${x.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
+  const ms = tsMs(d)
+  if (Number.isNaN(ms)) return '—'
+  return `${fmtDate(d)} · ${new Date(ms).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}`
 }
 export const relativeTime = (d) => {
-  const x = new Date(d)
-  if (Number.isNaN(x.getTime())) return '—'
-  const diff = Date.now() - x.getTime()
+  const ms = tsMs(d)
+  if (Number.isNaN(ms)) return '—'
+  const diff = Date.now() - ms
   const mins = Math.floor(diff / 60000)
   if (mins < 1) return 'baru saja'
   if (mins < 60) return `${mins} menit lalu`

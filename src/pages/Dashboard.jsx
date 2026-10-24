@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react'
 import {
   fleetSummary, componentIssues, byWilayah, scoreBuckets, groupProfile, unitTypeBreakdown,
-  trendByPeriod, topInspectors, latestByUnit, pct, fmtDateTime, relativeTime, kondisiOf, cx, periodKey,
+  trendByPeriod, topInspectors, latestByUnit, pct, fmtDateTime, relativeTime, kondisiOf, cx, periodKey, scoreColor,
 } from '../lib/analytics'
+import { daysAgoWIB } from '../lib/time'
 import { Card, CardHeader, Kpi, Bar, KondisiPill, StatusPill, Empty, Segmented, ScoreRing, GradePill } from '../components/ui'
 import { Donut, WilayahChart, IssuesBar, GroupRadar, TrendChart, ScoreHistogram, TipBox } from '../components/charts'
 import {
@@ -73,14 +74,26 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
   const inspectors = useMemo(() => topInspectors(filteredRecords, 4), [filteredRecords])
   const latest = useMemo(() => latestByUnit(filteredRecords), [filteredRecords])
 
+  /* 0 = Kritis, 1 = Perlu Perhatian, 2 = Baik — dipakai untuk mengurutkan prioritas */
+  const peringkatKondisi = (u) => {
+    const k = kondisiOf(u.score, u.status)
+    return k === 'Kritis' ? 0 : k === 'Perlu Perhatian' ? 1 : 2
+  }
+
   /* unit prioritas: skor terendah + (jika ada riwayat) paling lama tidak diinspeksi */
   const prioritas = useMemo(() => {
     return [...scoped]
       .map((u) => {
         const rec = latest.get(`${tipe === 'Irrigator' ? 'Irrigator' : 'Mesin'}:${u.kode}`)
-        return { ...u, last: rec || null, daysSince: rec ? Math.floor((Date.now() - new Date(rec.timestamp).getTime()) / 86400000) : null }
+        return { ...u, last: rec || null, daysSince: rec ? daysAgoWIB(rec.timestamp) : null }
       })
-      .sort((a, b) => a.score - b.score || (a.c + a.b) - (b.c + b.b))
+      /* unit Rusak selalu tampil paling atas (Kritis), baru urut skor terendah */
+      .sort(
+        (a, b) =>
+          peringkatKondisi(a) - peringkatKondisi(b) ||
+          a.score - b.score ||
+          (a.c + a.b) - (b.c + b.b)
+      )
       .slice(0, 8)
   }, [scoped, latest, tipe])
 
@@ -348,7 +361,7 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
         <Card className="xl:col-span-7">
           <CardHeader
             title="Unit Prioritas Perbaikan"
-            sub="Skor kondisi terendah pada master aset"
+            sub="Unit Rusak/Kritis lebih dulu, lalu skor terendah"
             right={
               <button onClick={() => navigate('unit')} className="btn-ghost !py-1 !text-[11px]">
                 Semua unit <IconChevron size={12} />
@@ -370,6 +383,9 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
                       {type === 'Mesin' ? <IconTruck size={10} /> : <IconDroplet size={10} />} {type}
                     </span>
                     <span className="ml-auto"><StatusPill status={u.status} /></span>
+                    {kondisiOf(u.score, u.status) === 'Kritis' && (
+                      <span className="shrink-0 rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-rose-300">Kritis</span>
+                    )}
                   </div>
                   <div className="mt-1 flex items-center gap-2">
                     <p className="min-w-0 flex-1 truncate text-[10.5px] text-slate-500">
@@ -377,7 +393,7 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
                     </p>
                     <button
                       onClick={() => navigate('inspeksi', { tipe: type, kode: u.kode })}
-                      className="shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                      className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
                     >
                       Inspeksi
                     </button>
@@ -390,7 +406,7 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
                       <span className="text-slate-600">/</span>
                       <span className="text-rose-400">{u.c}</span>
                     </span>
-                    <Bar value={u.score} color={u.score >= 90 ? '#22c55e' : u.score >= 70 ? '#f59e0b' : '#f43f5e'} height={5} />
+                    <Bar value={u.score} color={scoreColor(u.score, u.status)} height={5} />
                     <span className="w-8 shrink-0 text-right font-mono text-[10.5px] text-slate-300">{Math.round(u.score)}</span>
                   </div>
                 </div>
@@ -435,14 +451,14 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
                       </td>
                       <td className="px-2 py-2.5">
                         <div className="flex items-center gap-2">
-                          <Bar value={u.score} color={u.score >= 90 ? '#22c55e' : u.score >= 70 ? '#f59e0b' : '#f43f5e'} height={5} />
+                          <Bar value={u.score} color={scoreColor(u.score, u.status)} height={5} />
                           <span className="w-9 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(u.score)}</span>
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <button
                           onClick={() => navigate('inspeksi', { tipe: type, kode: u.kode })}
-                          className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                          className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
                         >
                           Inspeksi
                         </button>

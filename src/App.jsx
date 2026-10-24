@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Shell from './components/Shell'
 import Dashboard from './pages/Dashboard'
 import Inspect from './pages/Inspect'
@@ -42,7 +42,12 @@ export default function App() {
     return () => window.removeEventListener('hashchange', onHash)
   }, [])
 
+  /* satu sinkronisasi pada satu waktu: mencegah permintaan ganda saat tombol
+     ditekan bersamaan dengan auto-refresh / event focus */
+  const inFlight = useRef(null)
+
   const doSync = useCallback(async ({ silent = false } = {}) => {
+    if (inFlight.current) return inFlight.current
     /* tanpa endpoint: beri umpan balik jelas, jangan diam saja */
     if (!getEndpoint()) {
       setSync((s) => ({ ...s, syncing: false, offline: true }))
@@ -55,6 +60,7 @@ export default function App() {
       return
     }
     setSync((s) => ({ ...s, syncing: true }))
+    inFlight.current = (async () => {
     try {
       if (getEndpoint()) {
         try {
@@ -70,7 +76,11 @@ export default function App() {
     } catch (e) {
       setSync((s) => ({ ...s, syncing: false, offline: true }))
       if (!silent) setToast({ type: 'error', message: e.message })
+    } finally {
+      inFlight.current = null
     }
+    })()
+    return inFlight.current
   }, [])
 
   useEffect(() => {

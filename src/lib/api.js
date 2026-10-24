@@ -1,4 +1,8 @@
 import { getEndpoint, LS_CACHE } from './config'
+import { compareRecordsAsc } from './time'
+import { expandRecords } from './compress'
+
+const LS_REV = 'fsi:history-rev'
 
 /**
  * Komunikasi dengan Google Apps Script Web App.
@@ -16,9 +20,50 @@ const writeCache = (data) => {
   try {
     localStorage.setItem(LS_CACHE, JSON.stringify(data))
   } catch {
-    /* quota */
+    /* kuota penuh: simpan versi ringkas (tanpa komponen) supaya UI tetap terisi */
+    try {
+      const slim = {
+        records: (data.records || []).slice(0, 400).map(({ komponen, ...r }) => r),
+        syncedAt: data.syncedAt,
+      }
+      localStorage.setItem(LS_CACHE, JSON.stringify(slim))
+    } catch {
+      /* menyerah dengan tenang */
+    }
   }
 }
+
+const readRev = () => {
+  try {
+    return localStorage.getItem(LS_REV) || ''
+  } catch {
+    return ''
+  }
+}
+const writeRev = (rev) => {
+  try {
+    if (rev) localStorage.setItem(LS_REV, String(rev))
+    else localStorage.removeItem(LS_REV)
+  } catch {
+    /* abaikan */
+  }
+}
+
+/** Buang baris kembar (id sama, atau kode+tanggal+sidik jari komponen sama). */
+export function dedupeRecords(records = []) {
+  const seen = new Set()
+  const out = []
+  for (const r of records) {
+    const key = r.id || `${r.tipe}|${r.kode}|${r.tanggal}|${r.inspector || ''}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    out.push(r)
+  }
+  return out
+}
+
+/** Urutkan terbaru dulu memakai epoch ms, bukan perbandingan string. */
+export const sortRecords = (records = []) => dedupeRecords(records).sort((a, b) => compareRecordsAsc(b, a))
 
 const guard = () => {
   const url = getEndpoint()
@@ -57,6 +102,7 @@ export function queueLocal(payload) {
   const cache = readCache()
   const record = {
     ...payload,
+    clientId: payload.clientId || makeClientId(),
     id: `LOCAL-${Date.now()}`,
     timestamp: new Date().toISOString(),
     pending: true,
@@ -66,10 +112,15 @@ export function queueLocal(payload) {
   return record
 }
 
+/** ID idempoten: retry dengan clientId sama tidak akan membuat baris ganda di sheet. */
+export const makeClientId = () =>
+  `FSI-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+
 /** Kirim satu sesi inspeksi (1 unit, banyak komponen) */
 export async function submitInspection(payload) {
-  if (!getEndpoint()) return queueLocal(payload)
-  const json = await post({ action: 'submit', payload })
+  const body = { ...payload, clientId: payload.clientId || makeClientId() }
+  if (!getEndpoint()) return queueLocal(body)
+  const json = await post({ action: 'submit', payload: body })
   const cache = readCache()
   const record = json.record || { ...payload, id: `LOCAL-${Date.now()}`, timestamp: new Date().toISOString() }
   cache.records = [record, ...(cache.records || []).filter((r) => !(r.pending && r.kode === payload.kode && r.tanggal === payload.tanggal))].slice(0, 800)
@@ -83,17 +134,26 @@ export async function flushQueue() {
   const cache = readCache()
   const pending = (cache.records || []).filter((r) => r.pending)
   if (!pending.length || !getEndpoint()) return { sent: 0, failed: pending.length, remaining: pending.length }
-  let sent = 0, failed = 0
+  let sent = 0, failed = 0, streak = 0
   for (const rec of pending) {
     try {
       const clean = { ...rec }
       delete clean.pending
       delete clean.id
-      await post({ action: 'submit', payload: clean })
+      const json = await post({ action: 'submit', payload: clean })
       sent++
-      cache.records = cache.records.map((r) => (r.id === rec.id ? { ...r, pending: false } : r))
-    } catch {
+      streak = 0
+      const saved = json.record || clean
+      cache.records = cache.records.map((r) =>
+        r.id === rec.id
+          ? { ...saved, id: saved.id || r.id, clientId: clean.clientId, pending: false }
+          : r
+      )
+    } catch (e) {
       failed++
+      streak++
+      /* endpoint mati / jaringan hilang: jangan buang waktu mencoba 20 kali */
+      if (streak >= 2) break
     }
   }
   writeCache(cache)
@@ -106,15 +166,31 @@ export const pendingCount = () => (readCache().records || []).filter((r) => r.pe
 export async function fetchHistory({ silent = false } = {}) {
   if (!getEndpoint()) {
     const c = readCache()
-    return { records: c.records || [], syncedAt: c.syncedAt, offline: true }
+    return { records: sortRecords(c.records || []), syncedAt: c.syncedAt, offline: true }
   }
   try {
-    const json = await post({ action: 'history' }, 30000)
-    const local = readCache().records || []
+    const cached = readCache()
+    const local = cached.records || []
     const pending = local.filter((r) => r.pending)
-    const records = [...pending, ...(json.records || [])].sort((a, b) => String(b.timestamp).localeCompare(String(a.timestamp)))
+    /* rev = sidik jari isi sheet terakhir; bila tak berubah, cukup minta konfirmasi murah */
+    const rev = readRev()
+    const json = await post({ action: 'history', payload: { rev } }, 30000)
+
+    if (json.unchanged && local.length) {
+      const syncedAt = new Date().toISOString()
+      const records = sortRecords(local)
+      writeCache({ records, syncedAt })
+      return { records, syncedAt, offline: false, pending: pending.length, unchanged: true }
+    }
+
+    const fresh = expandRecords(json.records || [], json.kmap)
+    writeRev(json.rev || '')
+    /* buang pending yang ternyata SUDAH masuk sheet (clientId sama) → tidak dobel di layar */
+    const serverIds = new Set(fresh.map((r) => r.clientId || r.id).filter(Boolean))
+    const stillPending = pending.filter((r) => !serverIds.has(r.clientId))
+    const records = sortRecords([...stillPending, ...fresh])
     writeCache({ records, syncedAt: new Date().toISOString() })
-    return { records, syncedAt: new Date().toISOString(), offline: false, pending: pending.length }
+    return { records, syncedAt: new Date().toISOString(), offline: false, pending: stillPending.length, unchanged: false }
   } catch (e) {
     if (silent) {
       const c = readCache()
@@ -126,7 +202,7 @@ export async function fetchHistory({ silent = false } = {}) {
 
 export function readLocalHistory() {
   const c = readCache()
-  return { records: c.records || [], syncedAt: c.syncedAt, offline: true }
+  return { records: sortRecords(c.records || []), syncedAt: c.syncedAt, offline: true }
 }
 
 /** Isi sheet "Data Inspeksi" dengan inspeksi awal dari master (idempoten) */

@@ -15,13 +15,23 @@ Setelah dipasang, aplikasi terbuka tanpa address bar, ikonnya memakai logo FS In
 ## Tampilan di HP
 
 - **Unit Prioritas Perbaikan** (Dashboard) memakai daftar kartu di layar < 640 px: kode, tipe, status, wilayah/spesifikasi, sebaran A/B/C, skor, dan tombol **Inspeksi** semuanya terlihat tanpa geser ke samping.
-- Tabel lebar (Data Unit, Pengaturan) tetap berupa tabel, tapi bisa **digeser ke samping** di dalam kotaknya.
+- **Data Unit** dan **Riwayat** juga memakai daftar kartu di HP: kode, tipe, status/kondisi, wilayah & spesifikasi, skor, sebaran A/B/C, petugas, tanggal, dan tombol aksi tampil semua tanpa geser ke samping. Kartu Riwayat bisa dibuka (ikon ⌄) untuk melihat rincian komponen.
+- Di layar lebar (≥ 640 px) tetap berupa tabel; tabel lebar di *Pengaturan* masih bisa digeser di dalam kotaknya.
+- Semua tombol penting di HP berukuran minimal **36–40 px** (Laporkan kalau ada yang masih terasa kecil).
 - **Mode landscape / layar pendek**: menu samping (drawer) kini punya area gulir sendiri, jadi seluruh menu + kartu *Google Sheets* + link sheet tetap bisa dijangkau; header sidebar dirapatkan otomatis pada tinggi layar ≤ 520 px.
 
 ## Navigasi
 
 - **Header atas membeku (freeze)** — judul halaman, tombol **+ Tambah Inspeksi**, **Sinkron**, dan **Buka Sheet** tetap terlihat saat halaman digulir ke bawah; muncul bayangan halus sebagai penanda.
 - **Tombol ↑ (kembali ke atas)** muncul otomatis di kanan bawah setelah halaman digulir lebih dari ±320 px; sekali klik halaman meluncur kembali ke paling atas.
+
+## Kecepatan & ketepatan sinkron (v1.4.0)
+
+- **Sinkron pertama** mengunduh seluruh riwayat (± 115 KB untuk 275 sesi — turun dari ± 300 KB karena kolom komponen dikirim sebagai satu kode ringkas).
+- **Sinkron berikutnya** hanya menanyakan *sidik jari* sheet (revisi). Bila sheet tidak berubah, server membalas **± 70 byte** — praktis seketika, hemat kuota.
+- **Tidak ada data dobel**: setiap kiriman membawa `clientId`; bila jaringan putus di tengah jalan lalu dikirim ulang, Apps Script mengenali ID itu dan **tidak menambah baris kedua**.
+- **Waktu sekarang standar ISO +07:00** (`2026-10-24T08:05:00+07:00`), sehingga urutan "inspeksi terakhir" benar di semua browser (termasuk Safari/iPhone) dan tidak lagi terbalik antara jam 09:xx dan 10:xx.
+- Angka "inspeksi terakhir" per unit dihitung dari **waktu**, bukan urutan baris sheet — menyisipkan baris manual di sheet tidak lagi mengacak hasil.
 
 ## Tombol Sinkron
 
@@ -210,12 +220,14 @@ hasil tetap tersimpan di antrean lokal browser; setelah online → **Sinkron**.
 | Gejala | Penyebab & solusi |
 |---|---|
 | **Kolom komponen (Accu, Klem Accu, …) di sheet Mesin kosong** | Dua sebab: ① Unit itu memang belum pernah diinspeksi lewat dashboard → jalankan **`syncLatestToMaster`** (versi ≥1.2.0) yang kini **menulis A/B/C ke kolom komponen**. ② Endpoint masih deployment lama → update `Version: New version`. Cek hasil: muncul `… , N sel komponen terisi`. |
-| **Inspeksi masuk ke "Data Inspeksi", tapi sheet Mesin/Irrigator tidak berubah** | ① Deployment Apps Script masih **versi lama** (belum punya `syncmaster`). Perbaiki: **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy**. Cek di **Pengaturan ▸ Uji Koneksi** — harus muncul `versi 1.3.0`. ② Atau jalankan **`syncLatestToMaster`** langsung dari editor Apps Script (paling cepat, tanpa menunggu deploy). ③ Pastikan kolom ringkasan sudah pernah dibuat — kalau belum, fungsi itu juga yang membuatnya. |
+| **Inspeksi masuk ke "Data Inspeksi", tapi sheet Mesin/Irrigator tidak berubah** | ① Deployment Apps Script masih **versi lama** (belum punya `syncmaster`). Perbaiki: **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy**. Cek di **Pengaturan ▸ Uji Koneksi** — harus muncul `versi 1.4.0`. ② Atau jalankan **`syncLatestToMaster`** langsung dari editor Apps Script (paling cepat, tanpa menunggu deploy). ③ Pastikan kolom ringkasan sudah pernah dibuat — kalau belum, fungsi itu juga yang membuatnya. |
 | Sheet `Data Inspeksi` masih kosong | Kode hanya **disimpan**, belum **dijalankan**. Jalankan fungsi `backfillDariMaster` di editor (Run ▸ pilih fungsi), atau dari dashboard ▸ Pengaturan ▸ **Isi inspeksi awal**. Cek dengan fungsi `cekStatus`. |
 | `Respon server bukan JSON` | Deployment belum "Anyone", atau URL bukan `/exec`. |
 | Data tidak muncul di dashboard | Tekan **Sinkron**; pastikan endpoint terisi. |
 | Grafik kosong padahal sudah inspeksi | Sama seperti di atas, atau inspeksi masih di **antrean lokal** (Pengaturan ▸ Kirim antrean lokal). |
-| Skor unit di master beda dengan riwayat | Master = kondisi terakhir di sheet sumber; riwayat = sesi inspeksi dashboard. Unit berstatus **Rusak** selalu **Kritis**. |
+| Skor unit di master beda dengan riwayat | Master = kondisi terakhir di sheet sumber; riwayat = sesi inspeksi dashboard. Unit berstatus **Rusak** selalu **Kritis** — sekarang bar skor & daftar **Unit Prioritas** ikut memakai aturan ini (unit Rusak tampil merah dan paling atas, walau skornya tinggi). |
+| Baris dobel di `Data Inspeksi` setelah sinyal jelek | Seharusnya tidak terjadi lagi sejak v1.4.0 (ID unik per kiriman). Kalau masih ada sisa dobel dari versi lama, hapus manual baris yang `ID Inspeksi`-nya sama. |
+| Sinkron terasa lambat | Cek **Pengaturan ▸ Uji Koneksi** — harus `versi 1.4.0`. Versi lama selalu mengunduh penuh ± 300 KB. |
 | Ingin grafik terisi untuk presentasi | Pengaturan ▸ **Mode Demo** (data contoh, tidak dikirim ke sheet). |
 | Masih ada kolom `Category` di `Data Inspeksi` | Kolom itu sudah dihapus dari master (v1.3.0). Jalankan menu **FS Inspection ▸ 4. Bersihkan kolom Category lama**, lalu **Deploy ▸ New version**. |
 | Komponen jadi 46 (mesin) / 29 (irrigator) | Benar — kolom `Category` sudah dihapus dari sheet Mesin & Irrigator. Klik **Sinkron** di dashboard agar data master dimuat ulang. |

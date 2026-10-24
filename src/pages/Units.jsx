@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { kondisiOf, latestByUnit, fmtDateTime, cx, uniq } from '../lib/analytics'
+import { kondisiOf, latestByUnit, fmtDateTime, cx, uniq, scoreColor } from '../lib/analytics'
 import { Card, CardHeader, Bar, StatusPill, Empty, Segmented, MultiSelect } from '../components/ui'
 import { IconSearch, IconTruck, IconDroplet, IconDownload, IconFilter, IconX } from '../components/icons'
 import DetailDrawer from './UnitsDetail'
@@ -159,7 +159,65 @@ export default function Units({ data, records, navigate }) {
           }`}
           right={<span className="chip">tb_mesin + tb_irrigator</span>}
         />
-        <div className="mt-3 overflow-x-auto">
+        {/* ---------- MOBILE: kartu ringkas, semua kolom terlihat tanpa geser ---------- */}
+        <div className="mt-3 space-y-2 sm:hidden">
+          {view.map((u) => {
+            const rec = latest.get(`${u.tipe}:${u.kode}`)
+            const warna = scoreColor(u.score, u.status)
+            return (
+              <div key={`m-${u.tipe}-${u.kode}`} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                <div className="flex items-start gap-2">
+                  <button
+                    onClick={() => setDetail(u)}
+                    className="tap min-w-0 flex-1 justify-start gap-1.5 text-left"
+                    aria-label={`Detail unit ${u.kode}`}
+                  >
+                    <span className="font-mono text-[13px] font-bold text-white">{u.kode}</span>
+                    <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9.5px]', u.tipe === 'Mesin' ? 'border-sky-500/25 bg-sky-500/10 text-sky-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300')}>
+                      {u.tipe === 'Mesin' ? <IconTruck size={9} /> : <IconDroplet size={9} />} {u.tipe}
+                    </span>
+                  </button>
+                  <div className="flex shrink-0 flex-col items-end gap-1">
+                    <StatusPill status={u.status} />
+                    {kondisiOf(u.score, u.status) === 'Kritis' && (
+                      <span className="rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-rose-300">
+                        Kritis
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <p className="mt-1 truncate text-[11px] text-slate-400">
+                  {u.wilayah || '—'} · {u.spec || u.unit}{u.power ? ` · ${u.power} HP` : ''}{u.nozzle ? ` · Nozzle ${u.nozzle}` : ''}
+                </p>
+                <div className="mt-2 flex items-center gap-2">
+                  <Bar value={u.score} color={warna} height={5} />
+                  <span className="w-8 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(u.score)}</span>
+                  <span className="ml-auto shrink-0 font-mono text-[10.5px]">
+                    <span className="text-emerald-400">{u.a}</span>
+                    <span className="text-slate-600">/</span>
+                    <span className="text-amber-400">{u.b}</span>
+                    <span className="text-slate-600">/</span>
+                    <span className="text-rose-400">{u.c}</span>
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center gap-2 border-t border-white/[0.05] pt-2">
+                  <p className="min-w-0 flex-1 truncate text-[10.5px] text-slate-500">
+                    {rec ? `Inspeksi ${rec.tanggal} · ${rec.inspector || '—'}` : <span className="text-amber-500/80">belum pernah diinspeksi</span>}
+                  </p>
+                  <button
+                    onClick={() => navigate('inspeksi', { tipe: u.tipe, kode: u.kode })}
+                    className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300"
+                  >
+                    Inspeksi
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+          {!rows.length && <Empty title="Tidak ada unit" desc="Ubah filter atau kata kunci pencarian." icon={<IconSearch size={20} />} />}
+        </div>
+
+        <div className="mt-3 hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[820px] text-left">
             <thead>
               <tr className="border-y border-white/[0.06] text-[10px] uppercase tracking-wider text-slate-500">
@@ -180,7 +238,7 @@ export default function Units({ data, records, navigate }) {
                 return (
                   <tr key={`${u.tipe}-${u.kode}`} className="group border-b border-white/[0.04] transition hover:bg-white/[0.03]">
                     <td className="px-4 py-2.5">
-                      <button onClick={() => setDetail(u)} className="font-mono text-[12px] font-semibold text-white hover:text-brand">{u.kode}</button>
+                      <button onClick={() => setDetail(u)} className="tap justify-start px-1 font-mono text-[12px] font-semibold text-white hover:text-brand">{u.kode}</button>
                     </td>
                     <td className="px-2 py-2.5">
                       <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]', u.tipe === 'Mesin' ? 'border-sky-500/25 bg-sky-500/10 text-sky-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300')}>
@@ -199,7 +257,7 @@ export default function Units({ data, records, navigate }) {
                     </td>
                     <td className="px-2 py-2.5">
                       <div className="flex items-center gap-2">
-                        <Bar value={u.score} color={u.score >= 90 ? '#22c55e' : u.score >= 70 ? '#f59e0b' : '#f43f5e'} height={5} />
+                        <Bar value={u.score} color={scoreColor(u.score, u.status)} height={5} />
                         <span className="w-9 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(u.score)}</span>
                       </div>
                     </td>
@@ -209,7 +267,7 @@ export default function Units({ data, records, navigate }) {
                     <td className="px-4 py-2.5 text-right">
                       <button
                         onClick={() => navigate('inspeksi', { tipe: u.tipe, kode: u.kode })}
-                        className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                        className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
                       >
                         Inspeksi
                       </button>
