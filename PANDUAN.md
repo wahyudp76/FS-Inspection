@@ -16,6 +16,7 @@ Setelah dipasang, aplikasi terbuka tanpa address bar, ikonnya memakai logo FS In
 
 - **Unit Prioritas Perbaikan** (Dashboard) memakai daftar kartu di layar < 640 px: kode, tipe, status, wilayah/spesifikasi, sebaran A/B/C, skor, dan tombol **Inspeksi** semuanya terlihat tanpa geser ke samping.
 - Tabel lebar (Data Unit, Pengaturan) tetap berupa tabel, tapi bisa **digeser ke samping** di dalam kotaknya.
+- **Mode landscape / layar pendek**: menu samping (drawer) kini punya area gulir sendiri, jadi seluruh menu + kartu *Google Sheets* + link sheet tetap bisa dijangkau; header sidebar dirapatkan otomatis pada tinggi layar ≤ 520 px.
 
 ## Navigasi
 

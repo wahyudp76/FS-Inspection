@@ -76,8 +76,8 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
   const current = NAV.find((n) => n.id === route) || NAV[0]
 
   const SidebarInner = (
-    <div className="flex h-full flex-col">
-      <div className="flex items-center gap-2.5 px-4 py-5">
+    <div className="flex h-full flex-col overflow-hidden">
+      <div className="sidebar-head flex shrink-0 items-center gap-2.5 px-4 py-5">
         <IconLogo size={34} />
         <div className="min-w-0">
           <p className="text-[13px] font-bold leading-tight text-white">FS Inspection</p>
@@ -88,6 +88,9 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
         </button>
       </div>
 
+      {/* area yang bisa digulir: penting untuk landscape HP / layar pendek */}
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
+        <div className="flex min-h-full flex-col">
       <div className="px-3">
         <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Menu</p>
         <nav className="space-y-1">
@@ -132,9 +135,11 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
             Sheet “{TARGET_SHEET.name}” <IconExternal size={11} />
           </a>
         </div>
-        <p className="px-1 text-center text-[9.5px] leading-relaxed text-slate-600">
+        <p className="sidebar-ver px-1 text-center text-[9.5px] leading-relaxed text-slate-600">
           FS Inspection v1.0 · Data master dari<br />Draft Dashboard (tb_mesin / tb_irrigator)
         </p>
+      </div>
+        </div>
       </div>
     </div>
   )

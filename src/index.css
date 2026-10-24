@@ -97,3 +97,9 @@ body {
   animation-timing-function: linear;
   animation-fill-mode: forwards;
 }
+
+/* Layar pendek (HP landscape): rapatkan header sidebar agar semua menu terjangkau */
+@media (max-height: 520px) {
+  .sidebar-head { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+  .sidebar-ver { display: none; }
+}

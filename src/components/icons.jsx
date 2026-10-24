@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useId } from 'react'
 
 const S = ({ children, size = 18, ...p }) => (
   <svg
@@ -61,21 +61,24 @@ export const IconFilter = (p) => (<S {...p}><path d="M3 5h18l-7 8v6l-4 2v-8L3 5Z
 export const IconUser = (p) => (<S {...p}><circle cx="12" cy="8" r="4" /><path d="M4 21a8 8 0 0 1 16 0" /></S>)
 export const IconCalendar = (p) => (<S {...p}><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M8 3v4M16 3v4M3 11h18" /></S>)
 export const IconShield = (p) => (<S {...p}><path d="M12 3 5 6v6c0 4.4 3 7.7 7 9 4-1.3 7-4.6 7-9V6l-7-3Z" /><path d="m9 12 2 2 4-4" /></S>)
-export const IconLogo = ({ size = 28, id = 'fsi' }) => (
+export const IconLogo = ({ size = 28, id }) => {
+  // id unik per instance: hindari bentrok gradien saat logo tampil 2x (sidebar + drawer)
+  const uid = `fsi-${useId().replace(/[:]/g, '')}${id ? '-' + id : ''}`
+  return (
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
     <defs>
-      <linearGradient id={`${id}-bg`} x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
+      <linearGradient id={`${uid}-bg`} x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
         <stop stopColor="#38bdf8" />
         <stop offset="0.55" stopColor="#22d3ee" />
         <stop offset="1" stopColor="#2563eb" />
       </linearGradient>
-      <linearGradient id={`${id}-sh`} x1="12" y1="6" x2="44" y2="46" gradientUnits="userSpaceOnUse">
+      <linearGradient id={`${uid}-sh`} x1="12" y1="6" x2="44" y2="46" gradientUnits="userSpaceOnUse">
         <stop stopColor="#ffffff" stopOpacity="0.26" />
         <stop offset="0.65" stopColor="#ffffff" stopOpacity="0" />
       </linearGradient>
     </defs>
-    <rect width="64" height="64" rx="16" fill={`url(#${id}-bg)`} />
-    <rect width="64" height="64" rx="16" fill={`url(#${id}-sh)`} />
+    <rect width="64" height="64" rx="16" fill={`url(#${uid}-bg)`} />
+    <rect width="64" height="64" rx="16" fill={`url(#${uid}-sh)`} />
     {/* perisai = jaminan sudah diperiksa, centang = hasil inspeksi */}
     <path
       d="M32 12.5 17 18.2v12.6c0 9.6 6.1 17 15 20.2 8.9-3.2 15-10.6 15-20.2V18.2Z"
@@ -92,7 +95,8 @@ export const IconLogo = ({ size = 28, id = 'fsi' }) => (
       strokeLinejoin="round"
     />
   </svg>
-)
+  )
+}
 
 export const GROUP_ICON = {
   kelistrikan: IconBolt,
