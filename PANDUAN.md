@@ -30,7 +30,10 @@ sebagai dua batang berdampingan pada tiap rentang skor (90-100, 80-89, 70-79, 50
   - **analisa naratif** kategori tersebut (mis. *"6 unit Mesin (4% dari seluruh mesin) berada di rentang 80-89 — perlu perhatian; fokus pada …"*);
   - sebaran status (Terpasang/Standby/Rusak) dan wilayah terbanyak;
   - komponen paling bermasalah (B/C) pada rentang itu;
-  - **daftar unit** pada rentang tersebut (skor terendah lebih dulu) dengan tombol **Inspeksi** dan tautan ke detail unit.
+  - **daftar unit** pada rentang tersebut (skor terendah lebih dulu) dengan tombol **Inspeksi**.
+- **Klik kode unit** (mis. `DEC0004`) → **detail unit langsung terbuka di atas pop-up**, berisi skor,
+  sebaran A/B/C, keterangan master, dan checklist komponen per sistem. Menutup detail (✕ atau Esc)
+  mengembalikan Anda ke daftar di halaman yang sama — **tidak berpindah tab**.
 - Daftar unit memakai **paging: 10 unit per halaman** (bisa diubah ke 25/50), lengkap dengan penunjuk
   *"menampilkan 1–10"* dan tombol **‹ Sebelumnya / Berikutnya ›** — jadi pop-up tidak perlu digulir panjang.
 - Di HP, batang grafik kecil sulit ditekan — tersedia **tombol per rentang** (Mesin / Irrigator) tepat di bawah grafik.

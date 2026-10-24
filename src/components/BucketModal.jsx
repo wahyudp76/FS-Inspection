@@ -8,7 +8,7 @@ import { IconTruck, IconDroplet, IconAlert, IconClipboard, IconChevron } from '.
  * Pop-up analisis satu rentang skor untuk satu jenis aset.
  * Dibuka dari histogram "Distribusi Skor" (klik batang Mesin / Irrigator).
  */
-export default function BucketModal({ open, range, tipe, mesin = [], irrigator = [], onClose, onInspect, onOpenUnit }) {
+export default function BucketModal({ open, range, tipe, mesin = [], irrigator = [], onClose, onInspect, onOpenUnit, escDisabled = false }) {
   const units = useMemo(() => {
     const src = tipe === 'Irrigator' ? irrigator : mesin
     return unitsInRange(src, range?.min ?? -1, range?.max ?? 101).sort((a, b) => a.score - b.score)
@@ -44,7 +44,8 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
 
   useEffect(() => {
     if (!open) return
-    const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
+    /* jangan ikut menutup saat ada lapisan di atasnya (detail unit) yang menangani Esc */
+    const onKey = (e) => { if (e.key === 'Escape' && !escDisabled) onClose?.() }
     document.addEventListener('keydown', onKey)
     const prev = document.body.style.overflow
     document.body.style.overflow = 'hidden'
@@ -52,7 +53,7 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
       document.removeEventListener('keydown', onKey)
       document.body.style.overflow = prev
     }
-  }, [open, onClose])
+  }, [open, onClose, escDisabled])
 
   if (!open || !range) return null
   const isIrr = tipe === 'Irrigator'

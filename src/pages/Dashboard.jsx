@@ -7,6 +7,7 @@ import { daysAgoWIB } from '../lib/time'
 import { Card, CardHeader, Kpi, Bar, KondisiPill, StatusPill, Empty, Segmented, ScoreRing, GradePill } from '../components/ui'
 import { Donut, WilayahChart, IssuesBar, GroupRadar, TrendChart, ScoreHistogramSplit, TipBox } from '../components/charts'
 import BucketModal from '../components/BucketModal'
+import DetailDrawer from './UnitsDetail'
 import {
   IconTruck, IconDroplet, IconShield, IconAlert, IconClipboard, IconTrend, IconChevron, IconSpark,
   IconCalendar, IconUser, IconRefresh, IconGauge, IconList,
@@ -20,6 +21,8 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
   const [issueTab, setIssueTab] = useState('Mesin')
   /* pop-up distribusi skor: { range, tipe } */
   const [bucketSel, setBucketSel] = useState(null)
+  /* detail unit yang dibuka dari dalam pop-up (tanpa pindah tab) */
+  const [detailUnit, setDetailUnit] = useState(null)
 
   const mesin = data.mesin || []
   const irrigator = data.irrigator || []
@@ -573,11 +576,24 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
           setBucketSel(null)
           navigate('inspeksi', { tipe: bucketSel?.tipe || 'Mesin', kode: u.kode })
         }}
-        onOpenUnit={(u) => {
-          setBucketSel(null)
-          navigate('unit', { tipe: bucketSel?.tipe || 'Mesin', kode: u.kode })
-        }}
+        onOpenUnit={(u) => setDetailUnit(u)}
+        escDisabled={!!detailUnit}
       />
+
+      {/* detail unit tampil di atas pop-up; menutupnya kembali ke daftar */}
+      {detailUnit && (
+        <DetailDrawer
+          unit={detailUnit}
+          data={data}
+          records={records}
+          onClose={() => setDetailUnit(null)}
+          navigate={(r, p) => {
+            setDetailUnit(null)
+            setBucketSel(null)
+            navigate(r, p)
+          }}
+        />
+      )}
     </div>
   )
 }
