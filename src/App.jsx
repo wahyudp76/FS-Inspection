@@ -43,6 +43,17 @@ export default function App() {
   }, [])
 
   const doSync = useCallback(async ({ silent = false } = {}) => {
+    /* tanpa endpoint: beri umpan balik jelas, jangan diam saja */
+    if (!getEndpoint()) {
+      setSync((s) => ({ ...s, syncing: false, offline: true }))
+      if (!silent) {
+        setToast({
+          type: 'info',
+          message: 'Endpoint Apps Script belum diatur. Buka menu Pengaturan ▸ Koneksi sheet untuk mengisinya.',
+        })
+      }
+      return
+    }
     setSync((s) => ({ ...s, syncing: true }))
     try {
       if (getEndpoint()) {

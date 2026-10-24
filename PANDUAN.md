@@ -23,6 +23,14 @@ Setelah dipasang, aplikasi terbuka tanpa address bar, ikonnya memakai logo FS In
 - **Header atas membeku (freeze)** — judul halaman, tombol **+ Tambah Inspeksi**, **Sinkron**, dan **Buka Sheet** tetap terlihat saat halaman digulir ke bawah; muncul bayangan halus sebagai penanda.
 - **Tombol ↑ (kembali ke atas)** muncul otomatis di kanan bawah setelah halaman digulir lebih dari ±320 px; sekali klik halaman meluncur kembali ke paling atas.
 
+## Tombol Sinkron
+
+Tombol **Sinkron** (ikon ↻ di header, atau ↻ pada kartu *Google Sheets* di menu samping) selalu memberi umpan balik:
+
+- **Endpoint belum diisi** → muncul notifikasi *"Endpoint Apps Script belum diatur. Buka menu Pengaturan ▸ Koneksi sheet"*.
+- **Endpoint terisi** → ikon berputar, lalu notifikasi **berhasil** atau **gagal** (beserta pesan errornya) dan waktu sinkron terakhir diperbarui.
+- Di HP, tombol header berukuran 44×44 px agar mudah ditekan dan tidak salah tekan dengan tombol sebelahnya.
+
 ## Notifikasi
 
 Notifikasi di bawah layar (hasil sinkron, simpan inspeksi, error) **hilang otomatis**: 4 detik untuk berhasil/informasi, 7 detik untuk error. Arahkan kursor ke notifikasi untuk menahan agar tidak hilang, atau klik **×** untuk menutup langsung.

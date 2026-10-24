@@ -83,7 +83,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
           <p className="text-[13px] font-bold leading-tight text-white">FS Inspection</p>
           <p className="truncate text-[10px] uppercase tracking-[0.14em] text-slate-500">Engine &amp; Irrigator</p>
         </div>
-        <button className="ml-auto rounded-lg p-1 text-slate-500 lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
+        <button className="ml-auto grid h-10 w-10 place-items-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-white lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
           <IconX />
         </button>
       </div>
@@ -115,7 +115,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               {offline ? <IconCloudOff size={13} className="text-amber-400" /> : <IconCloud size={13} className="text-emerald-400" />}
               Google Sheets
             </span>
-            <button onClick={onSync} className="rounded-md p-1 text-slate-500 transition hover:text-brand" title="Sinkronkan data">
+            <button onClick={onSync} className="grid h-9 w-9 place-items-center rounded-md text-slate-400 transition hover:bg-white/[0.06] hover:text-brand" title="Sinkronkan data" aria-label="Sinkronkan data">
               <IconRefresh size={13} />
             </button>
           </div>
@@ -171,8 +171,8 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               : 'border-white/[0.06] bg-ink-950/80'
           )}
         >
-          <div className="flex items-center gap-3 px-4 py-3 sm:px-6">
-            <button className="rounded-lg border border-white/10 bg-white/[0.03] p-2 text-slate-300 lg:hidden" onClick={() => setOpen(true)} aria-label="Buka menu">
+          <div className="flex items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
+            <button className="grid h-11 w-11 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 sm:h-9 sm:w-9 lg:hidden" onClick={() => setOpen(true)} aria-label="Buka menu">
               <IconMenu size={16} />
             </button>
             <div className="min-w-0 flex-1">
@@ -184,18 +184,18 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
             </div>
             <button
               onClick={() => onAddInspect?.()}
-              className="btn-primary !px-2.5 !py-1.5"
+              className="btn-primary !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0"
               title="Tambah inspeksi baru (pop-up)"
               aria-label="Tambah Inspeksi"
             >
               <IconPlus size={15} />
               <span className="hidden sm:inline">Tambah Inspeksi</span>
             </button>
-            <button onClick={onSync} className="btn-ghost !px-2.5 !py-1.5" title="Sinkronkan riwayat inspeksi">
+            <button onClick={onSync} className="btn-ghost !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0" title="Sinkronkan riwayat inspeksi" aria-label="Sinkronkan riwayat inspeksi">
               <IconRefresh size={14} className={sync?.syncing ? 'animate-spin' : ''} />
               <span className="hidden md:inline">Sinkron</span>
             </button>
-            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost !px-2.5 !py-1.5" title="Buka Google Sheets">
+            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0" title="Buka Google Sheets" aria-label="Buka Google Sheets">
               <IconExternal size={14} />
               <span className="hidden md:inline">Buka Sheet</span>
             </a>
