@@ -355,7 +355,51 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
               </button>
             }
           />
-          <div className="mt-3 overflow-x-auto">
+          {/* mobile: daftar ringkas — semua data terlihat tanpa geser horizontal */}
+          <div className="mt-3 space-y-1.5 sm:hidden">
+            {prioritas.map((u) => {
+              const type = tipe === 'Semua' ? (mesin.some((m) => m.kode === u.kode) ? 'Mesin' : 'Irrigator') : tipe
+              return (
+                <div
+                  key={u.kode}
+                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono text-[12.5px] font-bold text-white">{u.kode}</span>
+                    <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9.5px]', type === 'Mesin' ? 'border-sky-500/25 bg-sky-500/10 text-sky-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300')}>
+                      {type === 'Mesin' ? <IconTruck size={10} /> : <IconDroplet size={10} />} {type}
+                    </span>
+                    <span className="ml-auto"><StatusPill status={u.status} /></span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-2">
+                    <p className="min-w-0 flex-1 truncate text-[10.5px] text-slate-500">
+                      {u.spec || u.unit} · {u.wilayah}
+                    </p>
+                    <button
+                      onClick={() => navigate('inspeksi', { tipe: type, kode: u.kode })}
+                      className="shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                    >
+                      Inspeksi
+                    </button>
+                  </div>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span className="shrink-0 font-mono text-[10px]">
+                      <span className="text-emerald-400">{u.a}</span>
+                      <span className="text-slate-600">/</span>
+                      <span className="text-amber-400">{u.b}</span>
+                      <span className="text-slate-600">/</span>
+                      <span className="text-rose-400">{u.c}</span>
+                    </span>
+                    <Bar value={u.score} color={u.score >= 90 ? '#22c55e' : u.score >= 70 ? '#f59e0b' : '#f43f5e'} height={5} />
+                    <span className="w-8 shrink-0 text-right font-mono text-[10.5px] text-slate-300">{Math.round(u.score)}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* tablet/desktop: tabel lengkap (bisa digeser bila sempit) */}
+          <div className="mt-3 hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[560px] text-left">
               <thead>
                 <tr className="border-y border-white/[0.06] text-[10px] uppercase tracking-wider text-slate-500">

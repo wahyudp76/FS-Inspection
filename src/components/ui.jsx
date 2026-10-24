@@ -5,7 +5,8 @@ import { gradeMeta, kondisiMeta, statusUnitMeta } from '../lib/config'
 import { IconAlert, IconChevronDown, IconCheck, IconSearch, IconX } from './icons'
 
 export const Card = ({ className = '', children, ...p }) => (
-  <div className={cx('card', className)} {...p}>
+  // min-w-0: cegah item grid/flex membengkak mengikuti isi (mis. tabel lebar) di layar kecil
+  <div className={cx('card min-w-0', className)} {...p}>
     {children}
   </div>
 )

@@ -12,6 +12,11 @@ Checklist singkat. Detail lengkap ada di [`README.md`](README.md).
 
 Setelah dipasang, aplikasi terbuka tanpa address bar, ikonnya memakai logo FS Inspection, dan shell tetap terbuka saat sinyal buruk (data inspeksi tetap butuh koneksi ke Apps Script).
 
+## Tampilan di HP
+
+- **Unit Prioritas Perbaikan** (Dashboard) memakai daftar kartu di layar < 640 px: kode, tipe, status, wilayah/spesifikasi, sebaran A/B/C, skor, dan tombol **Inspeksi** semuanya terlihat tanpa geser ke samping.
+- Tabel lebar (Data Unit, Pengaturan) tetap berupa tabel, tapi bisa **digeser ke samping** di dalam kotaknya.
+
 ## Navigasi
 
 - **Header atas membeku (freeze)** — judul halaman, tombol **+ Tambah Inspeksi**, **Sinkron**, dan **Buka Sheet** tetap terlihat saat halaman digulir ke bawah; muncul bayangan halus sebagai penanda.
