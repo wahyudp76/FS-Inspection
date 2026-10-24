@@ -44,6 +44,19 @@ sebagai dua batang berdampingan pada tiap rentang skor (90-100, 80-89, 70-79, 50
 - **Header atas membeku (freeze)** — judul halaman, tombol **+ Tambah Inspeksi**, **Sinkron**, dan **Buka Sheet** tetap terlihat saat halaman digulir ke bawah; muncul bayangan halus sebagai penanda.
 - **Tombol ↑ (kembali ke atas)** muncul otomatis di kanan bawah setelah halaman digulir lebih dari ±320 px; sekali klik halaman meluncur kembali ke paling atas.
 
+## Halaman tidak bisa digeser (sudah diperbaiki)
+
+Bila halaman terasa "beku" dan tidak mau digeser ke bawah — biasanya setelah membuka pop-up
+(detail unit, ubah inspeksi, tambah inspeksi, atau analisa distribusi skor) — itu karena scroll
+halaman tertinggal terkunci. Sejak perbaikan ini:
+
+- kunci scroll hanya aktif **selama pop-up benar-benar terbuka**, dan otomatis dilepas saat ditutup;
+- dua pop-up bertumpuk (mis. analisa + detail unit) memakai penghitung, jadi menutup yang atas
+  tidak membuka kunci terlalu cepat;
+- berpindah tab saat pop-up masih terbuka juga otomatis melepas kunci.
+
+Kalau suatu saat masih terasa terkunci, cukup muat ulang halaman (tombol ↻ browser).
+
 ## Urutan bagian di tab Riwayat
 
 Di HP, **Daftar Inspeksi** kini tampil **paling atas** (setelah kartu ringkasan), sehingga hasil inspeksi

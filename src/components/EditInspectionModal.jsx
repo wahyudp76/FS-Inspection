@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cx, scoreOf, kondisiOf, GRADE_COLOR } from '../lib/analytics'
+import { useScrollLock } from '../lib/scrollLock'
 import { GRADES } from '../lib/config'
 import { ScoreRing, Bar } from './ui'
 import { IconCheck, IconAlert, IconClipboard, IconTruck, IconDroplet } from './icons'
@@ -32,16 +33,14 @@ export default function EditInspectionModal({ record, data, onClose, onSave, sav
     setOnlyFilled(false)
   }, [record?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  /* kunci scroll hanya ketika benar-benar terbuka (bug: dulu body terkunci terus) */
+  useScrollLock(!!record)
   useEffect(() => {
+    if (!record) return undefined
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
     document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
-  }, [onClose])
+    return () => document.removeEventListener('keydown', onKey)
+  }, [!!record, onClose]) // eslint-disable-line react-hooks/exhaustive-deps
 
   /* SEMUA hook harus dipanggil sebelum render kondisional (aturan React) */
   const nilai = useMemo(() => scoreOf(grades), [grades])

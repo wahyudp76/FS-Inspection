@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { cx, kondisiUnit } from '../lib/analytics'
+import { useScrollLock } from '../lib/scrollLock'
 import { GradePill, KondisiPill, StatusPill, ScoreRing } from '../components/ui'
 import { IconX, IconAlert, IconClipboard, IconTruck, IconDroplet } from '../components/icons'
 import { GROUP_ICON } from '../components/icons'
@@ -9,16 +10,12 @@ export default function DetailDrawer({ unit, data, records, onClose, navigate })
   const groups = unit.tipe === 'Mesin' ? data.groups.mesin : data.groups.irrigator
   const history = records.filter((r) => r.tipe === unit.tipe && r.kode === unit.kode).slice(0, 4)
 
-  /* tutup dengan Esc + kunci scroll latar */
+  /* tutup dengan Esc + kunci scroll latar (hanya selama drawer tampil) */
+  useScrollLock(!!unit)
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
+    return () => window.removeEventListener('keydown', onKey)
   }, [onClose])
 
   const modal = (

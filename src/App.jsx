@@ -10,6 +10,7 @@ import { fetchHistory, readLocalHistory, flushQueue, sortRecords } from './lib/a
 import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
+import { releaseScrollLock } from './lib/scrollLock'
 import QuickInspect from './components/QuickInspect'
 
 const readHash = () => {
@@ -35,6 +36,14 @@ export default function App() {
     window.location.hash = `#/${r}${qs}`
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }, [])
+
+  /* pengaman: setiap kali rute berubah, pastikan scroll halaman tidak tertinggal terkunci */
+  useEffect(() => {
+    const t = setTimeout(() => {
+      if (!document.querySelector('[role="dialog"]')) releaseScrollLock()
+    }, 60)
+    return () => clearTimeout(t)
+  }, [route, params])
 
   useEffect(() => {
     const onHash = () => setNav(readHash())

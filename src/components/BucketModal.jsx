@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cx, kondisiOf, pct, scoreColor, bucketAnalysis, unitsInRange } from '../lib/analytics'
+import { useScrollLock } from '../lib/scrollLock'
 import { KondisiPill, StatusPill, Bar, Segmented } from './ui'
 import { IconTruck, IconDroplet, IconAlert, IconClipboard, IconChevron } from './icons'
 
@@ -42,17 +43,13 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
     if (body.scrollTop > top) body.scrollTo({ top, behavior: 'smooth' })
   }, [halamanAman])
 
+  useScrollLock(open)
   useEffect(() => {
-    if (!open) return
+    if (!open) return undefined
     /* jangan ikut menutup saat ada lapisan di atasnya (detail unit) yang menangani Esc */
     const onKey = (e) => { if (e.key === 'Escape' && !escDisabled) onClose?.() }
     document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.body.style.overflow = prev
-    }
+    return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose, escDisabled])
 
   if (!open || !range) return null

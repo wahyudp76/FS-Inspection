@@ -5,6 +5,7 @@ import { kondisiMeta, statusUnitMeta } from '../lib/config'
 import { Segmented, StatusPill, ScoreRing } from './ui'
 import { IconSearch, IconX, IconClipboard, IconChevron, IconTruck, IconDroplet, IconCheck } from './icons'
 import Inspect from '../pages/Inspect'
+import { useScrollLock } from '../lib/scrollLock'
 
 /* ------------------------- satu baris data pendukung ------------------------- */
 const Field = ({ label, value, mono, wide }) => (
@@ -48,14 +49,13 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
     return () => clearTimeout(t)
   }, [open])
 
-  /* Esc menutup, kunci scroll body */
+  /* Esc menutup, kunci scroll body (hanya saat terbuka) */
+  useScrollLock(open)
   useEffect(() => {
     if (!open) return undefined
     const onKey = (e) => { if (e.key === 'Escape') onClose?.() }
     document.addEventListener('keydown', onKey)
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    return () => { document.removeEventListener('keydown', onKey); document.body.style.overflow = prev }
+    return () => document.removeEventListener('keydown', onKey)
   }, [open, onClose])
 
   if (!open) return null

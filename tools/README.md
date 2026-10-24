@@ -30,7 +30,7 @@ node tools/e2e.mjs
 
 # 6. uji ubah & hapus sesi inspeksi (tab Riwayat) — jalankan mockapi dulu
 node tools/mockapi.mjs &
-node tools/edittest.mjs && node tools/syncedit.mjs
+node tools/edittest.mjs && node tools/syncedit.mjs && node tools/scrolllock.mjs
 
 # 7. uji pop-up Distribusi Skor (klik batang Mesin & Irrigator)
 node tools/mkseseed.mjs && node tools/buckettest.mjs && node tools/bucketnav.mjs
@@ -41,3 +41,5 @@ node tools/mkseseed.mjs && node tools/buckettest.mjs && node tools/bucketnav.mjs
 - `mockapi.mjs` — membungkus mock di atas menjadi HTTP server agar bisa diuji dari browser.
 - `mock-test.mjs` — 18 pemeriksaan: idempotensi submit, revisi, urutan waktu, kompresi lossless.
 - `audit2.mjs` / `clicksweep.mjs` / `datacheck.mjs` — audit UI di 320/360/390/414 px.
+- `scrolllock.mjs` — memastikan halaman selalu bisa digeser (scroll body tidak tertinggal terkunci
+  setelah pop-up dibuka/ditutup atau saat pindah tab).
