@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.4.0'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.5.0'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -125,6 +125,14 @@ function doPost(e) {
     if (action === 'submit') {
       var rec = writeInspection_(body.payload || {});
       return json_({ ok: true, record: rec });
+    }
+    if (action === 'update') {
+      var recU = updateInspection_(body.payload || {});
+      return json_({ ok: true, record: recU });
+    }
+    if (action === 'delete') {
+      var resD = deleteInspection_(body.payload || {});
+      return json_({ ok: true, result: resD });
     }
     if (action === 'syncmaster') {
       return json_({ ok: true, result: syncLatestToMaster() });
@@ -488,6 +496,89 @@ function revisiSaatIni_(sh) {
 
 function bumpRev_() {
   try { CacheService.getScriptCache().remove('fsi:rev'); } catch (e) {}
+}
+
+/**
+ * UBAH satu baris inspeksi (berdasarkan kolom "ID Inspeksi").
+ * Nilai A/B/C ditulis ulang ke kolom komponen tipe terkait dan ringkasan
+ * (A/B/C/Total/Skor/Kondisi) dihitung ulang di server agar konsisten.
+ */
+function updateInspection_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var id = String(p.id || '').trim();
+    if (!id) throw new Error('ID inspeksi kosong.');
+    var sh = ensureSheet_(false);
+    var map = headerMap_(sh);
+    if (!map['ID Inspeksi']) throw new Error('Kolom "ID Inspeksi" tidak ditemukan di sheet.');
+    var rowIndex = cariBaris_(sh, map['ID Inspeksi'], id);
+    if (!rowIndex) throw new Error('Baris dengan ID ' + id + ' tidak ditemukan (mungkin sudah dihapus / diubah di sheet).');
+
+    var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0].map(function (h) { return String(h).trim(); });
+    var row = sh.getRange(rowIndex, 1, 1, header.length).getValues()[0];
+    var rec = rowToRecord_(header, row, rowIndex, componentIndex_());
+
+    var tipe = String(p.tipe || rec.tipe || '');
+    var komponen = p.komponen || rec.komponen || {};
+    var set = function (name, value) {
+      if (map[name]) row[map[name] - 1] = value;
+    };
+
+    if (p.tanggal) set('Tanggal', String(p.tanggal));
+    if (p.inspector !== undefined) set('Petugas', String(p.inspector || ''));
+    if (p.catatan !== undefined) set('Catatan', String(p.catatan || ''));
+    if (p.statusUnit !== undefined) set('Status Unit', String(p.statusUnit || ''));
+    if (p.wilayah !== undefined) set('Wilayah', String(p.wilayah || ''));
+    if (p.unitJenis !== undefined) set('Jenis Unit', String(p.unitJenis || ''));
+    if (p.spec !== undefined) set('Spesifikasi', String(p.spec || ''));
+
+    /* ---- nilai komponen: hanya kolom milik tipe baris ini ---- */
+    var compIdx = componentIndex_();
+    var a = 0, b = 0, c = 0;
+    for (var label in compIdx) {
+      if (compIdx[label].tipe !== tipe) continue;
+      var col = map[label];
+      if (!col) continue;
+      var g = normalizeGrade_(komponen[compIdx[label].name]);
+      row[col - 1] = g;
+      if (g === 'A') a++; else if (g === 'B') b++; else if (g === 'C') c++;
+    }
+    var total = a + b + c;
+    var skor = total ? Math.round(((a * 100 + b * 60) / total) * 10) / 10 : 0;
+    set('A', a); set('B', b); set('C', c); set('Total', total); set('Skor', skor);
+    set('Kondisi', kondisiDari_(skor, String(p.statusUnit || rec.statusUnit || '')));
+
+    sh.getRange(rowIndex, 1, 1, header.length).setValues([row]);
+    bumpRev_();
+
+    var hasil = rowToRecord_(header, row, rowIndex, compIdx);
+    hasil.skor = skor;
+    return hasil;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** HAPUS satu baris inspeksi (berdasarkan ID Inspeksi). */
+function deleteInspection_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var id = String(p.id || '').trim();
+    if (!id) throw new Error('ID inspeksi kosong.');
+    var sh = ensureSheet_(false);
+    var map = headerMap_(sh);
+    if (!map['ID Inspeksi']) throw new Error('Kolom "ID Inspeksi" tidak ditemukan di sheet.');
+    var rowIndex = cariBaris_(sh, map['ID Inspeksi'], id);
+    if (!rowIndex) throw new Error('Baris dengan ID ' + id + ' tidak ditemukan (mungkin sudah dihapus).');
+    var info = sh.getRange(rowIndex, 1, 1, Math.min(6, sh.getLastColumn())).getValues()[0];
+    sh.deleteRow(rowIndex);
+    bumpRev_();
+    return { id: id, deleted: true, row: rowIndex, info: info };
+  } finally {
+    lock.releaseLock();
+  }
 }
 
 function readHistory_() {

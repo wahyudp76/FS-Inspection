@@ -205,6 +205,29 @@ export function readLocalHistory() {
   return { records: sortRecords(c.records || []), syncedAt: c.syncedAt, offline: true }
 }
 
+/** Ubah satu baris inspeksi di sheet (butuh endpoint; cache ikut diperbarui) */
+export async function updateInspection(payload) {
+  const json = await post({ action: 'update', payload })
+  const rec = json.record || payload
+  const cache = readCache()
+  const records = (cache.records || []).map((r) =>
+    (r.id && rec.id && r.id === rec.id) || (!r.id && r.kode === rec.kode && r.tanggal === rec.tanggal)
+      ? { ...r, ...rec, pending: false }
+      : r
+  )
+  writeCache({ records: sortRecords(records), syncedAt: new Date().toISOString() })
+  return rec
+}
+
+/** Hapus satu baris inspeksi di sheet (butuh endpoint; cache ikut diperbarui) */
+export async function deleteInspection(id) {
+  const json = await post({ action: 'delete', payload: { id } })
+  const cache = readCache()
+  const records = (cache.records || []).filter((r) => r.id !== id)
+  writeCache({ records: sortRecords(records), syncedAt: new Date().toISOString() })
+  return json.result || { id, deleted: true }
+}
+
 /** Isi sheet "Data Inspeksi" dengan inspeksi awal dari master (idempoten) */
 export async function backfillMaster(tanggal = '2026-03-05') {
   const json = await post({ action: 'backfill', payload: { tanggal } }, 120000)

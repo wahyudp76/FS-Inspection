@@ -90,5 +90,37 @@ const mismatch = expanded.filter((r) => !setPlain.has(key(r)))
 check('kompresi lossless (komponen identik setelah dikembangkan)', mismatch.length === 0, `${expanded.length} record, ${mismatch.length} beda`)
 console.log(`\nUkuran payload: penuh ${(JSON.stringify(plain).length / 1024).toFixed(0)} KB → terkompresi ${(JSON.stringify(packed).length / 1024).toFixed(0)} KB`)
 
+
+/* ---------------- 9. update & delete ----------------
+   (dijalankan setelah uji sebelumnya; memakai ctx yang sama) */
+const target = post(ctx, { action: 'submit', payload: {
+  clientId: 'FSI-EDIT-1', tipe: 'Mesin', kode: 'SPE0003', wilayah: 'PG2', unitJenis: 'SPE',
+  spec: 'Teco 75KW', statusUnit: 'Terpasang', tanggal: '2026-10-24', inspector: 'Petugas A',
+  komponen: { Accu: 'A', 'V Belt Altenator': 'A' }, a: 2, b: 0, c: 0, total: 2, skor: 100,
+} }).record
+const before9 = rowCount(env.sheet)
+const up = post(ctx, { action: 'update', payload: {
+  id: target.id, tanggal: '2026-10-25', inspector: 'Petugas B', catatan: 'sudah diganti accu',
+  komponen: { Accu: 'C', 'V Belt Altenator': 'B' },
+} })
+check('update mengubah petugas', up.ok && up.record.inspector === 'Petugas B', up.record && up.record.inspector)
+check('update mengubah tanggal', up.record.tanggal === '2026-10-25', up.record.tanggal)
+check('update menghitung ulang skor', up.record.skor === 30 && up.record.c === 1 && up.record.b === 1, `skor ${up.record.skor}, A${up.record.a} B${up.record.b} C${up.record.c}`)
+check('update tidak menambah baris', rowCount(env.sheet) === before9)
+check('update menyimpan catatan', up.record.catatan === 'sudah diganti accu', up.record.catatan)
+const histU = post(ctx, { action: 'history', payload: {} })
+const recU = histU.records.find((r) => r.id === target.id)
+check('history memuat hasil update', recU && recU.inspector === 'Petugas B' && recU.skor === 30, recU ? `${recU.inspector} / ${recU.skor}` : 'tidak ada')
+
+const del = post(ctx, { action: 'delete', payload: { id: target.id } })
+check('delete melaporkan sukses', del.ok && del.result.deleted === true, JSON.stringify(del.result && del.result.row))
+check('delete mengurangi 1 baris', rowCount(env.sheet) === before9 - 1, `${before9} → ${rowCount(env.sheet)}`)
+const histD = post(ctx, { action: 'history', payload: {} })
+check('record terhapus tidak muncul lagi', !histD.records.some((r) => r.id === target.id))
+const delAgain = post(ctx, { action: 'delete', payload: { id: target.id } })
+check('hapus dua kali → pesan jelas (bukan crash)', delAgain.ok === false && /tidak ditemukan/i.test(delAgain.error), delAgain.error)
+const noId = post(ctx, { action: 'update', payload: { id: 'TIDAK-ADA', inspector: 'X' } })
+check('update ID tak dikenal → error ramah', noId.ok === false && /tidak ditemukan/i.test(noId.error))
+
 console.log(fail === 0 ? '\nSEMUA UJI LULUS' : `\n${fail} UJI GAGAL`)
 process.exit(fail === 0 ? 0 : 1)

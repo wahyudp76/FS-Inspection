@@ -98,6 +98,10 @@ class Sheet {
     const r = this.getLastRow() + 1
     vals.forEach((v, i) => this.setCell(r, i + 1, v))
   }
+  deleteRow(n) {
+    this.grid.splice(n - 1, 1)
+    return this
+  }
   getDataRange() { return new Range(this, 1, 1, this.getLastRow(), this.getLastColumn()) }
 }
 

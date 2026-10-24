@@ -60,6 +60,21 @@ Tombol **Sinkron** (ikon ↻ di header, atau ↻ pada kartu *Google Sheets* di m
 - **Endpoint terisi** → ikon berputar, lalu notifikasi **berhasil** atau **gagal** (beserta pesan errornya) dan waktu sinkron terakhir diperbarui.
 - Di HP, tombol header berukuran 44×44 px agar mudah ditekan dan tidak salah tekan dengan tombol sebelahnya.
 
+## Ubah & hapus hasil inspeksi (tab Riwayat)
+
+Setiap baris di tab **Riwayat** punya dua tombol: **✎ Ubah** dan **🗑 Hapus** (di HP muncul di setiap kartu,
+di desktop pada kolom **Aksi**).
+
+- **Ubah** → pop-up berisi Petugas, Tanggal, Catatan, dan nilai **A/B/C tiap komponen**. Skor & kondisi
+  dihitung ulang otomatis saat disimpan (server juga menghitung ulang, jadi tidak mungkin beda).
+  Tombol **Simpan perubahan** baru aktif bila ada yang berubah.
+- **Hapus** → dialog konfirmasi (menyebut kode unit, tanggal, dan petugas) sebelum baris dihapus dari sheet.
+  Penghapusan **tidak bisa dibatalkan**.
+- Kedua aksi menulis langsung ke sheet **Data Inspeksi** (aksi `update` / `delete`, butuh Apps Script v1.5.0)
+  dan daftar di layar langsung ikut berubah tanpa perlu **Sinkron**.
+- Sesi yang masih di **antrean lokal** (belum terkirim ke sheet) atau data **Mode Demo** tidak bisa
+  diubah/dihapus — muncul notifikasi penjelasan.
+
 ## Notifikasi
 
 Notifikasi di bawah layar (hasil sinkron, simpan inspeksi, error) **hilang otomatis**: 4 detik untuk berhasil/informasi, 7 detik untuk error. Arahkan kursor ke notifikasi untuk menahan agar tidak hilang, atau klik **×** untuk menutup langsung.

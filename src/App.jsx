@@ -6,7 +6,7 @@ import Units from './pages/Units'
 import History from './pages/History'
 import Settings from './pages/Settings'
 import assetsData from './data/assets.json'
-import { fetchHistory, readLocalHistory, flushQueue } from './lib/api'
+import { fetchHistory, readLocalHistory, flushQueue, sortRecords } from './lib/api'
 import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
@@ -118,6 +118,16 @@ export default function App() {
     })
   }, [])
 
+  const handleUpdated = useCallback((rec) => {
+    setRecords((prev) => sortRecords(prev.map((r) => (r.id === rec.id ? { ...r, ...rec } : r))))
+  }, [])
+
+  const handleDeleted = useCallback((id) => {
+    setRecords((prev) => prev.filter((r) => r.id !== id))
+  }, [])
+
+  const notify = useCallback((toastData) => setToast(toastData), [])
+
   const data = useMemo(() => ({ ...assetsData, mesin: assetsData.mesin || [], irrigator: assetsData.irrigator || [] }), [])
 
   const demoRecords = useMemo(() => (demo ? buildDemoRecords(data) : []), [demo, data])
@@ -135,13 +145,25 @@ export default function App() {
       case 'unit':
         return <Units data={data} records={allRecords} navigate={navigate} />
       case 'riwayat':
-        return <History records={allRecords} data={data} navigate={navigate} onSync={() => doSync()} syncing={sync.syncing} />
+        return (
+          <History
+            records={allRecords}
+            data={data}
+            navigate={navigate}
+            onSync={() => doSync()}
+            syncing={sync.syncing}
+            onUpdated={handleUpdated}
+            onDeleted={handleDeleted}
+            notify={notify}
+            offline={!getEndpoint()}
+          />
+        )
       case 'pengaturan':
         return <Settings onSync={() => doSync()} records={records} demo={demo} onToggleDemo={toggleDemo} />
       default:
         return <Dashboard data={data} records={allRecords} navigate={navigate} onSync={() => doSync()} syncing={sync.syncing} />
     }
-  }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted])
+  }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted, handleUpdated, handleDeleted, notify])
 
   return (
     <Shell route={route} navigate={navigate} sync={sync} onSync={() => doSync()} offline={sync.offline} demo={demo} onAddInspect={() => setQuickOpen(true)}>

@@ -5,8 +5,11 @@ import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, Empty, Segme
 import { TrendChart, GradeStack } from '../components/charts'
 import { IconDownload, IconSearch, IconHistory, IconChevronDown, IconClipboard, IconAlert, IconSheet, IconRefresh } from '../components/icons'
 import { TARGET_SHEET } from '../lib/config'
+import { updateInspection, deleteInspection } from '../lib/api'
+import EditInspectionModal, { ConfirmDelete } from '../components/EditInspectionModal'
+import { IconEdit, IconTrash } from '../components/icons'
 
-export default function History({ records, data, navigate, onSync, syncing }) {
+export default function History({ records, data, navigate, onSync, syncing, onUpdated, onDeleted, notify, offline }) {
   const [tipe, setTipe] = useState('Semua')
   const [q, setQ] = useState('')
   const [period, setPeriod] = useState('minggu')
@@ -14,6 +17,64 @@ export default function History({ records, data, navigate, onSync, syncing }) {
   const [expanded, setExpanded] = useState(null)
   const [perPage, setPerPage] = useState(10)
   const [page, setPage] = useState(0)
+  /* ubah / hapus satu sesi inspeksi */
+  const [editRec, setEditRec] = useState(null)
+  const [hapusRec, setHapusRec] = useState(null)
+  const [busy, setBusy] = useState(false)
+
+  const bolehUbah = (r) => !!r && !!r.id && !r.pending && !String(r.id).startsWith('LOCAL-') && !String(r.id).startsWith('DEMO-')
+
+  const mulaiUbah = (r) => {
+    if (!bolehUbah(r)) {
+      notify?.({ type: 'info', message: 'Sesi ini belum tersimpan di Google Sheets (masih antrean lokal), jadi belum bisa diubah.' })
+      return
+    }
+    if (offline) {
+      notify?.({ type: 'info', message: 'Ubah/hapus butuh koneksi ke Apps Script. Atur endpoint di menu Pengaturan.' })
+      return
+    }
+    setEditRec(r)
+  }
+
+  const mulaiHapus = (r) => {
+    if (!bolehUbah(r)) {
+      notify?.({ type: 'info', message: 'Sesi ini belum tersimpan di Google Sheets (masih antrean lokal), jadi belum bisa dihapus.' })
+      return
+    }
+    if (offline) {
+      notify?.({ type: 'info', message: 'Ubah/hapus butuh koneksi ke Apps Script. Atur endpoint di menu Pengaturan.' })
+      return
+    }
+    setHapusRec(r)
+  }
+
+  const simpanUbah = async (payload) => {
+    setBusy(true)
+    try {
+      const rec = await updateInspection(payload)
+      onUpdated?.(rec)
+      setEditRec(null)
+      notify?.({ type: 'success', message: `Inspeksi ${rec.kode} berhasil diperbarui di sheet Data Inspeksi.` })
+    } catch (e) {
+      notify?.({ type: 'error', message: `Gagal menyimpan perubahan: ${e.message}` })
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const konfirmasiHapus = async (rec) => {
+    setBusy(true)
+    try {
+      await deleteInspection(rec.id)
+      onDeleted?.(rec.id)
+      setHapusRec(null)
+      notify?.({ type: 'success', message: `Sesi inspeksi ${rec.kode} (${rec.tanggal}) dihapus dari sheet.` })
+    } catch (e) {
+      notify?.({ type: 'error', message: `Gagal menghapus: ${e.message}` })
+    } finally {
+      setBusy(false)
+    }
+  }
 
   const groupFor = (t) => (t === 'Mesin' ? data.groups.mesin : data.groups.irrigator)
 
@@ -160,13 +221,31 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                         {r.wilayah || '—'} · {r.inspector || 'Tanpa nama'}
                       </p>
                     </div>
-                    <button
-                      onClick={() => setExpanded(isOpen ? null : key)}
-                      className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400"
-                      aria-label={isOpen ? 'Tutup rincian' : 'Buka rincian'}
-                    >
-                      <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
-                    </button>
+                    <div className="flex shrink-0 gap-1">
+                      <button
+                        onClick={() => mulaiUbah(r)}
+                        className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2 text-slate-400 transition hover:border-brand/40 hover:text-brand"
+                        aria-label={`Ubah inspeksi ${r.kode}`}
+                        title="Ubah"
+                      >
+                        <IconEdit size={13} />
+                      </button>
+                      <button
+                        onClick={() => mulaiHapus(r)}
+                        className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2 text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300"
+                        aria-label={`Hapus inspeksi ${r.kode}`}
+                        title="Hapus"
+                      >
+                        <IconTrash size={13} />
+                      </button>
+                      <button
+                        onClick={() => setExpanded(isOpen ? null : key)}
+                        className="tap rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400"
+                        aria-label={isOpen ? 'Tutup rincian' : 'Buka rincian'}
+                      >
+                        <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
+                      </button>
+                    </div>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <span className="shrink-0 font-mono text-[10.5px] text-slate-400">{r.tanggal}</span>
@@ -227,7 +306,7 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                   <th className="px-2 py-2 text-center font-semibold">A/B/C</th>
                   <th className="px-2 py-2 font-semibold">Skor</th>
                   <th className="px-2 py-2 font-semibold">Kondisi</th>
-                  <th className="px-4 py-2 text-right font-semibold">Detail</th>
+                  <th className="px-4 py-2 text-right font-semibold">Aksi</th>
                 </tr>
               </thead>
               <tbody>
@@ -262,9 +341,27 @@ export default function History({ records, data, navigate, onSync, syncing }) {
                         </td>
                         <td className="px-2 py-2.5"><KondisiPill kondisi={r.kondisi} /></td>
                         <td className="px-4 py-2.5 text-right">
-                          <button onClick={() => setExpanded(isOpen ? null : key)} className="tap rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400 transition hover:text-brand">
-                            <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
-                          </button>
+                          <div className="flex justify-end gap-1">
+                            <button
+                              onClick={() => mulaiUbah(r)}
+                              className="rounded-lg border border-white/10 bg-white/[0.03] px-1.5 py-1 text-slate-400 transition hover:border-brand/40 hover:text-brand"
+                              aria-label={`Ubah inspeksi ${r.kode}`}
+                              title="Ubah sesi ini"
+                            >
+                              <IconEdit size={13} />
+                            </button>
+                            <button
+                              onClick={() => mulaiHapus(r)}
+                              className="rounded-lg border border-white/10 bg-white/[0.03] px-1.5 py-1 text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300"
+                              aria-label={`Hapus inspeksi ${r.kode}`}
+                              title="Hapus sesi ini"
+                            >
+                              <IconTrash size={13} />
+                            </button>
+                            <button onClick={() => setExpanded(isOpen ? null : key)} className="tap rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400 transition hover:text-brand">
+                              <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                       {isOpen && (
@@ -384,6 +481,22 @@ export default function History({ records, data, navigate, onSync, syncing }) {
       )}
 
       </Card>
+
+      <EditInspectionModal
+        key={editRec?.id || 'no-edit'}
+        record={editRec}
+        data={data}
+        saving={busy}
+        offline={offline}
+        onClose={() => { if (!busy) setEditRec(null) }}
+        onSave={simpanUbah}
+      />
+      <ConfirmDelete
+        record={hapusRec}
+        busy={busy}
+        onClose={() => { if (!busy) setHapusRec(null) }}
+        onConfirm={konfirmasiHapus}
+      />
     </div>
   )
 }
