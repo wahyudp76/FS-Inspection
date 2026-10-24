@@ -59,9 +59,10 @@ Kalau suatu saat masih terasa terkunci, cukup muat ulang halaman (tombol ↻ bro
 
 ## Urutan bagian di tab Riwayat
 
-Di HP, **Daftar Inspeksi** kini tampil **paling atas** (setelah kartu ringkasan), sehingga hasil inspeksi
-langsung terlihat tanpa harus melewati grafik. Grafik **Tren Inspeksi** dan **Komposisi Temuan**
-berada di bawah daftar. Di layar lebar susunannya tetap berdampingan seperti sebelumnya.
+Urutan tetap dari atas ke bawah: kartu ringkasan (**Total Sesi**, **Unit Diinspeksi**, **Rata-rata Skor**,
+**Temuan B/C**) → **Tren Inspeksi** & **Komposisi Temuan** (grafik, berdampingan di layar lebar) →
+**Daftar Inspeksi** (tabel/kartu sesi) di **paling bawah**. Halaman tetap bisa digeser penuh sampai
+ke daftar; tombol **kembali ke atas** tersedia di pojok kanan bawah.
 
 ## Kecepatan & ketepatan sinkron (v1.4.0)
 
