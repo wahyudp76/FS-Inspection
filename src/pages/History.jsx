@@ -196,7 +196,7 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
       </div>
 
       <div className="flex flex-col gap-4">
-      <div className="order-2 grid gap-4 xl:grid-cols-12">
+      <div className="order-1 grid gap-4 xl:grid-cols-12">
         <Card className="xl:col-span-7">
           <CardHeader
             title="Tren Inspeksi"
@@ -219,7 +219,7 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
         </Card>
       </div>
 
-      <Card className="order-1 overflow-hidden">
+      <Card className="order-2 overflow-hidden">
         <CardHeader
           title="Daftar Inspeksi"
           sub={`${filtered.length} sesi · sheet “${TARGET_SHEET.name}”`}
