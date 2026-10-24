@@ -6,6 +6,9 @@ Skrip ini dipakai untuk mengaudit dashboard secara otomatis. Butuh **Node 20+**.
 # sekali saja (di root repo)
 npm i -D playwright-core
 npx playwright install chromium     # atau pakai Chrome yang sudah ada
+# bila playwright-core dipasang di folder lain:
+export PW_DIR=/path/ke/node_modules
+export CHROME=/path/ke/chrome
 
 # 1. uji backend Apps Script tanpa deployment
 #    butuh ekspor CSV sheet "Data Inspeksi" (gviz / File ▸ Download ▸ CSV)
@@ -24,6 +27,9 @@ node tools/mkseseed.mjs && node tools/datacheck.mjs
 # 5. uji end-to-end sinkron + kirim inspeksi (server tiruan Apps Script di :8111)
 node tools/mockapi.mjs &
 node tools/e2e.mjs
+
+# 6. uji pop-up Distribusi Skor (klik batang Mesin & Irrigator)
+node tools/mkseseed.mjs && node tools/buckettest.mjs && node tools/bucketnav.mjs
 ```
 
 - `mock.gs.mjs` — tiruan `SpreadsheetApp`, `Utilities`, `LockService`, `DriveApp`,

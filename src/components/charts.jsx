@@ -180,6 +180,41 @@ export function ScoreHistogram({ data, height = 180, onBucket }) {
   )
 }
 
+/* ------------------ Distribusi skor: Mesin vs Irrigator ------------------ */
+/**
+ * Histogram dua batang per rentang. Klik batang → `onBar({ range, tipe })`
+ * untuk membuka pop-up daftar unit + analisis rentang tersebut.
+ */
+export function ScoreHistogramSplit({ data, height = 200, onBar }) {
+  const klik = (tipe) => (d) => {
+    const label = d?.label ?? d?.payload?.label
+    const range = data.find((x) => x.label === label)
+    if (range) onBar?.({ range, tipe })
+  }
+  return (
+    <ResponsiveContainer width="100%" height={height}>
+      <BarChart data={data} margin={{ top: 18, right: 6, left: -16, bottom: 0 }} barCategoryGap="24%" barGap={2}>
+        <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
+        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
+        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
+        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<TipBox suffix=" unit" />} />
+        <Legend
+          iconType="circle"
+          iconSize={7}
+          wrapperStyle={{ fontSize: 10.5, paddingTop: 2 }}
+          formatter={(v) => <span style={{ color: '#94a3b8' }}>{v}</span>}
+        />
+        <Bar dataKey="mesin" name="Mesin (engine)" fill="#38bdf8" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Mesin')} cursor="pointer">
+          <LabelList dataKey="mesin" position="top" style={{ fill: '#bae6fd', fontSize: 9.5, fontWeight: 700 }} />
+        </Bar>
+        <Bar dataKey="irrigator" name="Irrigator" fill="#22d3ee" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Irrigator')} cursor="pointer">
+          <LabelList dataKey="irrigator" position="top" style={{ fill: '#a5f3fc', fontSize: 9.5, fontWeight: 700 }} />
+        </Bar>
+      </BarChart>
+    </ResponsiveContainer>
+  )
+}
+
 /* ------------------ Mini sparkline untuk KPI ------------------ */
 export function Spark({ data, color = '#38bdf8', height = 34 }) {
   if (!data?.length) return <div style={{ height }} />

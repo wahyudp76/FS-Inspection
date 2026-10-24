@@ -101,6 +101,85 @@ export function byWilayah(assets = []) {
     .sort((a, b) => b.total - a.total)
 }
 
+/** Rentang skor baku — dipakai histogram & analisis pop-up. */
+export const SCORE_RANGES = [
+  { label: '90-100', min: 90, max: 101, color: '#22c55e' },
+  { label: '80-89', min: 80, max: 90, color: '#84cc16' },
+  { label: '70-79', min: 70, max: 80, color: '#f59e0b' },
+  { label: '50-69', min: 50, max: 70, color: '#fb923c' },
+  { label: '<50', min: -1, max: 50, color: '#f43f5e' },
+]
+
+/** Unit yang skornya masuk rentang tertentu (dipakai pop-up distribusi skor). */
+export const unitsInRange = (assets = [], min = -1, max = 101) =>
+  assets.filter((a) => {
+    const s = a.score || 0
+    return s >= min && s < max
+  })
+
+/**
+ * Histogram skor TERPISAH per jenis aset (Mesin/engine vs Irrigator).
+ * Setiap bucket memuat jumlah masing-masing tipe agar bisa ditampilkan
+ * sebagai dua batang berdampingan dan diklik per tipe.
+ */
+export function scoreBucketsSplit(mesin = [], irrigator = []) {
+  return SCORE_RANGES.map((r) => {
+    const m = unitsInRange(mesin, r.min, r.max)
+    const i = unitsInRange(irrigator, r.min, r.max)
+    return { ...r, mesin: m.length, irrigator: i.length, count: m.length + i.length }
+  })
+}
+
+/**
+ * Analisis satu rentang skor untuk satu tipe aset.
+ * Dipakai di pop-up: rata-rata, sebaran status/kondisi, komponen paling
+ * bermasalah, sebaran wilayah, dan kalimat rekomendasi.
+ */
+export function bucketAnalysis(units = [], { range, tipe, totalTipe = 0 } = {}) {
+  const n = units.length
+  const skor = n ? units.reduce((s, u) => s + (u.score || 0), 0) / n : 0
+  const status = { Terpasang: 0, Standby: 0, Rusak: 0 }
+  units.forEach((u) => {
+    if (status[u.status] === undefined) status[u.status] = 0
+    status[u.status]++
+  })
+  const kritis = units.filter((u) => kondisiOf(u.score, u.status) === 'Kritis').length
+  const perhatian = units.filter((u) => kondisiOf(u.score, u.status) === 'Perlu Perhatian').length
+  const issues = componentIssues(units, 6)
+  const wilayahMap = new Map()
+  units.forEach((u) => wilayahMap.set(u.wilayah || '—', (wilayahMap.get(u.wilayah || '—') || 0) + 1))
+  const wilayah = [...wilayahMap.entries()].map(([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value)
+
+  const rata2Tipe = totalTipe ? units.reduce((s, u) => s + (u.score || 0), 0) / Math.max(n, 1) : 0
+  const porsi = pct(n, totalTipe)
+  const label = range?.label || ''
+  const rendah = range && range.max <= 70
+  const tinggi = range && range.min >= 90
+
+  let ringkas
+  if (!n) ringkas = `Tidak ada unit ${tipe} pada rentang ${label}.`
+  else if (tinggi)
+    ringkas = `${n} unit ${tipe} (${porsi}% dari seluruh ${tipe}) berada di rentang ${label} — kondisi prima, cukup pertahankan jadwal inspeksi berkala.`
+  else if (rendah)
+    ringkas = `${n} unit ${tipe} (${porsi}% dari seluruh ${tipe}) berada di rentang ${label} — prioritas utama; ${kritis} unit berstatus Kritis dan perlu tindak lanjut perbaikan segera.`
+  else
+    ringkas = `${n} unit ${tipe} (${porsi}% dari seluruh ${tipe}) berada di rentang ${label} — perlu perhatian; fokus pada ${issues[0]?.name || 'komponen kritis'} yang paling sering bermasalah.`
+
+  return {
+    n,
+    totalTipe,
+    porsi,
+    skor: Math.round(skor * 10) / 10,
+    rata2Tipe: Math.round(rata2Tipe * 10) / 10,
+    status,
+    kritis,
+    perhatian,
+    issues,
+    wilayah,
+    ringkas,
+  }
+}
+
 export function scoreBuckets(assets = []) {
   const buckets = [
     { label: '90-100', min: 90, max: 101, color: '#22c55e', count: 0 },

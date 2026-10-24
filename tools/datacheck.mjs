@@ -1,7 +1,10 @@
 import path from 'node:path'
 const HERE = path.dirname(new URL(import.meta.url).pathname)
 const R = (...p) => path.join(HERE, ...p)
-import { chromium } from 'playwright-core'
+import { createRequire } from 'node:module'
+const require = createRequire(import.meta.url)
+/* pakai playwright-core lokal (npm i -D playwright-core) atau dari PW_DIR */
+const { chromium } = require(process.env.PW_DIR ? process.env.PW_DIR + '/playwright-core' : 'playwright-core')
 import fs from 'node:fs'
 const CHROME = process.env.CHROME || process.env.HOME + '/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome'
 const seed = JSON.parse(fs.readFileSync(R('seed-cache.json'), 'utf8'))

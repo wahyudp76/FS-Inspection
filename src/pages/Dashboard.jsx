@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from 'react'
 import {
-  fleetSummary, componentIssues, byWilayah, scoreBuckets, groupProfile, unitTypeBreakdown,
+  fleetSummary, componentIssues, byWilayah, scoreBucketsSplit, groupProfile, unitTypeBreakdown,
   trendByPeriod, topInspectors, latestByUnit, pct, fmtDateTime, relativeTime, kondisiOf, cx, periodKey, scoreColor,
 } from '../lib/analytics'
 import { daysAgoWIB } from '../lib/time'
 import { Card, CardHeader, Kpi, Bar, KondisiPill, StatusPill, Empty, Segmented, ScoreRing, GradePill } from '../components/ui'
-import { Donut, WilayahChart, IssuesBar, GroupRadar, TrendChart, ScoreHistogram, TipBox } from '../components/charts'
+import { Donut, WilayahChart, IssuesBar, GroupRadar, TrendChart, ScoreHistogramSplit, TipBox } from '../components/charts'
+import BucketModal from '../components/BucketModal'
 import {
   IconTruck, IconDroplet, IconShield, IconAlert, IconClipboard, IconTrend, IconChevron, IconSpark,
   IconCalendar, IconUser, IconRefresh, IconGauge, IconList,
@@ -17,6 +18,8 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
   const [tipe, setTipe] = useState('Semua')
   const [period, setPeriod] = useState('bulan')
   const [issueTab, setIssueTab] = useState('Mesin')
+  /* pop-up distribusi skor: { range, tipe } */
+  const [bucketSel, setBucketSel] = useState(null)
 
   const mesin = data.mesin || []
   const irrigator = data.irrigator || []
@@ -42,7 +45,7 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
 
   const trend = useMemo(() => trendByPeriod(filteredRecords, period), [filteredRecords, period])
   const wilayah = useMemo(() => byWilayah(scoped), [scoped])
-  const buckets = useMemo(() => scoreBuckets(scoped), [scoped])
+  const bucketsSplit = useMemo(() => scoreBucketsSplit(mesin, irrigator), [mesin, irrigator])
   const issues = useMemo(
     () => componentIssues(issueTab === 'Mesin' ? mesin : irrigator, 10),
     [issueTab, mesin, irrigator]
@@ -303,10 +306,47 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
         </Card>
 
         <Card className="xl:col-span-3">
-          <CardHeader title="Distribusi Skor" sub="Jumlah unit per rentang skor" />
-          <div className="px-1 pb-2">
-            <ScoreHistogram data={buckets} height={190} />
+          <CardHeader
+            title="Distribusi Skor"
+            sub="Mesin vs Irrigator · klik batang untuk analisa"
+          />
+          <div className="px-1 pb-1">
+            <ScoreHistogramSplit
+              data={bucketsSplit}
+              height={200}
+              onBar={({ range, tipe: t }) => setBucketSel({ range, tipe: t })}
+            />
           </div>
+          {/* HP: batang chart terlalu kecil untuk jari → sediakan tombol per rentang */}
+          <div className="space-y-1 px-3 pb-2 sm:hidden">
+            {bucketsSplit.map((b) => (
+              <div key={`m-${b.label}`} className="flex items-center gap-1.5">
+                <span className="w-12 shrink-0 font-mono text-[10.5px] text-slate-400">{b.label}</span>
+                <button
+                  onClick={() => setBucketSel({ range: b, tipe: 'Mesin' })}
+                  disabled={!b.mesin}
+                  className="flex min-h-9 flex-1 items-center justify-between rounded-lg border border-sky-500/25 bg-sky-500/[0.08] px-2 text-[10.5px] font-semibold text-sky-200 disabled:opacity-40"
+                  aria-label={`Analisa ${b.label} Mesin, ${b.mesin} unit`}
+                >
+                  <span>Mesin</span>
+                  <span className="font-mono">{b.mesin}</span>
+                </button>
+                <button
+                  onClick={() => setBucketSel({ range: b, tipe: 'Irrigator' })}
+                  disabled={!b.irrigator}
+                  className="flex min-h-9 flex-1 items-center justify-between rounded-lg border border-cyan-500/25 bg-cyan-500/[0.08] px-2 text-[10.5px] font-semibold text-cyan-200 disabled:opacity-40"
+                  aria-label={`Analisa ${b.label} Irrigator, ${b.irrigator} unit`}
+                >
+                  <span>Irrigator</span>
+                  <span className="font-mono">{b.irrigator}</span>
+                </button>
+              </div>
+            ))}
+          </div>
+          <p className="hidden px-4 pb-2 text-[9.5px] leading-relaxed text-slate-500 sm:block">
+            Klik batang <span className="font-semibold text-sky-300">Mesin</span> atau{' '}
+            <span className="font-semibold text-cyan-300">Irrigator</span> untuk melihat daftar unit + analisa rentang skor.
+          </p>
           <div className="space-y-1.5 border-t border-white/[0.06] px-4 py-3">
             {komposisi.slice(0, 4).map((k) => (
               <div key={k.name} className="flex items-center gap-2">
@@ -521,6 +561,23 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
       <div className="pb-2 text-center text-[10px] text-slate-600">
         Skor kondisi = (A×100 + B×60 + C×0) ÷ total komponen · Master: tb_mesin ({mesin.length}) &amp; tb_irrigator ({irrigator.length})
       </div>
+
+      <BucketModal
+        open={!!bucketSel}
+        range={bucketSel?.range}
+        tipe={bucketSel?.tipe || 'Mesin'}
+        mesin={mesin}
+        irrigator={irrigator}
+        onClose={() => setBucketSel(null)}
+        onInspect={(u) => {
+          setBucketSel(null)
+          navigate('inspeksi', { tipe: bucketSel?.tipe || 'Mesin', kode: u.kode })
+        }}
+        onOpenUnit={(u) => {
+          setBucketSel(null)
+          navigate('unit', { tipe: bucketSel?.tipe || 'Mesin', kode: u.kode })
+        }}
+      />
     </div>
   )
 }

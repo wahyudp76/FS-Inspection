@@ -20,6 +20,20 @@ Setelah dipasang, aplikasi terbuka tanpa address bar, ikonnya memakai logo FS In
 - Semua tombol penting di HP berukuran minimal **36–40 px** (Laporkan kalau ada yang masih terasa kecil).
 - **Mode landscape / layar pendek**: menu samping (drawer) kini punya area gulir sendiri, jadi seluruh menu + kartu *Google Sheets* + link sheet tetap bisa dijangkau; header sidebar dirapatkan otomatis pada tinggi layar ≤ 520 px.
 
+## Distribusi Skor (Mesin vs Irrigator)
+
+Kartu **Distribusi Skor** di Dashboard kini memisahkan **Mesin (engine)** dan **Irrigator**
+sebagai dua batang berdampingan pada tiap rentang skor (90-100, 80-89, 70-79, 50-69, <50).
+
+- **Klik/ketuk sebuah batang** → terbuka pop-up berisi:
+  - jumlah unit, porsi terhadap total tipe tersebut, rata-rata skor, jumlah unit **Kritis** dan **Perlu perhatian**;
+  - **analisa naratif** kategori tersebut (mis. *"6 unit Mesin (4% dari seluruh mesin) berada di rentang 80-89 — perlu perhatian; fokus pada …"*);
+  - sebaran status (Terpasang/Standby/Rusak) dan wilayah terbanyak;
+  - komponen paling bermasalah (B/C) pada rentang itu;
+  - **daftar unit** pada rentang tersebut (skor terendah lebih dulu) dengan tombol **Inspeksi** dan tautan ke detail unit.
+- Di HP, batang grafik kecil sulit ditekan — tersedia **tombol per rentang** (Mesin / Irrigator) tepat di bawah grafik.
+- Pop-up bisa ditutup dengan tombol **Tutup**, tombol **✕**, tombol **Esc**, atau mengetuk area gelap di luar kartu.
+
 ## Navigasi
 
 - **Header atas membeku (freeze)** — judul halaman, tombol **+ Tambah Inspeksi**, **Sinkron**, dan **Buka Sheet** tetap terlihat saat halaman digulir ke bawah; muncul bayangan halus sebagai penanda.
