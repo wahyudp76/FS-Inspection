@@ -6,6 +6,7 @@ import {
 } from '../components/ServiceCharts'
 import ServiceForm from '../components/ServiceForm'
 import ServiceDetail from '../components/ServiceDetail'
+import ServiceStatusModal from '../components/ServiceStatusModal'
 import { cx, relativeTime } from '../lib/analytics'
 import { SERVICE_SHEET, SERVICE_STATUS, serviceStatusMeta } from '../lib/config'
 import {
@@ -152,6 +153,8 @@ export default function Service({ notify, openFormSignal = 0 }) {
   const [formOpen, setFormOpen] = useState(false)
   const [presetKode, setPresetKode] = useState('')
   const [detailUnit, setDetailUnit] = useState(null)
+  /* pop-up ringkas dari kartu KPI (lewat jadwal / jatuh tempo / belum service) */
+  const [kpiStatus, setKpiStatus] = useState(null)
 
   const ringkasan = useMemo(() => ringkasService(units, log, { duplikat }), [units, log, duplikat])
 
@@ -371,7 +374,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
           hint="Sudah melewati warning date"
           icon={<IconAlert size={14} />}
           accent="#f43f5e"
-          onClick={() => { setTabPerhatian('terlambat'); setFStatus(['terlambat']) }}
+          onClick={() => setKpiStatus('terlambat')}
         />
         <Kpi
           label="Jatuh Tempo"
@@ -380,7 +383,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
           hint={`≤ ${7} hari lagi`}
           icon={<IconClock size={14} />}
           accent="#f59e0b"
-          onClick={() => { setTabPerhatian('segera'); setFStatus(['segera']) }}
+          onClick={() => setKpiStatus('segera')}
         />
         <Kpi
           label="Belum Service"
@@ -389,7 +392,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
           hint="Belum ada catatan service"
           icon={<IconWrench size={14} />}
           accent="#94a3b8"
-          onClick={() => { setTabPerhatian('belum'); setFStatus(['belum']) }}
+          onClick={() => setKpiStatus('belum')}
         />
         <Kpi
           label="Service Bulan Ini"
@@ -1086,6 +1089,23 @@ export default function Service({ notify, openFormSignal = 0 }) {
         onClose={() => setFormOpen(false)}
         onSubmit={simpanService}
         notify={notify}
+      />
+      <ServiceStatusModal
+        statusId={kpiStatus}
+        units={kpiStatus ? ringkasan.daftar[kpiStatus] || [] : []}
+        totalUnit={ringkasan.totalUnit}
+        onClose={() => setKpiStatus(null)}
+        onPick={(u) => {
+          setKpiStatus(null)
+          setDetailUnit(u)
+        }}
+        onFilter={(id) => {
+          setFKode(null)
+          setFStatus([id])
+          setHalEval(0)
+          setKpiStatus(null)
+          notify?.({ type: 'success', message: `Tabel disaring ke status “${serviceStatusMeta(id).label}”.` })
+        }}
       />
       <ServiceDetail unit={detailUnit} log={log} onClose={() => setDetailUnit(null)} onCatat={(u) => bukaForm(u.kode)} />
     </div>

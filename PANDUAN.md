@@ -89,7 +89,8 @@ Rumus yang ditiru dashboard (sama dengan sheet):
 ### Yang ada di tab Service Engine
 
 1. **KPI**: total engine, lewat jadwal, jatuh tempo, belum service, service bulan ini, cakupan service.
-   Kartu *Lewat Jadwal / Jatuh Tempo / Belum Service* bisa diklik untuk menyaring tabel.
+   Kartu *Lewat Jadwal / Jatuh Tempo / Belum Service* bisa diklik → muncul **pop-up ringkas** (lihat di
+   bawah). Di dalam pop-up ada tombol untuk menyaring tabel.
 1b. **Aktivitas Bulanan**: pilih bulan acuan (mis. *Oktober 2026*) lalu lihat 4 angka — berapa engine
    **diservice bulan lalu**, **diservice bulan ini**, **jadwalnya jatuh bulan ini** (belum dikerjakan),
    dan **jadwalnya bulan depan**. Klik salah satu untuk menyaring tabel, klik chip *Filter: …* untuk
@@ -104,6 +105,21 @@ Rumus yang ditiru dashboard (sama dengan sheet):
    paging 10/20/50, ekspor CSV (kolom aktivitas ikut diekspor).
 5. **Riwayat Pencatatan Service**: seluruh baris `tb_service2` (terbaru dulu), dengan kenaikan HM antar
    service. Kenaikan **> 1.000 HM** atau negatif diberi tanda ⚠ — biasanya salah input HM di sheet.
+
+### Pop-up dari kartu KPI (v1.6.4)
+
+Klik kartu **Lewat Jadwal**, **Jatuh Tempo**, atau **Belum Service** → pop-up berisi gambaran singkat
+unit-unit pada kategori itu:
+
+- **Dari divisi mana saja** — chip per posisi (mis. `FM3 9 · 36%`, `PG2 8 · 32%`, `FM4 8 · 32%`) plus
+  bar komposisi. Klik chip untuk melihat daftar divisi itu saja; klik **Semua** untuk kembali.
+- **Ringkasan cepat** — mis. *“FM3 paling banyak (9 unit) · paling lama SPC0157 (86 hari) · rata-rata
+  telat 14 hari”*, atau untuk *Belum Service*: *“… dari 127 engine di tb_service1 sama sekali belum punya
+  baris di tb_service2”*.
+- **Daftar unit** 10 per halaman: kode, posisi, jenis, service terakhir, jadwal, HM, dan angka
+  keterlambatan/sisa hari. Klik satu unit → langsung terbuka **detail engine**.
+- Tombol **Saring tabel · n unit** di bawah menutup pop-up dan menyaring tabel evaluasi ke unit-unit
+  tersebut.
 
 ### Grafik analitik (v1.6.1)
 
