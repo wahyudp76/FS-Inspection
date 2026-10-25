@@ -26,7 +26,6 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
   const [daftarBuka, setDaftarBuka] = useState(false)
   const [tanggal, setTanggal] = useState(hariIniIso())
   const [hm, setHm] = useState('')
-  const [minggu, setMinggu] = useState('')
   const [posisi, setPosisi] = useState('')
   const [sibuk, setSibuk] = useState(false)
   const [galat, setGalat] = useState('')
@@ -37,6 +36,10 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
 
   const unit = useMemo(() => units.find((u) => u.kode === kode) || null, [units, kode])
 
+  /* Minggu service TIDAK dipilih manual: dihitung dari tanggal, sama seperti rumus
+     sheet "Monitor Kasie FS" → kolom F = ROUNDUP(DAY(tanggal)/7;0). */
+  const minggu = useMemo(() => mingguKe(tanggal) || 1, [tanggal])
+
   /* reset tiap kali pop-up dibuka */
   useEffect(() => {
     if (!open) return
@@ -45,7 +48,6 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
     setCari('')
     setDaftarBuka(!t)
     setTanggal(hariIniIso())
-    setMinggu(String(mingguKe(hariIniIso()) || ''))
     setPosisi('')
     setSibuk(false)
     setGalat('')
@@ -132,7 +134,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
         kode,
         tanggal,
         hm: hmNum,
-        minggu: Number(minggu) || mingguKe(tanggal) || 1,
+        minggu,
         posisi: posisi || unit?.posisi || '',
       })
       setSukses({ ...hasil, kode, hm: hmNum, tanggal })
@@ -288,10 +290,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                   <input
                     type="date"
                     value={tanggal}
-                    onChange={(e) => {
-                      setTanggal(e.target.value)
-                      setMinggu(String(mingguKe(e.target.value) || ''))
-                    }}
+                    onChange={(e) => setTanggal(e.target.value)}
                     className="input"
                   />
                   <p className="mt-1 text-[10px] text-slate-500">
@@ -299,15 +298,16 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                   </p>
                 </div>
                 <div>
-                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Minggu ke-</label>
-                  <select value={minggu} onChange={(e) => setMinggu(e.target.value)} className="input">
-                    {[1, 2, 3, 4, 5].map((w) => (
-                      <option key={w} value={String(w)} className="bg-ink-800">
-                        Minggu {w}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-[10px] text-slate-500">= ROUNDUP(tanggal/7)</p>
+                  <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Minggu service</label>
+                  <div
+                    className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-slate-200"
+                    aria-label={`Minggu service otomatis: minggu ${minggu}`}
+                    aria-readonly="true"
+                  >
+                    <span className="font-mono font-semibold text-white">Minggu {minggu}</span>
+                    <span className="ml-auto rounded bg-brand/15 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-brand">otomatis</span>
+                  </div>
+                  <p className="mt-1 text-[10px] text-slate-500">ROUNDUP(tanggal ÷ 7), sama dengan rumus sheet</p>
                 </div>
               </div>
 

@@ -105,8 +105,9 @@ Rumus yang ditiru dashboard (sama dengan sheet):
 Tombol **+ Catat Service** (header, juga di dalam tab) membuka pop-up:
 
 1. Pilih **kode mesin** (daftar bisa dicari; yang paling mendesak muncul lebih dulu, lengkap dengan status).
-2. **Tanggal service** (default hari ini) → **Bulan** otomatis, **Minggu ke-** otomatis
-   `ROUNDUP(tanggal/7)` dan masih bisa diubah.
+2. **Tanggal service** (default hari ini) → **Bulan** dan **Minggu service** terisi otomatis
+   (`Minggu = ROUNDUP(tanggal ÷ 7)`, sama dengan rumus kolom F sheet). **Minggu tidak dipilih manual**
+   — begitu tanggal diubah, angkanya ikut menyesuaikan (mis. 22 Okt → Minggu 4).
 3. Isi **HM service** (angka hour meter saat ini). Nilai harus lebih besar dari HM terakhir —
    dashboard menolak HM yang sama/kecil supaya tidak dobel.
 4. Pratinjau **jadwal berikutnya** (HM +250 dan perkiraan tanggal dari rerata HM/hari) sebelum menyimpan.
