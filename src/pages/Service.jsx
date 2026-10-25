@@ -374,6 +374,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
               <Donut
                 data={donutData}
                 height={210}
+                showLegend={false}
                 centerValue={fmt(ringkasan.totalUnit)}
                 centerLabel="engine"
                 onSlice={(name) => {
