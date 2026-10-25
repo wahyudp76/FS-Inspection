@@ -43,3 +43,15 @@ node tools/mkseseed.mjs && node tools/buckettest.mjs && node tools/bucketnav.mjs
 - `audit2.mjs` / `clicksweep.mjs` / `datacheck.mjs` — audit UI di 320/360/390/414 px.
 - `scrolllock.mjs` — memastikan halaman selalu bisa digeser (scroll body tidak tertinggal terkunci
   setelah pop-up dibuka/ditutup atau saat pindah tab).
+
+### Modul Service Engine (v1.6.0)
+
+```bash
+# 1. server tiruan Apps Script (svcread/svcrecord) + data asli 131 unit / 215 pencatatan
+SVC_FIXTURE=tools/svc-fixture.json node tools/svcmock.mjs 8112
+# 2. aplikasi statis
+python3 -m http.server 8099 --bind 0.0.0.0 --directory docs
+# 3. uji pop-up Catat Service → simpan → sheet tiruan → data ditarik ulang
+PW_DIR=$PWD/node_modules EP=http://127.0.0.1:8112/exec node tools/svce2e.mjs   # 14 pemeriksaan
+node tools/svcprobe.mjs      # tangkapan layar + hitung baris tabel di 390 px & 1440 px
+```

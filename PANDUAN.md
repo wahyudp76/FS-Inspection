@@ -57,6 +57,70 @@ halaman tertinggal terkunci. Sejak perbaikan ini:
 
 Kalau suatu saat masih terasa terkunci, cukup muat ulang halaman (tombol ↻ browser).
 
+## Service Engine — perawatan rutin musim kemarau (v1.6)
+
+Tab baru **Service Engine** (menu samping) memantau perawatan engine: ganti oli, ganti air
+radiator, dan pekerjaan rutin lain setiap **250 HM**.
+
+### Dari mana datanya?
+
+| Tabel | Sheet | Isi | Dipakai untuk |
+|---|---|---|---|
+| `tb_service1` | **Data Service Engine** (A3:W134) | hasil rumus: service terakhir, HM, rerata HM/hari, tgl & HM service berikutnya, **warning date**, minggu service tiap bulan | **resume evaluasi** (engine mana yang belum diservice, sudah lewat warning date, jatuh tempo) |
+| `tb_service2` | **Monitor Kasie FS** (A2:H217) | input kasie: Posisi, No, Tanggal, Month, Bulan Service, Minggu Service, Kode Mesin, HM Service | **tempat pencatatan** dari web |
+
+Rumus yang ditiru dashboard (sama dengan sheet):
+
+- `Rerata HM/hari` = rata-rata `tb_635[HM Berjalan]` per kode unit.
+- `Tgl Next Service` = service terakhir + `ROUNDUP(250 / rerata HM/hari)` hari.
+- `Next HM Service` = HM terakhir + 250.
+- `Warning Date` = `TODAY() − Tgl Next Service` → **positif = sudah lewat**.
+
+### Kategori status
+
+| Status | Arti |
+|---|---|
+| **Lewat jadwal** | `Warning Date` > 0 — sudah melewati tanggal service berikutnya |
+| **Jatuh tempo** | 0 s/d −7 hari lagi |
+| **Aman** | masih > 7 hari |
+| **Data HM kurang** | sudah pernah diservice tetapi rerata HM/hari kosong di sheet, jadi jadwal belum bisa dihitung |
+| **Belum pernah service** | tidak ada baris di `tb_service2` (kolom `Real Service Terakhir` kosong) |
+
+### Yang ada di tab Service Engine
+
+1. **KPI**: total engine, lewat jadwal, jatuh tempo, belum service, service bulan ini, cakupan service.
+   Kartu *Lewat Jadwal / Jatuh Tempo / Belum Service* bisa diklik untuk menyaring tabel.
+2. **Grafik**: komposisi status (donut, klik untuk filter), status per posisi (FM3/FM4/PG2/OP2),
+   volume service per bulan dari `tb_service2`.
+3. **Perlu Perhatian**: tab *Lewat / Jatuh tempo / Belum service / Data HM kurang*, urut paling mendesak,
+   10 per halaman. Klik satu baris → detail engine.
+4. **Tabel Evaluasi Service Engine**: semua 131 engine dengan kolom service terakhir, HM, next service,
+   next HM, sisa/telat hari, status, minggu service per bulan, catatan. Filter posisi/jenis/status,
+   pencarian, urutan (paling telat / jadwal terdekat / HM terbesar / kode), paging 10/20/50, ekspor CSV.
+5. **Riwayat Pencatatan Service**: seluruh baris `tb_service2` (terbaru dulu), dengan kenaikan HM antar
+   service. Kenaikan **> 1.000 HM** atau negatif diberi tanda ⚠ — biasanya salah input HM di sheet.
+
+### Mencatat service (masuk ke `tb_service2`)
+
+Tombol **+ Catat Service** (header, juga di dalam tab) membuka pop-up:
+
+1. Pilih **kode mesin** (daftar bisa dicari; yang paling mendesak muncul lebih dulu, lengkap dengan status).
+2. **Tanggal service** (default hari ini) → **Bulan** otomatis, **Minggu ke-** otomatis
+   `ROUNDUP(tanggal/7)` dan masih bisa diubah.
+3. Isi **HM service** (angka hour meter saat ini). Nilai harus lebih besar dari HM terakhir —
+   dashboard menolak HM yang sama/kecil supaya tidak dobel.
+4. Pratinjau **jadwal berikutnya** (HM +250 dan perkiraan tanggal dari rerata HM/hari) sebelum menyimpan.
+5. **Simpan ke Sheet** → Apps Script menambah **satu baris** di akhir `tb_service2`
+   (kolom A–H; `Month`, `Bulan Service`, `Minggu Service` diisi rumus), sheet menghitung ulang
+   `tb_service1`, lalu dashboard menarik ulang data dan menampilkan jadwal baru.
+
+Catatan penting:
+
+- Baris **tidak dobel**: kode + tanggal + HM yang sama tidak ditulis dua kali (idempoten).
+- Setelah menyimpan, jika `tb_service1` belum membaca baris baru, dashboard memberi peringatan
+  *“rumus tb_service1 belum membacanya”* — biasanya rentang tabel `tb_service2` perlu diperluas.
+- **Perlu Apps Script versi 1.6.0** (`svcread`, `svcrecord`) — lihat bagian *Pasang backend*.
+
 ## Urutan bagian di tab Riwayat
 
 Urutan tetap dari atas ke bawah: kartu ringkasan (**Total Sesi**, **Unit Diinspeksi**, **Rata-rata Skor**,
@@ -285,5 +349,8 @@ hasil tetap tersimpan di antrean lokal browser; setelah online → **Sinkron**.
 | Baris dobel di `Data Inspeksi` setelah sinyal jelek | Seharusnya tidak terjadi lagi sejak v1.4.0 (ID unik per kiriman). Kalau masih ada sisa dobel dari versi lama, hapus manual baris yang `ID Inspeksi`-nya sama. |
 | Sinkron terasa lambat | Cek **Pengaturan ▸ Uji Koneksi** — harus `versi 1.4.0`. Versi lama selalu mengunduh penuh ± 300 KB. |
 | Ingin grafik terisi untuk presentasi | Pengaturan ▸ **Mode Demo** (data contoh, tidak dikirim ke sheet). |
+| Tab **Service Engine** kosong / error “Endpoint Apps Script belum diatur” | Modul service butuh endpoint + Apps Script **v1.6.0**. Tempel ulang `apps-script/Code.gs`, lalu **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy**. Cek di **Pengaturan ▸ Uji Koneksi** — versi harus `1.6.0`. |
+| Service tersimpan tapi jadwal tidak berubah | `tb_service1` belum membaca baris baru. Di sheet **Monitor Kasie FS**, pastikan tabel `tb_service2` mencakup baris terakhir (Table Design ▸ Resize Table), lalu klik **Tarik dari Sheet**. |
+| Kolom `HM Service` kosong saat mencatat | HM wajib diisi manual (angka hour meter saat ini); dashboard sengaja tidak mengisinya otomatis supaya tidak tersimpan dobel. |
 | Masih ada kolom `Category` di `Data Inspeksi` | Kolom itu sudah dihapus dari master (v1.3.0). Jalankan menu **FS Inspection ▸ 4. Bersihkan kolom Category lama**, lalu **Deploy ▸ New version**. |
 | Komponen jadi 46 (mesin) / 29 (irrigator) | Benar — kolom `Category` sudah dihapus dari sheet Mesin & Irrigator. Klik **Sinkron** di dashboard agar data master dimuat ulang. |

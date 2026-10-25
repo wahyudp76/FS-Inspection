@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard'
 import Inspect from './pages/Inspect'
 import Units from './pages/Units'
 import History from './pages/History'
+import Service from './pages/Service'
 import Settings from './pages/Settings'
 import assetsData from './data/assets.json'
 import { fetchHistory, readLocalHistory, flushQueue, sortRecords } from './lib/api'
@@ -30,6 +31,7 @@ export default function App() {
   const [demo, setDemoOn] = useState(() => getDemo())
   const [toast, setToast] = useState(null)
   const [quickOpen, setQuickOpen] = useState(false)
+  const [svcSignal, setSvcSignal] = useState(0)
 
   const navigate = useCallback((r, p) => {
     const qs = p?.kode ? `?tipe=${encodeURIComponent(p.tipe || 'Mesin')}&kode=${encodeURIComponent(p.kode)}` : ''
@@ -167,15 +169,29 @@ export default function App() {
             offline={!getEndpoint()}
           />
         )
+      case 'service':
+        return <Service notify={notify} openFormSignal={svcSignal} />
       case 'pengaturan':
         return <Settings onSync={() => doSync()} records={records} demo={demo} onToggleDemo={toggleDemo} />
       default:
         return <Dashboard data={data} records={allRecords} navigate={navigate} onSync={() => doSync()} syncing={sync.syncing} />
     }
-  }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted, handleUpdated, handleDeleted, notify])
+  }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted, handleUpdated, handleDeleted, notify, svcSignal])
 
   return (
-    <Shell route={route} navigate={navigate} sync={sync} onSync={() => doSync()} offline={sync.offline} demo={demo} onAddInspect={() => setQuickOpen(true)}>
+    <Shell
+      route={route}
+      navigate={navigate}
+      sync={sync}
+      onSync={() => doSync()}
+      offline={sync.offline}
+      demo={demo}
+      onAddInspect={() => setQuickOpen(true)}
+      onAddService={() => {
+        if (route !== 'service') navigate('service')
+        setSvcSignal((n) => n + 1)
+      }}
+    >
       <div key={route + (params?.kode || '')} className="animate-fade-up">{page}</div>
       <QuickInspect
         open={quickOpen}

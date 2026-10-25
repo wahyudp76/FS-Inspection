@@ -75,6 +75,28 @@ export const TARGET_SHEET = {
   url: 'https://docs.google.com/spreadsheets/d/1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o/edit#gid=2034259854',
 }
 
+/* ------- sheet data SERVICE ENGINE (Update ZPAS637) -------
+   tb_service1 = "Data Service Engine"  → evaluasi & jadwal (hasil rumus sheet)
+   tb_service2 = "Monitor Kasie FS"     → tempat pencatatan service dari web  */
+export const SERVICE_SHEET = {
+  spreadsheetId: '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o',
+  evalSheet: 'Data Service Engine',
+  logSheet: 'Monitor Kasie FS',
+  evalTable: 'tb_service1',
+  logTable: 'tb_service2',
+  url: 'https://docs.google.com/spreadsheets/d/1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o/edit#gid=2096329957',
+}
+
+/* status evaluasi service engine */
+export const SERVICE_STATUS = [
+  { id: 'terlambat', label: 'Lewat jadwal', short: 'Lewat', color: '#f43f5e', cls: 'text-rose-300 bg-rose-500/12 border-rose-500/35', desc: 'Sudah melewati warning date' },
+  { id: 'segera', label: 'Jatuh tempo', short: 'Tempo', color: '#f59e0b', cls: 'text-amber-300 bg-amber-500/12 border-amber-500/35', desc: 'Jatuh tempo ≤ 7 hari' },
+  { id: 'aman', label: 'Aman', short: 'Aman', color: '#22c55e', cls: 'text-emerald-300 bg-emerald-500/12 border-emerald-500/35', desc: 'Masih ada waktu service' },
+  { id: 'tanpaJadwal', label: 'Data HM kurang', short: 'HM?', color: '#a78bfa', cls: 'text-violet-300 bg-violet-500/12 border-violet-500/35', desc: 'Sudah service, tapi rerata HM/hari kosong' },
+  { id: 'belum', label: 'Belum pernah service', short: 'Belum', color: '#64748b', cls: 'text-slate-300 bg-slate-500/12 border-slate-500/35', desc: 'Belum ada catatan di tb_service2' },
+]
+export const serviceStatusMeta = (id) => SERVICE_STATUS.find((s) => s.id === id) || SERVICE_STATUS[4]
+
 export const SOURCE_SHEET = {
   name: 'Draft Dashboard',
   spreadsheetId: '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4',

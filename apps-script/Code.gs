@@ -24,13 +24,24 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.5.0'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.6.0'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
 var MASTER = {
   Mesin:      { sheet: 'Mesin',     kode: 'Kode Unit', wilayah: 'Asal Mesin', spec: 'Spec',  jenis: 'Jenis', status: 'Status' },
   Irrigator:  { sheet: 'Irrigator', kode: 'KODE UNIT', wilayah: 'WILAYAH',     spec: 'Nozzle', jenis: 'Unit',  status: 'Status' }
+};
+
+/* ==================== SERVICE ENGINE (perawatan) ====================
+   Pencatatan service ditulis ke sheet "Monitor Kasie FS" (tabel tb_service2,
+   kolom A:H). Sheet "Data Service Engine" (tb_service1) menghitung sendiri
+   service terakhir, HM, jadwal berikutnya, dan warning date dari tabel itu. */
+var SERVICE = {
+  logSheet: 'Monitor Kasie FS',      // tb_service2 → tempat MENULIS
+  evalSheet: 'Data Service Engine',  // tb_service1 → hasil rumus (dibaca balik)
+  headers: ['Posisi', 'No', 'Tanggal', 'Month', 'Bulan Service', 'Minggu Service', 'Kode Mesin', 'HM Service'],
+  intervalHm: 250
 };
 
 /* Tanggal default untuk inspeksi awal hasil tarikan master */
@@ -139,6 +150,16 @@ function doPost(e) {
     }
     if (action === 'backfill') {
       return json_({ ok: true, result: backfillDariMaster((body.payload || {}).tanggal) });
+    }
+    if (action === 'svcread') {
+      return json_({ ok: true, result: serviceRead_(), version: SCRIPT_VERSION });
+    }
+    if (action === 'svcrecord') {
+      return json_({ ok: true, result: serviceRecord_(body.payload || {}) });
+    }
+    if (action === 'svcping') {
+      var info = serviceInfo_();
+      return json_({ ok: true, result: info, version: SCRIPT_VERSION });
     }
     if (action === 'setup') {
       var sh = ensureSheet_(true);
@@ -669,6 +690,227 @@ function cekStatus() {
   Logger.log(out.join('\n'));
   try { SpreadsheetApp.getActiveSpreadsheet().toast('Lihat Execution log (View ▸ Logs)', 'FS Inspection', 6); } catch (e) {}
   return out.join(' | ');
+}
+
+/*********************** SERVICE ENGINE ***********************/
+
+/** Sheet "Monitor Kasie FS" (tb_service2). */
+function serviceLogSheet_() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sh = ss.getSheetByName(SERVICE.logSheet);
+  if (!sh) throw new Error('Sheet "' + SERVICE.logSheet + '" tidak ditemukan di spreadsheet tujuan.');
+  return sh;
+}
+
+/** Cari baris header tb_service2 berdasarkan teks "Kode Mesin" di kolom G. */
+function serviceHeaderRow_(sh) {
+  var max = Math.min(8, sh.getLastRow());
+  for (var r = 1; r <= max; r++) {
+    var v = String(sh.getRange(r, 7).getValue()).trim().toLowerCase();
+    if (v === 'kode mesin') return r;
+  }
+  return 1;
+}
+
+/** "2026-10-25" / "25/10/2026" / Date → Date (jam 12 siang, aman dari zona waktu). */
+function parseTanggal_(v) {
+  if (v instanceof Date && !isNaN(v.getTime())) return v;
+  var s = String(v == null ? '' : v).trim();
+  var m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (m) return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0);
+  m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1], 12, 0, 0);
+  return null;
+}
+
+/** Posisi unit (FM3/FM4/PG2/OP2) dari sheet "Data Service Engine". */
+function petaEvaluasi_() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sh = ss.getSheetByName(SERVICE.evalSheet);
+  if (!sh) return {};
+  var last = sh.getLastRow();
+  if (last < 2) return {};
+  var vals = sh.getRange(2, 1, last - 1, 10).getValues(); // A..J
+  var out = {};
+  for (var i = 0; i < vals.length; i++) {
+    var kode = String(vals[i][1] || '').trim().toUpperCase();
+    if (!kode || kode === 'KODE UNIT') continue;
+    out[kode] = {
+      baris: i + 2,
+      kode: kode,
+      posisi: String(vals[i][3] || '').trim().toUpperCase(),
+      terakhir: vals[i][4],
+      hm: vals[i][5],
+      rerata: vals[i][6],
+      nextTgl: vals[i][7],
+      nextHm: vals[i][8],
+      warning: vals[i][9]
+    };
+  }
+  return out;
+}
+
+/** Baris header sheet "Data Service Engine" (dicari dari kolom B = KODE UNIT). */
+function serviceEvalHeaderRow_(sh) {
+  var max = Math.min(8, sh.getLastRow());
+  for (var r = 1; r <= max; r++) {
+    if (String(sh.getRange(r, 2).getValue()).trim().toUpperCase() === 'KODE UNIT') return r;
+  }
+  return 1;
+}
+
+/** Date → "yyyy-MM-dd" (teks) supaya mudah di-parse browser; nilai lain apa adanya. */
+function isoRow_(row) {
+  return row.map(function (v) {
+    if (v instanceof Date && !isNaN(v.getTime())) return Utilities.formatDate(v, 'Asia/Jakarta', 'yyyy-MM-dd');
+    return v;
+  });
+}
+
+/**
+ * BACA data service untuk dashboard:
+ *   eval* = sheet "Data Service Engine" (tb_service1, hasil rumus)
+ *   log*  = sheet "Monitor Kasie FS"    (tb_service2, input kasie)
+ * Dikirim sebagai header + baris mentah supaya parse-nya satu tempat di web.
+ */
+function serviceRead_() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var out = { ts: new Date().toISOString(), intervalHm: SERVICE.intervalHm };
+
+  var evalSh = ss.getSheetByName(SERVICE.evalSheet);
+  if (evalSh) {
+    var hr = serviceEvalHeaderRow_(evalSh);
+    var last = evalSh.getLastRow();
+    var cols = Math.max(10, Math.min(23, evalSh.getLastColumn()));
+    out.evalHeader = evalSh.getRange(hr, 1, 1, cols).getValues()[0].map(function (v) { return String(v); });
+    out.evalRows = last > hr ? evalSh.getRange(hr + 1, 1, last - hr, cols).getValues().map(isoRow_) : [];
+  } else {
+    out.evalHeader = [];
+    out.evalRows = [];
+  }
+
+  var logSh = serviceLogSheet_();
+  var lhr = serviceHeaderRow_(logSh);
+  var llast = logSh.getLastRow();
+  out.logHeader = logSh.getRange(lhr, 1, 1, 8).getValues()[0].map(function (v) { return String(v); });
+  out.logRows = llast > lhr ? logSh.getRange(lhr + 1, 1, llast - lhr, 8).getValues().map(isoRow_) : [];
+
+  return out;
+}
+
+/** Info ringkas untuk pengujian koneksi modul service. */
+function serviceInfo_() {
+  var sh = serviceLogSheet_();
+  var headerRow = serviceHeaderRow_(sh);
+  return {
+    sheet: SERVICE.logSheet,
+    evalSheet: SERVICE.evalSheet,
+    headerRow: headerRow,
+    lastRow: sh.getLastRow(),
+    barisData: Math.max(0, sh.getLastRow() - headerRow),
+    intervalHm: SERVICE.intervalHm,
+    versi: SCRIPT_VERSION
+  };
+}
+
+/**
+ * CATAT satu service → tambah satu baris di akhir tb_service2.
+ * Idempoten: kode + tanggal + HM yang sama tidak ditulis dua kali.
+ */
+function serviceRecord_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var kode = String(p.kode || p.kodeMesin || '').trim().toUpperCase();
+    if (!kode) throw new Error('Kode mesin wajib diisi.');
+    var tgl = parseTanggal_(p.tanggal);
+    if (!tgl) throw new Error('Tanggal service tidak valid.');
+    var hm = Number(String(p.hm == null ? '' : p.hm).replace(/[^\d.-]/g, ''));
+    if (!isFinite(hm) || hm <= 0) throw new Error('HM service harus berupa angka lebih dari 0.');
+
+    var sh = serviceLogSheet_();
+    var headerRow = serviceHeaderRow_(sh);
+    var lastRow = sh.getLastRow();
+    var jumlahBaris = Math.max(0, lastRow - headerRow);
+    var data = jumlahBaris ? sh.getRange(headerRow + 1, 1, jumlahBaris, 8).getValues() : [];
+
+    var barisTerakhirData = 0;
+    var noTerbesar = 0;
+    var isoBaru = Utilities.formatDate(tgl, 'Asia/Jakarta', 'yyyy-MM-dd');
+    for (var i = 0; i < data.length; i++) {
+      var k = String(data[i][6] || '').trim();
+      var no = Number(data[i][1]);
+      if (k) barisTerakhirData = i + 1;
+      if (isFinite(no) && no > noTerbesar) noTerbesar = no;
+      /* sudah ada baris yang sama? jangan dobel */
+      if (k.toUpperCase() === kode) {
+        var tglLama = data[i][2] instanceof Date ? Utilities.formatDate(data[i][2], 'Asia/Jakarta', 'yyyy-MM-dd') : String(data[i][2] || '');
+        var hmLama = Number(data[i][7]);
+        if (String(tglLama).indexOf(isoBaru) === 0 && isFinite(hmLama) && hmLama === hm) {
+          return { baris: headerRow + i + 1, no: no, kode: kode, hm: hm, tanggal: isoBaru, duplikat: true, verified: true, evaluasi: ringkasEvaluasi_(kode) };
+        }
+      }
+    }
+
+    var target = headerRow + barisTerakhirData + 1;
+    var posisi = String(p.posisi || '').trim().toUpperCase();
+    if (!posisi) {
+      var peta = petaEvaluasi_();
+      posisi = peta[kode] ? peta[kode].posisi : '';
+    }
+    var noBaru = noTerbesar + 1;
+
+    sh.getRange(target, 1, 1, 8).setValues([[
+      posisi,
+      noBaru,
+      tgl,
+      '=MONTH(C' + target + ')',
+      '=TEXT(D' + target + '*29,"mmmm")',
+      '=ROUNDUP(DAY(C' + target + ')/7,0)',
+      kode,
+      hm
+    ]]);
+    SpreadsheetApp.flush();
+
+    /* ---- pastikan rumus tb_service1 sudah membaca baris baru ---- */
+    var ev = ringkasEvaluasi_(kode);
+    var verified = !!(ev && (ev.hm == null || Number(ev.hm) >= hm));
+
+    return {
+      baris: target,
+      no: noBaru,
+      posisi: posisi,
+      kode: kode,
+      tanggal: isoBaru,
+      hm: hm,
+      verified: verified,
+      evaluasi: ev
+    };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/** Ringkasan jadwal satu unit dari sheet "Data Service Engine" (hasil rumus). */
+function ringkasEvaluasi_(kode) {
+  try {
+    var peta = petaEvaluasi_();
+    var row = peta[String(kode).trim().toUpperCase()];
+    if (!row) return null;
+    var fmt = function (v) {
+      if (v instanceof Date) return Utilities.formatDate(v, 'Asia/Jakarta', 'yyyy-MM-dd');
+      return v == null ? '' : String(v);
+    };
+    return {
+      terakhir: fmt(row.terakhir),
+      hm: row.hm === '' ? null : Number(row.hm),
+      nextService: fmt(row.nextTgl),
+      nextHm: row.nextHm === '' ? null : Number(row.nextHm),
+      warning: row.warning === '' ? null : Number(row.warning)
+    };
+  } catch (err) {
+    return null;
+  }
 }
 
 /* ====================== UTIL ====================== */

@@ -97,6 +97,11 @@ async function post(body, timeoutMs = 25000) {
   }
 }
 
+/** Kirim aksi apa pun ke Apps Script (dipakai modul lain, mis. Service Engine). */
+export async function postApi(body, timeoutMs = 25000) {
+  return post(body, timeoutMs)
+}
+
 /** Simpan hasil inspeksi ke antrean lokal (mode offline / endpoint belum diatur) */
 export function queueLocal(payload) {
   const cache = readCache()

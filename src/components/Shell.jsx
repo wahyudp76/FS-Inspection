@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import { cx, relativeTime } from '../lib/analytics'
 import {
   IconLogo, IconGauge, IconClipboard, IconList, IconHistory, IconSettings, IconMenu, IconX,
-  IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus, IconChevron,
+  IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus, IconChevron, IconWrench,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
 
@@ -11,6 +11,7 @@ const NAV = [
   { id: 'inspeksi', label: 'Inspeksi', icon: IconClipboard, desc: 'Form checklist' },
   { id: 'unit', label: 'Data Unit', icon: IconList, desc: 'Master aset' },
   { id: 'riwayat', label: 'Riwayat', icon: IconHistory, desc: 'Hasil inspeksi' },
+  { id: 'service', label: 'Service Engine', icon: IconWrench, desc: 'Perawatan & jadwal' },
   { id: 'pengaturan', label: 'Pengaturan', icon: IconSettings, desc: 'Koneksi sheet' },
 ]
 
@@ -62,7 +63,7 @@ function BackToTop() {
   )
 }
 
-export default function Shell({ children, route, navigate, sync, onSync, offline, demo, onAddInspect }) {
+export default function Shell({ children, route, navigate, sync, onSync, offline, demo, onAddInspect, onAddService }) {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -136,7 +137,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
           </a>
         </div>
         <p className="sidebar-ver px-1 text-center text-[9.5px] leading-relaxed text-slate-600">
-          FS Inspection v1.0 · Data master dari<br />Draft Dashboard (tb_mesin / tb_irrigator)
+          FS Inspection v1.6 · Inspeksi (tb_mesin / tb_irrigator)<br />+ Service engine (tb_service1 / tb_service2)
         </p>
       </div>
         </div>
@@ -183,13 +184,13 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               <p className="truncate text-[10.5px] text-slate-500">{current.desc}</p>
             </div>
             <button
-              onClick={() => onAddInspect?.()}
+              onClick={() => (route === 'service' ? onAddService?.() : onAddInspect?.())}
               className="btn-primary !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0"
-              title="Tambah inspeksi baru (pop-up)"
-              aria-label="Tambah Inspeksi"
+              title={route === 'service' ? 'Catat service engine (pop-up)' : 'Tambah inspeksi baru (pop-up)'}
+              aria-label={route === 'service' ? 'Catat Service' : 'Tambah Inspeksi'}
             >
-              <IconPlus size={15} />
-              <span className="hidden sm:inline">Tambah Inspeksi</span>
+              {route === 'service' ? <IconWrench size={15} /> : <IconPlus size={15} />}
+              <span className="hidden sm:inline">{route === 'service' ? 'Catat Service' : 'Tambah Inspeksi'}</span>
             </button>
             <button onClick={onSync} className="btn-ghost !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0" title="Sinkronkan riwayat inspeksi" aria-label="Sinkronkan riwayat inspeksi">
               <IconRefresh size={14} className={sync?.syncing ? 'animate-spin' : ''} />
