@@ -20,6 +20,19 @@ if (process.env.MASTER === '1') {
   }
   const mesin = muat(env.ss.insertSheet('Mesin'), 'mesin.csv')
   const irrigator = muat(env.ss.insertSheet('Irrigator'), 'irrigator.csv')
+
+  /* sheet service (tb_service2 & tb_service1) untuk menguji aksi svcrecord/svcrepair */
+  const SVC_DIR = process.env.SVC_DIR || '/home/user/data2'
+  const muatSvc = (nama, file) => {
+    const p = path.join(SVC_DIR, file)
+    if (!fs.existsSync(p)) return null
+    const rows = parseCSV(fs.readFileSync(p, 'utf8')).filter((r) => r.some((v) => v !== ''))
+    const sh = env.ss.insertSheet(nama)
+    rows.forEach((line, r) => line.forEach((v, c) => sh.setCell(r + 1, c + 1, v)))
+    return sh
+  }
+  muatSvc('Monitor Kasie FS', 'Monitor_Kasie_FS.csv')
+  muatSvc('Data Service Engine', 'Data_Service_Engine.csv')
   ctx.SpreadsheetApp.openById = () => ({
     getSheetByName: (n) => (n === 'Mesin' ? mesin : n === 'Irrigator' ? irrigator : env.ss.getSheetByName(n)),
     getSpreadsheetTimeZone: () => 'Asia/Jakarta',

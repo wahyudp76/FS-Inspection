@@ -33,6 +33,77 @@ export function parseCSV(text) {
   return rows
 }
 
+/* ---------- evaluator rumus mini (meniru Google Sheets + lokal) ----------
+   Sheet ber-lokal Indonesia memakai koma sebagai DESIMAL, sehingga pemisah
+   argumen rumus harus titik koma. Rumus yang memakai pemisah salah harus
+   menghasilkan #ERROR! seperti di Sheets asli. */
+const BULAN_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+const BULAN_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+const LOKAL_TITIK_KOMA = /^(id|de|fr|es|it|pt|nl|ru|tr|pl|sv|da|nb|fi|cs|hu|ro|sk|uk|bg|hr|sl|lt|lv|et|el)/
+
+const pemisahLokal = (locale) => (LOKAL_TITIK_KOMA.test(String(locale || '').toLowerCase()) ? ';' : ',')
+
+function evalRumus(raw, sheet, locale) {
+  const sep = pemisahLokal(locale)
+  const lain = sep === ';' ? ',' : ';'
+  const tanpaTeks = raw.replace(/"[^"]*"/g, '""')
+  if (tanpaTeks.includes(lain)) return '#ERROR!' /* pemisah argumen salah */
+  const sel = (ref) => {
+    const m = String(ref).match(/^([A-Z]+)(\d+)$/)
+    if (!m) return ''
+    let col = 0
+    for (const ch of m[1]) col = col * 26 + (ch.charCodeAt(0) - 64)
+    return sheet.cell(Number(m[2]), col)
+  }
+  const keTanggal = (v) => {
+    if (v instanceof Date) return v
+    const s = String(v || '').trim()
+    let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
+    if (m) return new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]))
+    m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
+    if (m) return new Date(Date.UTC(+m[3], +m[2] - 1, +m[1]))
+    return null
+  }
+  const badan = raw.slice(1).trim()
+
+  let m = badan.match(/^MONTH\((.+)\)$/i)
+  if (m) {
+    const d = keTanggal(sel(m[1].trim()))
+    return d ? d.getUTCMonth() + 1 : '#VALUE!'
+  }
+  m = badan.match(/^DAY\((.+)\)$/i)
+  if (m) {
+    const d = keTanggal(sel(m[1].trim()))
+    return d ? d.getUTCDate() : '#VALUE!'
+  }
+  m = badan.match(/^ROUNDUP\((.+)\)$/i)
+  if (m) {
+    const bagian = m[1].split(sep)
+    const hari = keTanggal(sel(bagian[0].replace(/^DAY\(|\).*$/g, '').trim()))
+    if (!hari) return '#VALUE!'
+    const angka = hari.getUTCDate() / 7
+    const digit = bagian[1] != null ? Number(bagian[1]) : 0
+    const f = Math.pow(10, digit)
+    return Math.ceil(angka * f) / f
+  }
+  m = badan.match(/^TEXT\((.+)\)$/i)
+  if (m) {
+    const bagian = m[1].split(sep)
+    const pola = String(bagian[1] || '').replace(/"/g, '')
+    const sumber = bagian[0].trim()
+    let serial
+    const kali = sumber.match(/^([A-Z]+\d+)\s*\*\s*(\d+)$/)
+    if (kali) serial = Number(sel(kali[1])) * Number(kali[2])
+    else serial = Number(sel(sumber))
+    if (!Number.isFinite(serial)) return '#VALUE!'
+    const dasar = Date.UTC(1899, 11, 30) + serial * 86400000
+    const bulan = new Date(dasar).getUTCMonth()
+    if (/m/i.test(pola)) return (pemisahLokal(locale) === ';' ? BULAN_ID : BULAN_EN)[bulan]
+    return String(serial)
+  }
+  return '#NAME?'
+}
+
 class Range {
   constructor(sheet, row, col, nRows = 1, nCols = 1) {
     Object.assign(this, { sheet, row, col, nRows, nCols })
@@ -60,12 +131,23 @@ class Range {
 }
 
 class Sheet {
-  constructor(name, grid = []) {
+  constructor(name, grid = [], locale = 'id_ID') {
     this.name = name
     this.grid = grid.map((r) => [...r])
+    this.locale = locale
+    this.parent = null
   }
   getName() { return this.name }
+  getParent() { return this.parent }
   cell(r, c) {
+    const line = this.grid[r - 1]
+    const v = line && line[c - 1] !== undefined ? line[c - 1] : ''
+    /* sel berisi rumus → kembalikan hasil hitung (atau #ERROR! bila pemisah salah) */
+    if (typeof v === 'string' && v.charAt(0) === '=') return evalRumus(v, this, this.locale)
+    return v
+  }
+  /* nilai mentah (rumus apa adanya) — dipakai uji untuk memeriksa pemisah */
+  formula(r, c) {
     const line = this.grid[r - 1]
     return line && line[c - 1] !== undefined ? line[c - 1] : ''
   }
@@ -109,16 +191,18 @@ class SheetStub {
   constructor() { this.deletes = 0 }
 }
 
-export function makeEnv({ extraSheets = {} } = {}) {
+export function makeEnv({ extraSheets = {}, locale = process.env.SHEET_LOCALE || 'id_ID' } = {}) {
   const rows = parseCSV(fs.readFileSync(DATA, 'utf8')).filter((r) => r.some((v) => v !== ''))
-  const main = new Sheet('Data Inspeksi', rows)
+  const main = new Sheet('Data Inspeksi', rows, locale)
   const sheets = { 'Data Inspeksi': main, ...extraSheets }
+  const daftarSheet = () => sheets
   const state = { modified: Date.now(), writes: 0 }
 
   const ss = {
-    getId: () => 'FAKE-SS-ID',
+    getId: () => 'FAKE-SS-' + locale,
+    getSpreadsheetLocale: () => locale,
     getSheetByName: (n) => sheets[n] || null,
-    insertSheet: (n) => { sheets[n] = new Sheet(n, []); return sheets[n] },
+    insertSheet: (n) => { sheets[n] = new Sheet(n, [], locale); sheets[n].parent = ss; return sheets[n] },
     getSpreadsheetTimeZone: () => 'Asia/Jakarta',
     toast: () => {},
   }
@@ -183,7 +267,11 @@ export function makeEnv({ extraSheets = {} } = {}) {
     Date, Math, JSON, String, Number, Object, Array, isNaN, parseInt, parseFloat,
   }
   sandbox.globalThis = sandbox
-  return { sandbox, sheet: main, ss, state, sheets }
+  main.parent = ss
+  Object.values(extraSheets).forEach((sh) => { if (sh && typeof sh === 'object') sh.parent = ss })
+  main.locale = locale
+  Object.values(extraSheets).forEach((sh) => { if (sh && typeof sh === 'object' && !sh.locale) sh.locale = locale })
+  return { sandbox, sheet: main, ss, state, sheets, locale, daftarSheet }
 }
 
 export function loadCode(env) {

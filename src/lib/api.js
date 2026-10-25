@@ -245,6 +245,12 @@ export async function syncMaster() {
   return json.result || []
 }
 
+/** Perbaiki kolom D/E/F (Month, Bulan Service, Minggu Service) di tb_service2 yang error/kosong */
+export async function serviceRepair() {
+  const json = await post({ action: 'svcrepair' }, 180000)
+  return json.result || {}
+}
+
 /** Audit kualitas data sheet: ringkasan vs komponen, komponen hilang, ID ganda */
 export async function auditData() {
   const json = await post({ action: 'audit' }, 120000)

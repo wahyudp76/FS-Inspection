@@ -63,6 +63,26 @@ Badge **“N catatan kualitas data”** di halaman Service memakai audit yang sa
 (`tb_service1`/`tb_service2`): tanggal tak terbaca, kode asing, pencatatan tanpa HM, dan kenaikan HM
 tidak wajar. Klik badge untuk melihat rinciannya.
 
+## Catat service dari web — pemisah rumus spreadsheet (v1.8.1)
+
+Kolom **D (Month)**, **E (Bulan Service)**, dan **F (Minggu Service)** di sheet
+`Monitor Kasie FS` (tb_service2) diisi rumus oleh Apps Script setiap kali service dicatat dari web.
+
+Spreadsheet **berlokal Indonesia** memakai koma sebagai desimal, jadi pemisah argumen rumus harus
+**titik koma**: `=ROUNDUP(DAY(C217)/7;0)`. Versi lama menulis dengan koma → sel jadi **`#ERROR!`**.
+
+Sejak v1.8.1:
+
+- pemisah rumus **dideteksi** (hasil yang pernah berhasil → lokal spreadsheet → default `;`),
+- setiap penulisan **diverifikasi**; bila rumus ditolak, dicoba pemisah satunya,
+- bila dua-duanya ditolak, kolom diisi **nilai jadi** (bulan, nama bulan, minggu) — jadi tidak pernah
+  ada `#ERROR!` yang tertinggal,
+- baris lama yang sudah telanjur error dibetulkan lewat
+  **Pengaturan ▸ Rumus Service (tb_service2) ▸ Perbaiki rumus service** (idempoten, aman diulang).
+
+> Jalankan tombol itu sekali setelah memasang `Code.gs` **1.8.1** ke Apps Script
+> (**Deploy ▸ Manage deployments ▸ ✏️ ▸ New version**).
+
 ## Pasang sebagai aplikasi (PWA)
 
 - **Android (Chrome)**: menu ⋮ ▸ **Add to Home screen / Instal aplikasi**.

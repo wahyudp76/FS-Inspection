@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.8.0'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.8.1'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -156,6 +156,9 @@ function doPost(e) {
     }
     if (action === 'svcrecord') {
       return json_({ ok: true, result: serviceRecord_(body.payload || {}) });
+    }
+    if (action === 'svcrepair') {
+      return json_({ ok: true, result: serviceRepairRumus_(), version: SCRIPT_VERSION });
     }
     if (action === 'svcping') {
       var info = serviceInfo_();
@@ -737,6 +740,70 @@ function serviceHeaderRow_(sh) {
   return 1;
 }
 
+var BULAN_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+/**
+ * Pemisah argumen rumus pada spreadsheet ini.
+ *
+ * Sheet berlokal Indonesia memakai KOMA sebagai desimal, sehingga pemisah argumen
+ * rumus harus TITIK KOMA (`=ROUNDUP(DAY(C5)/7;0)`). Kalau dipaksa `,` hasilnya
+ * `#ERROR!` — inilah yang membuat baris tb_service2 error saat dicatat dari web.
+ *
+ * Urutan penentuan: hasil yang sudah tersimpan (dari percobaan yang berhasil) →
+ * petunjuk lokal spreadsheet → default ';' (paling umum untuk sheet lokal Indonesia).
+ * `serviceRecord_` memverifikasi hasilnya dan otomatis berganti bila masih error.
+ */
+function pemisahRumus_(ss) {
+  var kunci = 'FSI_PEMISAH_' + (ss && ss.getId ? ss.getId() : 'default');
+  try {
+    var simpan = PropertiesService.getScriptProperties().getProperty(kunci);
+    if (simpan === ';' || simpan === ',') return simpan;
+  } catch (e) {}
+  try {
+    var loc = String(ss && ss.getSpreadsheetLocale ? ss.getSpreadsheetLocale() : '').toLowerCase();
+    /* lokal yang memakai desimal titik → pemisah argumen koma */
+    if (/^(en|ja|zh|ko|th|he|hi|ms|fil)/.test(loc)) return ',';
+  } catch (e2) {}
+  return ';';
+}
+
+function simpanPemisahRumus_(ss, sep) {
+  try {
+    var kunci = 'FSI_PEMISAH_' + (ss && ss.getId ? ss.getId() : 'default');
+    PropertiesService.getScriptProperties().setProperty(kunci, sep === ',' ? ',' : ';');
+  } catch (e) {}
+}
+
+/** Nilai kolom D/E/F tb_service2 bila dihitung langsung (bukan rumus). */
+function nilaiService_(tgl) {
+  var m = tgl.getMonth() + 1;
+  return [m, BULAN_ID[m - 1], Math.ceil(tgl.getDate() / 7)];
+}
+
+/** Tiga rumus kolom D/E/F (Month, Bulan Service, Minggu Service) dengan pemisah tertentu. */
+function rumusService_(baris, sep) {
+  return [
+    '=MONTH(C' + baris + ')',
+    '=TEXT(D' + baris + '*29' + sep + '"mmmm")',
+    '=ROUNDUP(DAY(C' + baris + ')/7' + sep + '0)',
+  ];
+}
+
+/** true bila sel D/E/F sudah berisi hasil yang benar (bukan error / teks rumus). */
+function rumusServiceValid_(v, tgl) {
+  var harap = nilaiService_(tgl);
+  var teks = [0, 1, 2].map(function (i) {
+    var x = v[i];
+    return x instanceof Date ? Utilities.formatDate(x, 'Asia/Jakarta', 'yyyy-MM-dd') : String(x == null ? '' : x).trim();
+  });
+  for (var i = 0; i < teks.length; i++) {
+    if (!teks[i] || teks[i].charAt(0) === '#' || teks[i].charAt(0) === '=') return false;
+  }
+  if (Number(teks[0]) !== harap[0]) return false;
+  if (Number(teks[2]) !== harap[2]) return false;
+  return teks[1].length >= 3; /* nama bulan boleh bahasa sheet (Oktober/October) */
+}
+
 /** "2026-10-25" / "25/10/2026" / Date → Date (jam 12 siang, aman dari zona waktu). */
 function parseTanggal_(v) {
   if (v instanceof Date && !isNaN(v.getTime())) return v;
@@ -885,17 +952,36 @@ function serviceRecord_(p) {
     }
     var noBaru = noTerbesar + 1;
 
-    sh.getRange(target, 1, 1, 8).setValues([[
-      posisi,
-      noBaru,
-      tgl,
-      '=MONTH(C' + target + ')',
-      '=TEXT(D' + target + '*29,"mmmm")',
-      '=ROUNDUP(DAY(C' + target + ')/7,0)',
-      kode,
-      hm
-    ]]);
-    SpreadsheetApp.flush();
+    /* Kolom D/E/F ditulis sebagai rumus, tetapi pemisah argumennya harus sesuai
+       lokal spreadsheet (Indonesia → titik koma). Hasilnya diverifikasi; bila masih
+       error, dicoba pemisah satunya, dan bila tetap gagal ditulis nilai jadi
+       supaya baris tidak pernah berisi #ERROR!. */
+    var ss = sh.getParent ? sh.getParent() : SpreadsheetApp.openById(SPREADSHEET_ID);
+    var dasar = [posisi, noBaru, tgl, '', '', '', kode, hm];
+    var sep = pemisahRumus_(ss);
+    var tulis = function (pemisah) {
+      var nilai = dasar.slice();
+      var rumus = rumusService_(target, pemisah);
+      nilai[3] = rumus[0];
+      nilai[4] = rumus[1];
+      nilai[5] = rumus[2];
+      sh.getRange(target, 1, 1, 8).setValues([nilai]);
+      SpreadsheetApp.flush();
+    };
+    tulis(sep);
+    var cekRumus = sh.getRange(target, 4, 1, 3).getValues()[0];
+    if (!rumusServiceValid_(cekRumus, tgl)) {
+      sep = sep === ';' ? ',' : ';';
+      tulis(sep);
+      cekRumus = sh.getRange(target, 4, 1, 3).getValues()[0];
+      if (!rumusServiceValid_(cekRumus, tgl)) {
+        /* rumus ditolak sheet → tulis nilai jadi, jangan tinggalkan #ERROR! */
+        sh.getRange(target, 4, 1, 3).setValues([nilaiService_(tgl)]);
+        SpreadsheetApp.flush();
+        sep = '';
+      }
+    }
+    if (sep) simpanPemisahRumus_(ss, sep);
 
     /* ---- pastikan rumus tb_service1 sudah membaca baris baru ---- */
     var ev = ringkasEvaluasi_(kode);
@@ -1717,4 +1803,98 @@ function masterLive_() {
     });
   });
   return hasil;
+}
+
+
+/**
+ * Perbaiki kolom D/E/F (Month, Bulan Service, Minggu Service) di tb_service2
+ * untuk baris yang error / kosong / berisi teks rumus — mis. baris yang dicatat
+ * saat separator rumus masih salah (koma vs titik koma).
+ *
+ * @return {Object} {diperiksa, diperbaiki, gagal, pemisah}
+ */
+function serviceRepairRumus_() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var sh = serviceLogSheet_();
+    var ss = sh.getParent ? sh.getParent() : SpreadsheetApp.openById(SPREADSHEET_ID);
+    var hdr = serviceHeaderRow_(sh);
+    var last = sh.getLastRow();
+    var out = { diperiksa: 0, diperbaiki: 0, gagal: 0, pemisah: '' };
+    if (last <= hdr) return out;
+
+    var vals = sh.getRange(hdr + 1, 1, last - hdr, 8).getValues();
+    var barisRusak = [];
+    var tglBaris = {};
+    for (var i = 0; i < vals.length; i++) {
+      var baris = hdr + 1 + i;
+      var tgl = vals[i][2] instanceof Date ? vals[i][2] : parseTanggal_(vals[i][2]);
+      if (!tgl || isNaN(tgl.getTime())) continue;
+      if (!String(vals[i][6] || '').trim()) continue; /* bukan baris data */
+      out.diperiksa++;
+      var d = [vals[i][3], vals[i][4], vals[i][5]];
+      if (rumusServiceValid_(d, tgl)) continue;
+      barisRusak.push(baris);
+      tglBaris[baris] = tgl;
+    }
+    if (!barisRusak.length) {
+      out.pemisah = pemisahRumus_(ss);
+      bumpRev_();
+      return out;
+    }
+
+    var sep = pemisahRumus_(ss);
+    var tulisRumus = function (baris, pemisah) {
+      sh.getRange(baris, 4, 1, 3).setValues([rumusService_(baris, pemisah)]);
+    };
+    var semuaValid = function (daftar) {
+      for (var x = 0; x < daftar.length; x++) {
+        if (!rumusServiceValid_(sh.getRange(daftar[x], 4, 1, 3).getValues()[0], tglBaris[daftar[x]])) return false;
+      }
+      return true;
+    };
+    var tulisSemua = function (daftar, pemisah) {
+      for (var x = 0; x < daftar.length; x++) tulisRumus(daftar[x], pemisah);
+      SpreadsheetApp.flush();
+    };
+
+    /* percobaan 1: pemisah tersimpan/petunjuk lokal */
+    tulisSemua(barisRusak, sep);
+    var pemisahPakai = semuaValid(barisRusak) ? sep : '';
+
+    /* percobaan 2: pemisah satunya */
+    if (!pemisahPakai) {
+      var sep2 = sep === ';' ? ',' : ';';
+      tulisSemua(barisRusak, sep2);
+      if (semuaValid(barisRusak)) pemisahPakai = sep2;
+    }
+
+    /* masih error → tulis nilai jadi supaya tidak ada #ERROR! yang tertinggal */
+    if (!pemisahPakai) {
+      for (var y = 0; y < barisRusak.length; y++) {
+        var by = barisRusak[y];
+        if (!rumusServiceValid_(sh.getRange(by, 4, 1, 3).getValues()[0], tglBaris[by])) {
+          sh.getRange(by, 4, 1, 3).setValues([nilaiService_(tglBaris[by])]);
+        }
+      }
+      SpreadsheetApp.flush();
+    }
+
+    /* hitung hasil akhir */
+    for (var z = 0; z < barisRusak.length; z++) {
+      var bz = barisRusak[z];
+      if (rumusServiceValid_(sh.getRange(bz, 4, 1, 3).getValues()[0], tglBaris[bz])) {
+        out.diperbaiki++;
+      } else {
+        out.gagal++;
+      }
+    }
+    out.pemisah = pemisahPakai || 'nilai';
+    if (pemisahPakai) simpanPemisahRumus_(ss, pemisahPakai);
+    bumpRev_();
+    return out;
+  } finally {
+    lock.releaseLock();
+  }
 }

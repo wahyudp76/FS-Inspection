@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
 import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, getAutoRefresh, setAutoRefresh, REFRESH_MS, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
-import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster, auditData, repairData } from '../lib/api'
-import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark } from '../components/icons'
+import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster, auditData, repairData, serviceRepair } from '../lib/api'
+import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark, IconEngine } from '../components/icons'
 import { cx } from '../lib/analytics'
 
 const STEPS = [
@@ -24,6 +24,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
   const [audit, setAudit] = useState(null)
   const [busyAudit, setBusyAudit] = useState(false)
   const [busyRepair, setBusyRepair] = useState(false)
+  const [busyService, setBusyService] = useState(false)
 
   const save = () => {
     if (url && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(url.trim())) {
@@ -338,6 +339,47 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
             sheet <span className="font-mono text-[10.5px]">Irrigator</span>. Perbaikan mengisi komponen kosong dari master
             lebih dulu, baru menghitung ulang ringkasan — jadi nilai komponen tidak pernah ditimpa.
           </p>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Rumus Service (tb_service2)"
+          sub="Perbaiki kolom Month / Bulan Service / Minggu Service yang error di sheet “Monitor Kasie FS”"
+          icon={<IconEngine size={15} />}
+          right={<span className="chip">{'idempoten'}</span>}
+        />
+        <div className="card-pad space-y-3 pt-3">
+          <p className="text-[11.5px] leading-relaxed text-slate-400">
+            Kolom <span className="font-mono text-[10.5px] text-slate-300">D–F</span> diisi rumus saat service dicatat dari web.
+            Spreadsheet berlokal Indonesia memakai <span className="font-semibold text-slate-200">koma sebagai desimal</span>,
+            jadi pemisah argumen rumus harus <span className="font-mono text-[10.5px] text-slate-300">;</span> —
+            kalau ditulis dengan <span className="font-mono text-[10.5px] text-slate-300">,</span> sel jadi
+            <span className="font-semibold text-rose-300"> #ERROR!</span>. Tombol di bawah menulis ulang rumus
+            (atau nilai jadi bila rumus tetap ditolak sheet) untuk semua baris yang rusak.
+          </p>
+          <button
+            className="btn-ghost"
+            disabled={busyService || !isConfigured()}
+            onClick={async () => {
+              setBusyService(true)
+              try {
+                const r = await serviceRepair()
+                setToast({
+                  type: r.gagal ? 'error' : 'success',
+                  message: r.diperbaiki
+                    ? `${r.diperbaiki} baris diperbaiki · ${r.diperiksa} baris diperiksa · pemisah rumus “${r.pemisah}”`
+                    : `Tidak ada baris rusak · ${r.diperiksa ?? 0} baris diperiksa · pemisah rumus “${r.pemisah}”`,
+                })
+              } catch (e) {
+                setToast({ type: 'error', message: `Gagal memperbaiki rumus: ${e.message}` })
+              } finally {
+                setBusyService(false)
+              }
+            }}
+          >
+            <IconCheck size={14} /> {busyService ? 'Memeriksa…' : 'Perbaiki rumus service'}
+          </button>
         </div>
       </Card>
 

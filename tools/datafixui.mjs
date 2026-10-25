@@ -59,6 +59,17 @@ for (const vp of [{ w: 1440, h: 950, n: 'Desktop' }, { w: 390, h: 844, n: 'HP' }
   const chipAkhir = await p.locator('span.chip', { hasText: /Bersih|temuan/i }).first().innerText().catch(() => '')
   cek(`[${vp.n}] sheet bersih setelah perbaikan`, /bersih/i.test(chipAkhir), chipAkhir)
 
+  /* kartu rumus service (tb_service2) */
+  const kartuSvc = p.locator('text=Rumus Service (tb_service2)').first()
+  cek(`[${vp.n}] kartu “Rumus Service (tb_service2)” tampil`, (await kartuSvc.count()) > 0)
+  const svcBtn = p.getByRole('button', { name: /Perbaiki rumus service/ })
+  if (await svcBtn.count()) {
+    await svcBtn.click()
+    await p.waitForTimeout(3500)
+    const teksSvc = (await p.locator('body').innerText()).toLowerCase()
+    cek(`[${vp.n}] hasil perbaikan rumus service tampil`, /baris (diperbaiki|diperiksa)|tidak ada baris rusak/.test(teksSvc))
+  }
+
   cek(`[${vp.n}] tanpa error JS`, errs.length === 0, errs[0] || '')
   await ctx.close()
 }

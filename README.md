@@ -307,6 +307,7 @@ Semua uji jalan tanpa deployment (memakai `tools/mock.gs.mjs`, grid sheet tiruan
 | `node tools/mastertest.mjs` | unit test `src/lib/master.js` (merge inspeksi baru, Rusak ⇒ Kritis, kode asing) |
 | `node tools/kualitas.mjs` | badge “catatan kualitas data” di halaman Service |
 | `node tools/datafixui.mjs` | kartu “Kualitas Data Sheet” di Pengaturan (butuh `PORT=8113 MASTER=1 node tools/mockapi.mjs`) |
+| `node tools/svcrumus.mjs` | penulisan “Catat Service” ke tb_service2: pemisah rumus (`;` vs `,`), nilai D/E/F, `svcrepair` |
 | `node tools/perf.mjs` | ukuran bundel + metrik muat Dashboard/Service (`LIVE=1` untuk membandingkan versi live) |
 | `node tools/logo.mjs` | 47 cek ikon/PWA (desktop & HP) |
 
