@@ -10,6 +10,10 @@ import { cx, relativeTime } from '../lib/analytics'
 import { SERVICE_SHEET, SERVICE_STATUS, serviceStatusMeta } from '../lib/config'
 import {
   fetchServiceData,
+  daftarBulan,
+  analisaBulan,
+  kohortMeta,
+  labelAktivitas,
   readServiceCache,
   ringkasService,
   catatService,
@@ -18,7 +22,7 @@ import {
 } from '../lib/service'
 import {
   IconWrench, IconRefresh, IconDownload, IconAlert, IconCheck, IconClock, IconCalendar,
-  IconEngine, IconSearch, IconChevron, IconExternal, IconSheet, IconTrend,
+  IconEngine, IconSearch, IconChevron, IconExternal, IconSheet, IconTrend, IconX,
 } from '../components/icons'
 
 const fmt = (n) => (n == null || n === '' ? '—' : new Intl.NumberFormat('id-ID').format(n))
@@ -111,6 +115,8 @@ export default function Service({ notify, openFormSignal = 0 }) {
   const cached = useMemo(() => readServiceCache(), [])
   const [units, setUnits] = useState(cached?.units || [])
   const [log, setLog] = useState(cached?.log || [])
+  const [duplikat, setDuplikat] = useState(cached?.duplikat || 0)
+  const [barisEvalRaw, setBarisEvalRaw] = useState(cached?.barisEval || 0)
   const [syncedAt, setSyncedAt] = useState(cached?.syncedAt || null)
   const [memuat, setMemuat] = useState(!cached)
   const [galat, setGalat] = useState('')
@@ -119,6 +125,9 @@ export default function Service({ notify, openFormSignal = 0 }) {
   const [fPosisi, setFPosisi] = useState([])
   const [fJenis, setFJenis] = useState([])
   const [fStatus, setFStatus] = useState([])
+  /* bulan acuan untuk analisa aktivitas (service bulan lalu / bulan ini / jadwal bulan depan) */
+  const [acuan, setAcuan] = useState('')
+  const [fKohort, setFKohort] = useState(null)
   const [cari, setCari] = useState('')
   const [urut, setUrut] = useState('telat')
   const [halEval, setHalEval] = useState(0)
@@ -140,7 +149,17 @@ export default function Service({ notify, openFormSignal = 0 }) {
   const [presetKode, setPresetKode] = useState('')
   const [detailUnit, setDetailUnit] = useState(null)
 
-  const ringkasan = useMemo(() => ringkasService(units, log), [units, log])
+  const ringkasan = useMemo(() => ringkasService(units, log, { duplikat }), [units, log, duplikat])
+
+  /* daftar bulan acuan + default = bulan berjalan */
+  const bulanOpsi = useMemo(() => daftarBulan(log), [log])
+  const acuanAktif = useMemo(() => {
+    if (acuan && bulanOpsi.some((b) => b.value === acuan)) return acuan
+    const now = new Date()
+    const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    return bulanOpsi.find((b) => b.value === key)?.value || bulanOpsi[0]?.value || key
+  }, [acuan, bulanOpsi])
+  const bulanAktif = useMemo(() => analisaBulan(units, log, acuanAktif), [units, log, acuanAktif])
 
   const muat = useCallback(
     async ({ diam = false } = {}) => {
@@ -149,6 +168,8 @@ export default function Service({ notify, openFormSignal = 0 }) {
         const data = await fetchServiceData()
         setUnits(data.units)
         setLog(data.log)
+        setDuplikat(data.duplikat || 0)
+        setBarisEvalRaw(data.barisEval || 0)
         setSyncedAt(data.syncedAt)
         setGalat('')
       } catch (e) {
@@ -179,6 +200,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
     if (fPosisi.length) rows = rows.filter((u) => fPosisi.includes(u.posisi))
     if (fJenis.length) rows = rows.filter((u) => fJenis.includes(u.jenis))
     if (fStatus.length) rows = rows.filter((u) => fStatus.includes(u.status))
+    if (fKohort) { const set = bulanAktif.sets[fKohort]; if (set) rows = rows.filter((u) => set.has(u.kode)) }
     if (q) rows = rows.filter((u) => u.kode.includes(q) || (u.note || '').toUpperCase().includes(q))
     const bobot = { terlambat: 0, segera: 1, tanpaJadwal: 2, belum: 3, aman: 4 }
     const salin = [...rows]
@@ -187,13 +209,13 @@ export default function Service({ notify, openFormSignal = 0 }) {
     else if (urut === 'kode') salin.sort((a, b) => a.kode.localeCompare(b.kode))
     else if (urut === 'hm') salin.sort((a, b) => (b.hm ?? -1) - (a.hm ?? -1))
     return salin
-  }, [units, fPosisi, fJenis, fStatus, cari, urut])
+  }, [units, fPosisi, fJenis, fStatus, cari, urut, fKohort, bulanAktif])
 
   const totalHalamanEval = Math.max(1, Math.ceil(filtered.length / perEval))
   const halEvalAman = Math.min(halEval, totalHalamanEval - 1)
   const barisEval = filtered.slice(halEvalAman * perEval, halEvalAman * perEval + perEval)
 
-  useEffect(() => { setHalEval(0) }, [fPosisi, fJenis, fStatus, cari, urut, perEval])
+  useEffect(() => { setHalEval(0) }, [fPosisi, fJenis, fStatus, cari, urut, perEval, fKohort, acuanAktif])
 
   /* --------------------------- perhatian --------------------------- */
   const daftarPerhatian = ringkasan.daftar[tabPerhatian] || []
@@ -235,6 +257,8 @@ export default function Service({ notify, openFormSignal = 0 }) {
     if (segar?.units?.length) {
       setUnits(segar.units)
       setLog(segar.log)
+      setDuplikat(segar.duplikat || 0)
+      setBarisEvalRaw(segar.barisEval || 0)
       setSyncedAt(segar.syncedAt)
     } else {
       await muat({ diam: true })
@@ -243,10 +267,10 @@ export default function Service({ notify, openFormSignal = 0 }) {
   }
 
   const unduhCsv = () => {
-    const header = ['Kode Unit', 'Jenis', 'Posisi', 'Service Terakhir', 'HM Terakhir', 'Next Service', 'Next HM', 'Warning (hari)', 'Status', 'Catatan']
+    const header = ['Kode Unit', 'Jenis', 'Posisi', 'Service Terakhir', 'HM Terakhir', 'Next Service', 'Next HM', 'Warning (hari)', 'Status', `Aktivitas ${bulanAktif.acuan.label}`, 'Catatan']
     const baris = filtered.map((u) => [
       u.kode, u.jenis, u.posisi, u.terakhirIso, u.hm ?? '', u.nextIso, u.nextHm ?? '', u.warning ?? '',
-      serviceStatusMeta(u.status).label, u.note || '',
+      serviceStatusMeta(u.status).label, labelAktivitas(bulanAktif.perUnit.get(u.kode), bulanAktif), u.note || '',
     ])
     const csv = [header, ...baris].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n')
     const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }))
@@ -305,6 +329,14 @@ export default function Service({ notify, openFormSignal = 0 }) {
           <span className="inline-flex items-center gap-1">
             <IconEngine size={11} /> {fmt(ringkasan.totalUnit)} engine · {fmt(ringkasan.totalPencatatan)} pencatatan service
           </span>
+          {!!duplikat && (
+            <span
+              className="inline-flex items-center gap-1 rounded border border-amber-500/35 bg-amber-500/10 px-1.5 py-0.5 text-amber-300"
+              title={`tb_service1 punya ${barisEvalRaw || ringkasan.totalUnit + duplikat} baris untuk ${ringkasan.totalUnit} kode unit unik. Baris ganda diabaikan (dipakai HM terbesar).`}
+            >
+              <IconAlert size={10} /> {duplikat} baris ganda di tb_service1
+            </span>
+          )}
           <a href={SERVICE_SHEET.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand/90 hover:text-brand">
             Buka sheet <IconExternal size={10} />
           </a>
@@ -373,6 +405,151 @@ export default function Service({ notify, openFormSignal = 0 }) {
           accent="#22c55e"
         />
       </div>
+
+      {/* ---------------- aktivitas per bulan ---------------- */}
+      <Card className="overflow-hidden">
+        <CardHeader
+          title={`Aktivitas Bulan ${bulanAktif.acuan.label}`}
+          sub={`Bandingkan service ${bulanAktif.lalu.label} (bulan lalu), ${bulanAktif.acuan.label} (bulan ini), dan jadwal ${bulanAktif.depan.label} (bulan depan)`}
+          icon={<IconCalendar size={15} />}
+          right={
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => {
+                  const i = bulanOpsi.findIndex((b) => b.value === acuanAktif)
+                  const n = bulanOpsi[i + 1]
+                  if (n) { setAcuan(n.value); setFKohort(null) }
+                }}
+                disabled={bulanOpsi.findIndex((b) => b.value === acuanAktif) >= bulanOpsi.length - 1}
+                className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:text-white disabled:opacity-35"
+                aria-label="Bulan sebelumnya"
+                title="Bulan sebelumnya"
+              >
+                <IconChevron size={14} className="rotate-180" />
+              </button>
+              <label className="sr-only" htmlFor="bulan-acuan">Bulan acuan</label>
+              <select
+                id="bulan-acuan"
+                value={acuanAktif}
+                onChange={(e) => { setAcuan(e.target.value); setFKohort(null) }}
+                className="rounded-lg border border-brand/40 bg-brand/10 px-2 py-1.5 text-[11.5px] font-semibold text-white focus:outline-none"
+              >
+                {bulanOpsi.map((b) => (
+                  <option key={b.value} value={b.value} className="bg-ink-800 text-slate-100">
+                    {b.label}
+                  </option>
+                ))}
+              </select>
+              <button
+                onClick={() => {
+                  const i = bulanOpsi.findIndex((b) => b.value === acuanAktif)
+                  const n = bulanOpsi[i - 1]
+                  if (n) { setAcuan(n.value); setFKohort(null) }
+                }}
+                disabled={bulanOpsi.findIndex((b) => b.value === acuanAktif) <= 0}
+                className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:text-white disabled:opacity-35"
+                aria-label="Bulan berikutnya"
+                title="Bulan berikutnya"
+              >
+                <IconChevron size={14} />
+              </button>
+            </div>
+          }
+        />
+
+        <div className="mt-2 grid grid-cols-1 gap-2 px-3 sm:grid-cols-2 sm:px-4 xl:grid-cols-4">
+          {[
+            {
+              id: 'servisLalu',
+              judul: `Service ${bulanAktif.lalu.label}`,
+              angka: bulanAktif.jumlah.servisLalu,
+              sub: `belum diservice lagi di ${bulanAktif.acuan.singkat} · ${bulanAktif.sesiLalu} sesi bulan lalu`,
+              accent: '#38bdf8',
+            },
+            {
+              id: 'servisIni',
+              judul: `Service ${bulanAktif.acuan.label}`,
+              angka: bulanAktif.jumlah.servisIni,
+              sub: `${bulanAktif.sesiIni} sesi dikerjakan bulan ini`,
+              accent: '#22c55e',
+            },
+            {
+              id: 'jadwalIniSemua',
+              judul: `Jadwal ${bulanAktif.acuan.label}`,
+              angka: bulanAktif.jumlah.jadwalIniSemua,
+              sub: bulanAktif.jumlah.jadwalIni
+                ? `${bulanAktif.jumlah.jadwalIni} belum dikerjakan`
+                : 'semua sudah dikerjakan bulan ini',
+              accent: '#f59e0b',
+            },
+            {
+              id: 'jadwalDepanSemua',
+              judul: `Jadwal ${bulanAktif.depan.label}`,
+              angka: bulanAktif.jumlah.jadwalDepanSemua,
+              sub: bulanAktif.jumlah.jadwalDepan
+                ? `${bulanAktif.jumlah.jadwalDepan} belum diservice bulan ini`
+                : 'sudah diservice bulan ini, jadwal berikutnya bulan depan',
+              accent: '#a78bfa',
+            },
+          ].map((t) => {
+            const m = kohortMeta(t.id)
+            const aktif = fKohort === t.id
+            return (
+              <button
+                key={t.id}
+                onClick={() => { setFKohort(aktif ? null : t.id); setHalEval(0) }}
+                className={cx(
+                  'group relative min-w-0 overflow-hidden rounded-xl border px-3 py-2.5 text-left transition',
+                  aktif ? 'border-brand/60 bg-brand/[0.10]' : 'border-white/[0.07] bg-white/[0.02] hover:border-white/20'
+                )}
+                title={`Tampilkan ${t.judul.toLowerCase()} di tabel evaluasi`}
+              >
+                <span className="pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full opacity-[0.18] blur-2xl" style={{ background: t.accent }} />
+                <span className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: m.color }} />
+                  <span className="truncate text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">{t.judul}</span>
+                </span>
+                <span className="mt-1 flex items-baseline gap-1.5">
+                  <span className="font-mono text-[22px] font-semibold leading-none text-white">{fmt(t.angka)}</span>
+                  <span className="text-[10px] text-slate-500">engine</span>
+                </span>
+                <span className="mt-1 block truncate text-[10px] text-slate-500">{t.sub}</span>
+                <span
+                  className="mt-1.5 flex h-1 w-full overflow-hidden rounded-full bg-white/[0.06]"
+                  aria-hidden="true"
+                >
+                  <span
+                    className="h-full rounded-full transition-all"
+                    style={{ width: `${units.length ? Math.round((t.angka / units.length) * 100) : 0}%`, background: m.color }}
+                  />
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-3 text-[10px] text-slate-500 sm:px-4">
+          <span>
+            <span className="font-mono text-slate-300">{fmt(bulanAktif.jumlah.servisLalu + bulanAktif.jumlah.servisIni)}</span> engine tercatat diservice bulan lalu + bulan ini ·
+            <span className="ml-1 font-mono text-slate-300">{fmt(bulanAktif.jumlah.lain)}</span> di luar 3 kategori
+          </span>
+          {fKohort && (
+            <button
+              onClick={() => setFKohort(null)}
+              className="inline-flex items-center gap-1 rounded-md border border-brand/40 bg-brand/10 px-1.5 py-0.5 font-semibold text-brand hover:bg-brand/20"
+            >
+              Filter:{' '}
+              {fKohort === 'jadwalIniSemua'
+                ? `Jadwal ${bulanAktif.acuan.label}`
+                : fKohort === 'jadwalDepanSemua'
+                ? `Jadwal ${bulanAktif.depan.label}`
+                : kohortMeta(fKohort).label}{' '}
+              <IconX size={10} />
+            </button>
+          )}
+          <span className="hidden sm:inline">Klik kartu untuk menyaring tabel evaluasi di bawah.</span>
+        </div>
+      </Card>
 
       {/* ---------------- grafik ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">
@@ -692,6 +869,22 @@ export default function Service({ notify, openFormSignal = 0 }) {
                       </div>
                       <span className={cx('shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold', m.cls)}>{m.short}</span>
                     </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-1">
+                      {(() => {
+                        const info = bulanAktif.perUnit.get(u.kode)
+                        const km = kohortMeta(info?.kohort)
+                        const lab = labelAktivitas(info, bulanAktif)
+                        return lab === '—' ? null : (
+                          <span className={cx('inline-flex items-center gap-1 rounded border px-1.5 py-0.5 text-[9.5px] font-semibold', km.cls)}>{lab}</span>
+                        )
+                      })()}
+                      {(() => {
+                        const info = bulanAktif.perUnit.get(u.kode)
+                        if (info?.servisIni) return <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9.5px] text-slate-400">{info.servisIni}× service {bulanAktif.acuan.singkat}</span>
+                        if (info?.servisLalu) return <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9.5px] text-slate-400">{info.servisLalu}× service {bulanAktif.lalu.singkat}</span>
+                        return null
+                      })()}
+                    </div>
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       <div>
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">Terakhir</p>
@@ -729,6 +922,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
                     <th className="px-2 py-2 text-right font-semibold">Next HM</th>
                     <th className="px-2 py-2 font-semibold">Sisa / Telat</th>
                     <th className="px-2 py-2 font-semibold">Status</th>
+                    <th className="px-2 py-2 font-semibold">Aktivitas {bulanAktif.acuan.singkat}</th>
                     <th className="px-2 py-2 font-semibold">Minggu Service</th>
                     <th className="px-4 py-2 font-semibold">Catatan</th>
                   </tr>
@@ -751,6 +945,17 @@ export default function Service({ notify, openFormSignal = 0 }) {
                         </span>
                       </td>
                       <td className="px-2 py-2"><StatusPill id={u.status} /></td>
+                      <td className="px-2 py-2">
+                        {(() => {
+                          const info = bulanAktif.perUnit.get(u.kode)
+                          const km = kohortMeta(info?.kohort)
+                          return (
+                            <span className={cx('inline-flex items-center gap-1 whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[10px] font-semibold', km.cls)}>
+                              {labelAktivitas(info, bulanAktif)}
+                            </span>
+                          )
+                        })()}
+                      </td>
                       <td className="px-2 py-2"><MingguChips mingguBulan={u.mingguBulan} /></td>
                       <td className="px-4 py-2 text-[11px] text-slate-400">{u.note || '—'}</td>
                     </tr>

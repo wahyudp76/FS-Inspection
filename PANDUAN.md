@@ -90,13 +90,18 @@ Rumus yang ditiru dashboard (sama dengan sheet):
 
 1. **KPI**: total engine, lewat jadwal, jatuh tempo, belum service, service bulan ini, cakupan service.
    Kartu *Lewat Jadwal / Jatuh Tempo / Belum Service* bisa diklik untuk menyaring tabel.
+1b. **Aktivitas Bulanan**: pilih bulan acuan (mis. *Oktober 2026*) lalu lihat 4 angka — berapa engine
+   **diservice bulan lalu**, **diservice bulan ini**, **jadwalnya jatuh bulan ini** (belum dikerjakan),
+   dan **jadwalnya bulan depan**. Klik salah satu untuk menyaring tabel, klik chip *Filter: …* untuk
+   menghapus saringan.
 2. **Grafik**: komposisi status (donut, klik untuk filter), status per posisi (FM3/FM4/PG2/OP2),
    volume service per bulan dari `tb_service2`.
 3. **Perlu Perhatian**: tab *Lewat / Jatuh tempo / Belum service / Data HM kurang*, urut paling mendesak,
    10 per halaman. Klik satu baris → detail engine.
 4. **Tabel Evaluasi Service Engine**: semua 131 engine dengan kolom service terakhir, HM, next service,
-   next HM, sisa/telat hari, status, minggu service per bulan, catatan. Filter posisi/jenis/status,
-   pencarian, urutan (paling telat / jadwal terdekat / HM terbesar / kode), paging 10/20/50, ekspor CSV.
+   next HM, sisa/telat hari, status, **aktivitas pada bulan acuan**, minggu service per bulan, catatan.
+   Filter posisi/jenis/status, pencarian, urutan (paling telat / jadwal terdekat / HM terbesar / kode),
+   paging 10/20/50, ekspor CSV (kolom aktivitas ikut diekspor).
 5. **Riwayat Pencatatan Service**: seluruh baris `tb_service2` (terbaru dulu), dengan kenaikan HM antar
    service. Kenaikan **> 1.000 HM** atau negatif diberi tanda ⚠ — biasanya salah input HM di sheet.
 
@@ -116,6 +121,34 @@ Di bawah grafik utama ada enam panel analitik yang bisa dibaca cepat:
 Dasar hitungan ketepatan: `selisih HM = HM service − HM service sebelumnya` untuk unit yang sama.
 Interval target sheet = **250 HM**, toleransi ±10 % dianggap tepat (225–275 HM). Baris dengan lonjakan
 HM tidak wajar (> 1.000 HM) dikeluarkan dari perhitungan agar angkanya tidak menyesatkan.
+
+### Filter bulan — “bulan lalu / bulan ini / bulan depan” (v1.6.2)
+
+Kartu **Aktivitas Bulanan** di atas grafik menjawab satu pertanyaan: *pada bulan tertentu, engine mana
+yang baru saja diservice, mana yang sedang diservice, dan mana yang harus diservice berikutnya?*
+
+Cara pakai:
+
+1. Pilih bulan pada dropdown **Bulan acuan** (‹ › untuk geser satu bulan). Pilihan bulan diambil dari
+   tanggal yang benar-benar ada di `tb_service2`, jadi selalu ada isinya.
+2. Empat tile menampilkan jumlah engine:
+
+   | Tile | Arti | Sumber |
+   |---|---|---|
+   | **Service bulan lalu** | ada pencatatan service di bulan sebelumnya | `tb_service2` |
+   | **Service bulan ini** | ada pencatatan service di bulan acuan | `tb_service2` |
+   | **Jadwal bulan ini** | next service (rumus sheet) jatuh di bulan acuan dan belum dikerjakan | `tb_service1` |
+   | **Jadwal bulan depan** | next service jatuh bulan setelah bulan acuan | `tb_service1` |
+
+3. Klik tile → tabel **Evaluasi Service Engine** tersaring ke engine tersebut, muncul chip
+   *Filter: …* (klik chip untuk membatalkan). Dua tile jadwal bersifat *tambahan*, tidak saling
+   meniadakan: engine yang sudah diservice bulan ini tetap bisa muncul di *Jadwal bulan depan*.
+4. Kolom **Aktivitas <bulan>** pada tabel (badge di tampilan HP) menuliskan status per engine, misal
+   *Servis Okt*, *Jadwal Nov*, atau *2× service Agustus + Sep*.
+
+Catatan data: `tb_service1` bisa memuat satu kode unit lebih dari sekali (saat ini 131 baris untuk
+127 kode). Aplikasi memakai baris dengan **HM terbesar** untuk tiap kode, dan header menampilkan badge
+kuning *“N baris ganda di tb_service1”* supaya baris ganda bisa dibersihkan di sheet.
 
 ### Mencatat service (masuk ke `tb_service2`)
 

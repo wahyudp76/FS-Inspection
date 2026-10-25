@@ -181,7 +181,25 @@ export function parseService1(header = [], rows = []) {
     })
     .filter(Boolean)
 
-  return { units, header }
+  /* ---- buang baris ganda: satu kode unit bisa muncul 2× di tb_service1.
+     Yang dipakai baris dengan HM terbesar (atau tanggal service terbaru). ---- */
+  const peta = new Map()
+  for (const u of units) {
+    const ada = peta.get(u.kode)
+    if (!ada) {
+      peta.set(u.kode, u)
+      continue
+    }
+    const lebihBaru =
+      (u.hm ?? -1) > (ada.hm ?? -1) ||
+      ((u.hm ?? -1) === (ada.hm ?? -1) && (u.terakhirIso || '') > (ada.terakhirIso || ''))
+    const pilih = lebihBaru ? u : ada
+    pilih.duplikat = (ada.duplikat || 0) + (u.duplikat || 0) + 1
+    peta.set(u.kode, pilih)
+  }
+  const unik = [...peta.values()]
+  const duplikat = unik.reduce((a, u) => a + (u.duplikat || 0), 0)
+  return { units: unik, header, duplikat, baris: units.length }
 }
 
 /** tb_service2 → daftar pencatatan service (blok A:H) */
@@ -236,7 +254,7 @@ export function parseService2(header = [], rows = []) {
 
 /* ----------------------------- ringkasan ----------------------------- */
 
-export function ringkasService(units = [], log = []) {
+export function ringkasService(units = [], log = [], meta = {}) {
   const hitung = (id) => units.filter((u) => u.status === id).length
   const byStatus = {
     terlambat: hitung('terlambat'),
@@ -400,12 +418,163 @@ export function ringkasService(units = [], log = []) {
     totalPencatatan: log.length,
     serviceBulanIni,
     hmJanggal,
+    duplikat: meta.duplikat || 0,
     daftar: { terlambat, segera, belum, tanpaJadwal, aman },
     cakupan: units.length ? Math.round((sudahService / units.length) * 100) : 0,
   }
 }
 
 /** Riwayat service satu unit (dari tb_service2, terbaru dulu) */
+/* ---------------------- analisa per bulan ---------------------- */
+
+export const bulanKey = (y, m) => `${y}-${String(m).padStart(2, '0')}`
+
+/** Daftar bulan acuan: semua bulan yang ada di tb_service2 + bulan ini & bulan depan. */
+export function daftarBulan(log = [], hariIni = new Date()) {
+  const map = new Map()
+  for (const r of log) {
+    const iso = r.tanggal || ''
+    if (iso.length < 7) continue
+    const key = iso.slice(0, 7)
+    map.set(key, (map.get(key) || 0) + 1)
+  }
+  const y = hariIni.getFullYear()
+  const m = hariIni.getMonth() + 1
+  const ini = bulanKey(y, m)
+  const depan = m === 12 ? bulanKey(y + 1, 1) : bulanKey(y, m + 1)
+  if (!map.has(ini)) map.set(ini, 0)
+  if (!map.has(depan)) map.set(depan, 0)
+  return [...map.entries()]
+    .map(([key, jumlah]) => {
+      const [yy, mm] = key.split('-').map(Number)
+      return { value: key, label: `${namaBulan(mm)} ${yy}`, singkat: `${singkatBulan(mm)} ${String(yy).slice(2)}`, y: yy, m: mm, jumlah }
+    })
+    .sort((a, b) => (b.y - a.y) || (b.m - a.m))
+}
+
+/** Kohort aktivitas satu engine pada bulan acuan. */
+export const KOHORT = [
+  { id: 'servisIni', label: 'Service bulan ini', short: 'Servis', color: '#22c55e', cls: 'text-emerald-300 bg-emerald-500/12 border-emerald-500/35' },
+  { id: 'servisLalu', label: 'Service bulan lalu', short: 'Bulan lalu', color: '#38bdf8', cls: 'text-sky-300 bg-sky-500/12 border-sky-500/35' },
+  { id: 'jadwalIni', label: 'Jadwal bulan ini, belum dikerjakan', short: 'Jadwal kini', color: '#f59e0b', cls: 'text-amber-300 bg-amber-500/12 border-amber-500/35' },
+  { id: 'jadwalDepan', label: 'Jadwal bulan depan', short: 'Bulan depan', color: '#a78bfa', cls: 'text-violet-300 bg-violet-500/12 border-violet-500/35' },
+  { id: 'lain', label: 'Di luar 3 kategori itu', short: 'Lainnya', color: '#64748b', cls: 'text-slate-300 bg-slate-500/12 border-slate-500/35' },
+]
+export const kohortMeta = (id) => KOHORT.find((k) => k.id === id) || KOHORT[4]
+
+/**
+ * Kelompokkan engine menurut aktivitas pada bulan acuan:
+ *  - service dilakukan bulan ini / bulan lalu (dari tb_service2),
+ *  - jadwal service jatuh bulan ini (belum dikerjakan) atau bulan depan (dari tb_service1).
+ */
+export function analisaBulan(units = [], log = [], acuanValue) {
+  const [ay, am] = String(acuanValue || '').split('-').map(Number)
+  const hariIni = new Date()
+  const y = ay || hariIni.getFullYear()
+  const m = am || hariIni.getMonth() + 1
+  const prev = m === 1 ? { y: y - 1, m: 12 } : { y, m: m - 1 }
+  const next = m === 12 ? { y: y + 1, m: 1 } : { y, m: m + 1 }
+  const kIni = bulanKey(y, m)
+  const kLalu = bulanKey(prev.y, prev.m)
+  const kDepan = bulanKey(next.y, next.m)
+
+  /* service per unit per bulan */
+  const mapLog = new Map()
+  for (const r of log) {
+    const iso = r.tanggal || ''
+    if (iso.length < 7) continue
+    const key = iso.slice(0, 7)
+    const cur = mapLog.get(r.kode) || {}
+    const arr = cur[key] || []
+    arr.push(iso)
+    cur[key] = arr
+    mapLog.set(r.kode, cur)
+  }
+
+  const perUnit = new Map()
+  for (const u of units) {
+    const bulan = mapLog.get(u.kode) || {}
+    const ini = (bulan[kIni] || []).slice().sort()
+    const lalu = (bulan[kLalu] || []).slice().sort()
+    const nextIso = u.nextIso || ''
+    const nextKey = nextIso.slice(0, 7)
+    const jadwalIni = nextKey === kIni && u.status !== 'belum' ? nextIso : ''
+    const jadwalDepan = nextKey === kDepan && u.status !== 'belum' ? nextIso : ''
+
+    let kohort = 'lain'
+    if (ini.length) kohort = 'servisIni'
+    else if (lalu.length) kohort = 'servisLalu'
+    else if (jadwalIni) kohort = 'jadwalIni'
+    else if (jadwalDepan) kohort = 'jadwalDepan'
+
+    perUnit.set(u.kode, {
+      kohort,
+      servisIni: ini.length,
+      servisIniTerakhir: ini.length ? ini[ini.length - 1] : '',
+      servisLalu: lalu.length,
+      servisLaluTerakhir: lalu.length ? lalu[lalu.length - 1] : '',
+      jadwalIni,
+      jadwalDepan,
+    })
+  }
+
+  const jumlah = { servisIni: 0, servisLalu: 0, jadwalIni: 0, jadwalDepan: 0, lain: 0 }
+  for (const v of perUnit.values()) jumlah[v.kohort] += 1
+
+  /* hitungan Jadwal TIDAK eksklusif: satu engine bisa diservice bulan ini sekaligus
+     punya jadwal berikutnya di bulan depan — dua-duanya perlu terlihat. */
+  const jadwalIniSemua = units.filter((u) => u.status !== 'belum' && (u.nextIso || '').slice(0, 7) === kIni)
+  const jadwalDepanSemua = units.filter((u) => u.status !== 'belum' && (u.nextIso || '').slice(0, 7) === kDepan)
+  const servisLaluSemua = units.filter((u) => (mapLog.get(u.kode)?.[kLalu] || []).length > 0)
+
+  /* service yang benar-benar dilakukan pada tiap bulan (bukan per unit, tapi hitungan sesi) */
+  const sesiIni = log.filter((r) => (r.tanggal || '').slice(0, 7) === kIni).length
+  const sesiLalu = log.filter((r) => (r.tanggal || '').slice(0, 7) === kLalu).length
+
+  const daftar = {}
+  for (const k of KOHORT) daftar[k.id] = units.filter((u) => perUnit.get(u.kode)?.kohort === k.id)
+
+  /* himpunan kode untuk menyaring tabel (termasuk dua himpunan jadwal non-eksklusif) */
+  const sets = {}
+  for (const k of KOHORT) sets[k.id] = new Set(daftar[k.id].map((u) => u.kode))
+  sets.jadwalIniSemua = new Set(jadwalIniSemua.map((u) => u.kode))
+  sets.jadwalDepanSemua = new Set(jadwalDepanSemua.map((u) => u.kode))
+  sets.servisLaluSemua = new Set(servisLaluSemua.map((u) => u.kode))
+
+  return {
+    acuan: { value: kIni, label: `${namaBulan(m)} ${y}`, singkat: singkatBulan(m), y, m },
+    lalu: { value: kLalu, label: `${namaBulan(prev.m)} ${prev.y}`, singkat: singkatBulan(prev.m) },
+    depan: { value: kDepan, label: `${namaBulan(next.m)} ${next.y}`, singkat: singkatBulan(next.m) },
+    perUnit,
+    jumlah: {
+      ...jumlah,
+      jadwalIniSemua: jadwalIniSemua.length,
+      jadwalDepanSemua: jadwalDepanSemua.length,
+      servisLaluSemua: servisLaluSemua.length,
+    },
+    sesiIni,
+    sesiLalu,
+    daftar,
+    sets,
+  }
+}
+
+export const labelAktivitas = (info, analisa) => {
+  if (!info || !analisa) return '—'
+  switch (info.kohort) {
+    case 'servisIni':
+      return `Servis ${analisa.acuan.singkat}`
+    case 'servisLalu':
+      return `Servis ${analisa.lalu.singkat}`
+    case 'jadwalIni':
+      return `Jadwal ${analisa.acuan.singkat}`
+    case 'jadwalDepan':
+      return `Jadwal ${analisa.depan.singkat}`
+    default:
+      return '—'
+  }
+}
+
 export const riwayatUnit = (log = [], kode = '') =>
   log.filter((r) => norm(r.kode) === norm(kode))
 
@@ -449,10 +618,10 @@ export async function fetchServiceData() {
   }
   const json = await postApi({ action: 'svcread' }, 45000)
   const r = json.result || {}
-  const { units } = parseService1(r.evalHeader || [], r.evalRows || [])
+  const { units, duplikat, baris } = parseService1(r.evalHeader || [], r.evalRows || [])
   const log = parseService2(r.logHeader || [], r.logRows || [])
-  const data = { units, log, syncedAt: new Date().toISOString(), intervalHm: r.intervalHm || INTERVAL_HM }
-  writeServiceCache({ units, log, syncedAt: data.syncedAt })
+  const data = { units, log, duplikat: duplikat || 0, barisEval: baris || units.length, syncedAt: new Date().toISOString(), intervalHm: r.intervalHm || INTERVAL_HM }
+  writeServiceCache({ units, log, duplikat: data.duplikat, barisEval: data.barisEval, syncedAt: data.syncedAt })
   return data
 }
 
