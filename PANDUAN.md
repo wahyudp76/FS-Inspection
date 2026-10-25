@@ -4,6 +4,28 @@ Checklist singkat. Detail lengkap ada di [`README.md`](README.md).
 
 ---
 
+## Logo & ikon aplikasi (v1.7.0)
+
+Logo resmi **FS Inspection** (mesin + irrigator + papan checklist di dalam lingkaran biru–hijau) dipakai
+di tiga tempat:
+
+| Tempat | Berkas |
+|---|---|
+| Ikon tab browser (favicon) | `public/favicon.ico`, `public/icons/favicon-16.png`, `favicon-32.png`, `favicon-48.png`, `public/icon.svg` |
+| Ikon aplikasi / PWA (home screen Android, iOS, desktop) | `public/icons/icon-72…512.png` + `public/icons/maskable-192.png` & `maskable-512.png` + `public/apple-touch-icon.png` |
+| Logo di dalam aplikasi | sidebar (desktop) dan topbar (HP/tablet), dari `src/assets/logo.png` |
+
+Catatan teknis:
+
+- Ikon dibuat dari satu gambar sumber 1254×1254: latar putih dibuang jadi transparan, lalu ditempel di
+  kanvas putih (ikon PWA versi `any` memakai 80 % area + sudut membulat, versi **maskable** 62 % supaya
+  aman saat Android memotong bentuk lingkaran/bulat).
+- Semua tautan ikon memakai penanda versi `?v=20261025b`, dan service worker naik ke cache **`fsi-v3`**,
+  jadi ikon baru langsung muncul walau browser menyimpan cache lama. Kalau nanti logo diganti lagi,
+  naikkan penanda versi itu dan nama cache-nya.
+- Untuk mengganti logo: timpa `public/icons/*`, `public/favicon.ico`, `public/apple-touch-icon.png`, dan
+  `src/assets/logo.png`, lalu `npm run build:pages` + `touch docs/.nojekyll`.
+
 ## Pasang sebagai aplikasi (PWA)
 
 - **Android (Chrome)**: menu ⋮ ▸ **Add to Home screen / Instal aplikasi**.

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { cx, relativeTime } from '../lib/analytics'
 import {
-  IconLogo, IconGauge, IconClipboard, IconList, IconHistory, IconSettings, IconMenu, IconX,
+  IconGauge, IconClipboard, IconList, IconHistory, IconSettings, IconMenu, IconX,
   IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus, IconChevron, IconWrench,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
+import logoUrl from '../assets/logo.png'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: IconGauge, desc: 'Ringkasan & analitik' },
@@ -79,7 +80,9 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
   const SidebarInner = (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="sidebar-head flex shrink-0 items-center gap-2.5 px-4 py-5">
-        <IconLogo size={34} />
+        <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-[2px] shadow-md shadow-black/30 ring-1 ring-white/25">
+          <img src={logoUrl} alt="FS Inspection" className="h-full w-full object-contain" width="40" height="40" />
+        </span>
         <div className="min-w-0">
           <p className="text-[13px] font-bold leading-tight text-white">FS Inspection</p>
           <p className="truncate text-[10px] uppercase tracking-[0.14em] text-slate-500">Engine &amp; Irrigator</p>
@@ -176,6 +179,10 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
             <button className="grid h-11 w-11 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 sm:h-9 sm:w-9 lg:hidden" onClick={() => setOpen(true)} aria-label="Buka menu">
               <IconMenu size={16} />
             </button>
+            {/* logo di topbar (HP/tablet) — desktop sudah punya di sidebar */}
+            <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-[1.5px] ring-1 ring-white/15 lg:hidden">
+              <img src={logoUrl} alt="FS Inspection" className="h-full w-full object-contain" width="36" height="36" />
+            </span>
             <div className="min-w-0 flex-1">
               <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-white">
                 {current.label}
