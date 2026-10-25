@@ -575,6 +575,206 @@ export const labelAktivitas = (info, analisa) => {
   }
 }
 
+/* ================== analisa “kondisi per bulan” ==================
+   Untuk filter bulan: status tiap engine dihitung ulang seolah-olah hari ini
+   adalah akhir bulan acuan (atau hari ini bila bulan itu masih berjalan).
+   Dasar: service terakhir (tb_service2) + jadwal berikutnya (tb_service1),
+   sehingga “berapa yang lewat jadwal di bulan September” bisa dijawab.
+   ================================================================= */
+
+const keyBulanIso = (iso) => (iso || '').slice(0, 7)
+
+/** ISO + n hari (aritmetika tanggal murni, tanpa geser zona waktu WIB) */
+export const tambahHari = (iso, n) => {
+  const m = String(iso ?? '').match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!m) return ''
+  const d = new Date(Date.UTC(+m[1], +m[2] - 1, +m[3]) + n * 86400000)
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`
+}
+
+export const akhirBulan = (acuanKey) => {
+  const [y, m] = String(acuanKey).split('-').map(Number)
+  if (!y || !m) return ''
+  return `${y}-${pad(m)}-${pad(new Date(Date.UTC(y, m, 0)).getUTCDate())}`
+}
+
+/** Titik acuan waktu untuk satu bulan: akhir bulan, dibatasi hari ini. */
+export const refBulan = (acuanKey, hariIni = todayIso()) => {
+  const akhir = akhirBulan(acuanKey)
+  if (!akhir) return hariIni
+  return hariIni < akhir ? hariIni : akhir
+}
+
+export const labelRef = (iso) => {
+  const t = parseTanggal(iso)
+  return t ? `${t.d} ${singkatBulan(t.m)} ${t.y}` : ''
+}
+
+/**
+ * Status tiap engine “per refIso”.
+ * - belum      : belum ada pencatatan service sampai tanggal itu
+ * - tanpaJadwal: tidak ada jadwal/rerata HM, jadi tanggal service berikutnya tak bisa dihitung
+ * - terlambat  : tanggal service berikutnya sudah lewat pada refIso
+ * - segera     : ≤ 7 hari lagi
+ * - aman       : masih > 7 hari lagi
+ */
+export function statusPada(units = [], log = [], refIso = todayIso()) {
+  const riwayat = new Map() // kode → baris service terakhir yang ≤ refIso
+  for (const r of log) {
+    if (!r.tanggal || !r.kode) continue
+    if (r.tanggal > refIso) continue
+    const ada = riwayat.get(r.kode)
+    if (!ada || r.tanggal > ada.tanggal) riwayat.set(r.kode, r)
+  }
+  return units.map((u) => {
+    const last = riwayat.get(u.kode)
+    if (!last) {
+      return { ...u, statusAsal: 'belum', warningAsal: null, sisaHariAsal: null, nextAsalIso: '', terakhirAsalIso: '' }
+    }
+    /* kalau baris terakhir di log = baris terakhir di sheet, pakai jadwal resmi sheet */
+    let nextIso = ''
+    if (last.tanggal === u.terakhirIso) nextIso = u.nextIso
+    else if (u.rerata > 0) nextIso = tambahHari(last.tanggal, Math.ceil(INTERVAL_HM / u.rerata))
+    const warning = nextIso ? selisihHari(nextIso, refIso) : null // positif = sudah lewat
+    let statusAsal = 'aman'
+    if (!nextIso || !(u.rerata > 0)) statusAsal = 'tanpaJadwal'
+    else if (warning > 0) statusAsal = 'terlambat'
+    else if (warning >= -AMAN_HARI) statusAsal = 'segera'
+    return {
+      ...u,
+      statusAsal,
+      warningAsal: warning,
+      sisaHariAsal: warning == null ? null : -warning,
+      nextAsalIso: nextIso,
+      terakhirAsalIso: last.tanggal,
+    }
+  })
+}
+
+const EMBER_DELTA = [
+  { id: '<150', label: '< 150', min: 0, max: 150, color: '#0ea5e9' },
+  { id: '150-199', label: '150–199', min: 150, max: 200, color: '#38bdf8' },
+  { id: '200-224', label: '200–224', min: 200, max: TEPAT_MIN, color: '#7dd3fc' },
+  { id: '225-275', label: '225–275', min: TEPAT_MIN, max: TEPAT_MAX + 1, color: '#22c55e' },
+  { id: '276-349', label: '276–349', min: TEPAT_MAX + 1, max: 350, color: '#fb7185' },
+  { id: '350+', label: '≥ 350', min: 350, max: 1e9, color: '#f43f5e' },
+]
+
+/** Ketepatan interval HM dari sekumpulan baris service (hmDelta sudah dihitung parseService2). */
+export function ketepatanDari(rows = []) {
+  const dinilaiLog = rows.filter((r) => !r.hmAnomali && r.hmDelta != null)
+  const k = {
+    dinilai: dinilaiLog.length,
+    tepat: dinilaiLog.filter((r) => ketepatanHm(r.hmDelta) === 'tepat').length,
+    telat: dinilaiLog.filter((r) => ketepatanHm(r.hmDelta) === 'telat').length,
+    awal: dinilaiLog.filter((r) => ketepatanHm(r.hmDelta) === 'awal').length,
+    dikecualikan: rows.filter((r) => r.hmAnomali).length,
+  }
+  k.pct = k.dinilai ? Math.round((k.tepat / k.dinilai) * 100) : 0
+  k.sebaran = EMBER_DELTA.map((e) => ({
+    ...e,
+    jumlah: dinilaiLog.filter((r) => r.hmDelta >= e.min && r.hmDelta < e.max).length,
+  }))
+  k.rata = dinilaiLog.length
+    ? Math.round(dinilaiLog.reduce((a, r) => a + r.hmDelta, 0) / dinilaiLog.length)
+    : null
+  return k
+}
+
+/**
+ * Ringkasan grafik untuk satu bulan acuan:
+ * komposisi status, cakupan per divisi, sebaran urgensi, top 10 terlambat,
+ * ketepatan interval, dan baris log bulan itu (untuk peta minggu).
+ */
+export function ringkasBulan(units = [], log = [], acuanKey, opsi = {}) {
+  const refIso = opsi.refIso || refBulan(acuanKey)
+  const asof = statusPada(units, log, refIso)
+  const n = (id) => asof.filter((u) => u.statusAsal === id).length
+  const byStatus = {
+    terlambat: n('terlambat'),
+    segera: n('segera'),
+    aman: n('aman'),
+    tanpaJadwal: n('tanpaJadwal'),
+    belum: n('belum'),
+  }
+  const totalUnit = asof.length
+  const sudahService = totalUnit - byStatus.belum
+
+  /* cakupan per divisi */
+  const posisi = [...new Set(asof.map((u) => u.posisi).filter(Boolean))].sort()
+  const perPosisi = posisi.map((p) => {
+    const set = asof.filter((u) => u.posisi === p)
+    const total = set.length
+    const m = (id) => set.filter((u) => u.statusAsal === id).length
+    const belum = m('belum')
+    const sudah = total - belum
+    const pct = (v) => (total ? Math.round((v / total) * 100) : 0)
+    return {
+      posisi: p,
+      total,
+      terlambat: m('terlambat'),
+      segera: m('segera'),
+      aman: m('aman'),
+      tanpaJadwal: m('tanpaJadwal'),
+      belum,
+      sudah,
+      belumPct: pct(belum),
+      sudahPct: pct(sudah),
+      terlambatPct: pct(m('terlambat')),
+      beres: m('aman'),
+    }
+  })
+
+  /* sebaran urgensi + himpunan kode untuk klik-untuk-filter */
+  const mapUrgensi = new Map()
+  const setsUrgensi = {}
+  for (const u of asof) {
+    if (u.statusAsal === 'belum' || u.sisaHariAsal == null) continue
+    const id = emberUrgensi(u.sisaHariAsal)
+    mapUrgensi.set(id, (mapUrgensi.get(id) || 0) + 1)
+    ;(setsUrgensi[id] = setsUrgensi[id] || new Set()).add(u.kode)
+  }
+  const urgensi = URGENSI.map((e) => ({ ...e, jumlah: mapUrgensi.get(e.id) || 0 }))
+
+  const setsStatus = {}
+  for (const u of asof) (setsStatus[u.statusAsal] = setsStatus[u.statusAsal] || new Set()).add(u.kode)
+
+  const topTerlambat = asof
+    .filter((u) => u.statusAsal === 'terlambat')
+    .sort((a, b) => b.warningAsal - a.warningAsal)
+    .slice(0, 10)
+    .map((u) => ({ kode: u.kode, posisi: u.posisi, jenis: u.jenis, telat: u.warningAsal, jadwal: u.nextAsalIso }))
+
+  /* baris service yang terjadi pada bulan acuan */
+  const logBulan = log.filter((r) => keyBulanIso(r.tanggal) === acuanKey)
+  const ketepatan = ketepatanDari(logBulan)
+
+  return {
+    acuanKey,
+    refIso,
+    refLabel: labelRef(refIso),
+    bulanBerjalan: refIso < akhirBulan(acuanKey),
+    totalUnit,
+    sudahService,
+    belumService: byStatus.belum,
+    terlambat: byStatus.terlambat,
+    segera: byStatus.segera,
+    aman: byStatus.aman,
+    tanpaJadwal: byStatus.tanpaJadwal,
+    byStatus,
+    cakupan: totalUnit ? Math.round((sudahService / totalUnit) * 100) : 0,
+    perPosisi,
+    urgensi,
+    topTerlambat,
+    ketepatan,
+    logBulan,
+    sesiBulan: logBulan.length,
+    unitBulan: new Set(logBulan.map((r) => r.kode)).size,
+    setsStatus,
+    setsUrgensi,
+  }
+}
+
 export const riwayatUnit = (log = [], kode = '') =>
   log.filter((r) => norm(r.kode) === norm(kode))
 

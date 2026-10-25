@@ -11,6 +11,8 @@ import { SERVICE_SHEET, SERVICE_STATUS, serviceStatusMeta } from '../lib/config'
 import {
   fetchServiceData,
   daftarBulan,
+  ringkasBulan,
+  URGENSI,
   analisaBulan,
   kohortMeta,
   labelAktivitas,
@@ -128,6 +130,8 @@ export default function Service({ notify, openFormSignal = 0 }) {
   /* bulan acuan untuk analisa aktivitas (service bulan lalu / bulan ini / jadwal bulan depan) */
   const [acuan, setAcuan] = useState('')
   const [fKohort, setFKohort] = useState(null)
+  /* filter tabel berupa himpunan kode hasil klik grafik “kondisi per bulan” */
+  const [fKode, setFKode] = useState(null)
   const [cari, setCari] = useState('')
   const [urut, setUrut] = useState('telat')
   const [halEval, setHalEval] = useState(0)
@@ -160,6 +164,8 @@ export default function Service({ notify, openFormSignal = 0 }) {
     return bulanOpsi.find((b) => b.value === key)?.value || bulanOpsi[0]?.value || key
   }, [acuan, bulanOpsi])
   const bulanAktif = useMemo(() => analisaBulan(units, log, acuanAktif), [units, log, acuanAktif])
+  /* grafik “kondisi per bulan”: status dihitung per akhir bulan acuan */
+  const bulanRingkas = useMemo(() => ringkasBulan(units, log, acuanAktif), [units, log, acuanAktif])
 
   const muat = useCallback(
     async ({ diam = false } = {}) => {
@@ -201,6 +207,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
     if (fJenis.length) rows = rows.filter((u) => fJenis.includes(u.jenis))
     if (fStatus.length) rows = rows.filter((u) => fStatus.includes(u.status))
     if (fKohort) { const set = bulanAktif.sets[fKohort]; if (set) rows = rows.filter((u) => set.has(u.kode)) }
+    if (fKode?.set) rows = rows.filter((u) => fKode.set.has(u.kode))
     if (q) rows = rows.filter((u) => u.kode.includes(q) || (u.note || '').toUpperCase().includes(q))
     const bobot = { terlambat: 0, segera: 1, tanpaJadwal: 2, belum: 3, aman: 4 }
     const salin = [...rows]
@@ -209,13 +216,15 @@ export default function Service({ notify, openFormSignal = 0 }) {
     else if (urut === 'kode') salin.sort((a, b) => a.kode.localeCompare(b.kode))
     else if (urut === 'hm') salin.sort((a, b) => (b.hm ?? -1) - (a.hm ?? -1))
     return salin
-  }, [units, fPosisi, fJenis, fStatus, cari, urut, fKohort, bulanAktif])
+  }, [units, fPosisi, fJenis, fStatus, cari, urut, fKohort, bulanAktif, fKode])
 
   const totalHalamanEval = Math.max(1, Math.ceil(filtered.length / perEval))
   const halEvalAman = Math.min(halEval, totalHalamanEval - 1)
   const barisEval = filtered.slice(halEvalAman * perEval, halEvalAman * perEval + perEval)
 
-  useEffect(() => { setHalEval(0) }, [fPosisi, fJenis, fStatus, cari, urut, perEval, fKohort, acuanAktif])
+  useEffect(() => { setHalEval(0) }, [fPosisi, fJenis, fStatus, cari, urut, perEval, fKohort, acuanAktif, fKode])
+  /* ganti bulan → saringan hasil klik grafik bulan lama dibuang */
+  useEffect(() => { setFKode(null) }, [acuanAktif])
 
   /* --------------------------- perhatian --------------------------- */
   const daftarPerhatian = ringkasan.daftar[tabPerhatian] || []
@@ -282,9 +291,9 @@ export default function Service({ notify, openFormSignal = 0 }) {
     notify?.({ type: 'success', message: `${filtered.length} baris evaluasi service diunduh sebagai CSV.` })
   }
 
-  const donutData = SERVICE_STATUS.filter((s) => (ringkasan.byStatus[s.id] || 0) > 0).map((s) => ({
+  const donutData = SERVICE_STATUS.filter((s) => (bulanRingkas.byStatus[s.id] || 0) > 0).map((s) => ({
     name: s.label,
-    value: ringkasan.byStatus[s.id],
+    value: bulanRingkas.byStatus[s.id],
     color: s.color,
   }))
 
@@ -554,18 +563,30 @@ export default function Service({ notify, openFormSignal = 0 }) {
       {/* ---------------- grafik ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">
         <Card className="xl:col-span-5">
-          <CardHeader title="Komposisi Status" sub="Kesiapan engine menghadapi musim kemarau" icon={<IconWrench size={15} />} />
+          <CardHeader
+            title="Komposisi Status"
+            sub={`Kondisi per ${bulanRingkas.refLabel}${bulanRingkas.bulanBerjalan ? ' (bulan berjalan)' : ''}`}
+            icon={<IconWrench size={15} />}
+            right={
+              <span className="hidden rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-400 sm:inline">
+                {bulanAktif.acuan.label}
+              </span>
+            }
+          />
           <div className="px-3 pb-4 pt-2">
-            {ringkasan.totalUnit ? (
+            {bulanRingkas.totalUnit ? (
               <Donut
                 data={donutData}
                 height={210}
                 showLegend={false}
-                centerValue={fmt(ringkasan.totalUnit)}
+                centerValue={fmt(bulanRingkas.totalUnit)}
                 centerLabel="engine"
                 onSlice={(name) => {
                   const s = SERVICE_STATUS.find((x) => x.label === name)
-                  if (s) { setFStatus([s.id]); setHalEval(0) }
+                  if (s) {
+                    setFKode({ label: `${s.label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsStatus[s.id] || new Set() })
+                    setHalEval(0)
+                  }
                 }}
               />
             ) : (
@@ -573,12 +594,15 @@ export default function Service({ notify, openFormSignal = 0 }) {
             )}
             <div className="mt-3 space-y-1.5">
               {SERVICE_STATUS.map((s) => {
-                const n = ringkasan.byStatus[s.id] || 0
-                const pct = ringkasan.totalUnit ? Math.round((n / ringkasan.totalUnit) * 100) : 0
+                const n = bulanRingkas.byStatus[s.id] || 0
+                const pct = bulanRingkas.totalUnit ? Math.round((n / bulanRingkas.totalUnit) * 100) : 0
                 return (
                   <button
                     key={s.id}
-                    onClick={() => { setFStatus([s.id]); setHalEval(0) }}
+                    onClick={() => {
+                      setFKode({ label: `${s.label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsStatus[s.id] || new Set() })
+                      setHalEval(0)
+                    }}
                     className="flex w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-white/[0.04]"
                   >
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
@@ -610,12 +634,12 @@ export default function Service({ notify, openFormSignal = 0 }) {
         <Card className="xl:col-span-5">
           <CardHeader
             title="Cakupan per Divisi"
-            sub="Berapa engine tiap posisi yang belum pernah diservice"
+            sub={`Status tiap posisi per ${bulanRingkas.refLabel}`}
             icon={<IconEngine size={15} />}
           />
           <div className="px-2 pb-3 pt-2">
             <DivisiCakupanChart
-              data={ringkasan.perPosisi}
+              data={bulanRingkas.perPosisi}
               height={168}
               onPick={(posisi) => {
                 setFPosisi([posisi])
@@ -627,14 +651,19 @@ export default function Service({ notify, openFormSignal = 0 }) {
         </Card>
 
         <Card className="xl:col-span-4">
-          <CardHeader title="Sebaran Urgensi" sub="Sisa hari menuju warning date (tb_service1)" icon={<IconAlert size={15} />} />
+          <CardHeader
+            title="Sebaran Urgensi"
+            sub={`Sisa hari menuju warning date per ${bulanRingkas.refLabel}`}
+            icon={<IconAlert size={15} />}
+          />
           <div className="px-1 pb-3 pt-2">
             <UrgensiChart
-              data={ringkasan.urgensi}
+              data={bulanRingkas.urgensi}
               height={168}
               onClickEmber={(id) => {
                 const map = { lewat30: 'terlambat', lewat8: 'terlambat', lewat7: 'terlambat', tempo: 'segera', aman30: 'aman', aman: 'aman' }
-                setFStatus([map[id]])
+                const label = (URGENSI.find((e) => e.id === id)?.label || id)
+                setFKode({ label: `${label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsUrgensi[id] || new Set() })
                 setHalEval(0)
               }}
             />
@@ -642,10 +671,10 @@ export default function Service({ notify, openFormSignal = 0 }) {
         </Card>
 
         <Card className="xl:col-span-3">
-          <CardHeader title="10 Paling Terlambat" sub="Hari lewat warning date" icon={<IconWrench size={15} />} />
+          <CardHeader title="10 Paling Terlambat" sub={`Hari lewat warning date per ${bulanRingkas.refLabel}`} icon={<IconWrench size={15} />} />
           <div className="px-1 pb-3 pt-2">
             <TopTerlambatChart
-              data={ringkasan.topTerlambat}
+              data={bulanRingkas.topTerlambat}
               height={214}
               onPick={(kode) => {
                 const u = units.find((x) => x.kode === kode)
@@ -658,7 +687,14 @@ export default function Service({ notify, openFormSignal = 0 }) {
 
       <div className="grid gap-4 xl:grid-cols-12">
         <Card className="xl:col-span-5">
-          <CardHeader title="Ringkasan Ketepatan Interval" sub="Dihitung dari selisih HM antar service tiap unit" />
+          <CardHeader
+            title="Ringkasan Ketepatan Interval"
+            sub={
+              bulanRingkas.ketepatan.dinilai
+                ? `Selisih HM antar service unit · ${bulanAktif.acuan.label}`
+                : `Belum ada service tercatat pada ${bulanAktif.acuan.label}`
+            }
+          />
           <div className="px-3 pb-3 pt-2">
             <div className="flex items-center gap-3">
               <div className="relative grid h-[86px] w-[86px] shrink-0 place-items-center">
@@ -669,22 +705,22 @@ export default function Service({ notify, openFormSignal = 0 }) {
                     cy="18"
                     r="15.5"
                     fill="none"
-                    stroke={ringkasan.ketepatan.pct >= 70 ? '#22c55e' : ringkasan.ketepatan.pct >= 40 ? '#f59e0b' : '#f43f5e'}
+                    stroke={bulanRingkas.ketepatan.pct >= 70 ? '#22c55e' : bulanRingkas.ketepatan.pct >= 40 ? '#f59e0b' : '#f43f5e'}
                     strokeWidth="3.5"
                     strokeLinecap="round"
-                    strokeDasharray={`${(ringkasan.ketepatan.pct / 100) * 97.4} 97.4`}
+                    strokeDasharray={`${(bulanRingkas.ketepatan.pct / 100) * 97.4} 97.4`}
                   />
                 </svg>
                 <div className="text-center">
-                  <p className="font-mono text-[15px] font-semibold text-white">{ringkasan.ketepatan.pct}%</p>
+                  <p className="font-mono text-[15px] font-semibold text-white">{bulanRingkas.ketepatan.pct}%</p>
                   <p className="text-[8.5px] uppercase tracking-wider text-slate-500">tepat</p>
                 </div>
               </div>
               <div className="min-w-0 flex-1 space-y-1">
                 {[
-                  ['Tepat 225–275 HM', ringkasan.ketepatan.tepat, '#22c55e'],
-                  ['Terlambat > 275 HM', ringkasan.ketepatan.telat, '#f43f5e'],
-                  ['Lebih awal < 225 HM', ringkasan.ketepatan.awal, '#38bdf8'],
+                  ['Tepat 225–275 HM', bulanRingkas.ketepatan.tepat, '#22c55e'],
+                  ['Terlambat > 275 HM', bulanRingkas.ketepatan.telat, '#f43f5e'],
+                  ['Lebih awal < 225 HM', bulanRingkas.ketepatan.awal, '#38bdf8'],
                 ].map(([label, n, color]) => (
                   <div key={label} className="flex items-center gap-1.5 text-[10.5px]">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
@@ -693,8 +729,8 @@ export default function Service({ notify, openFormSignal = 0 }) {
                   </div>
                 ))}
                 <p className="pt-0.5 text-[9.5px] leading-relaxed text-slate-500">
-                  Rata-rata selisih HM <span className="font-mono text-slate-300">{ringkasan.ketepatan.rata ?? '—'}</span> ·
-                  {' '}{ringkasan.ketepatan.dikecualikan} baris HM janggal tidak dihitung
+                  Rata-rata selisih HM <span className="font-mono text-slate-300">{bulanRingkas.ketepatan.rata ?? '—'}</span> ·
+                  {' '}{bulanRingkas.ketepatan.dikecualikan} baris HM janggal tidak dihitung
                 </p>
               </div>
             </div>
@@ -703,19 +739,19 @@ export default function Service({ notify, openFormSignal = 0 }) {
             <div className="mt-3">
               <p className="mb-1 text-[9.5px] uppercase tracking-wider text-slate-500">Sebaran selisih HM antar service</p>
               <div className="flex h-3 w-full overflow-hidden rounded-full bg-white/[0.05]">
-                {(ringkasan.ketepatan.sebaran || []).map((e) => (
+                {(bulanRingkas.ketepatan.sebaran || []).map((e) => (
                   <div
                     key={e.id}
                     title={`${e.label} HM: ${e.jumlah} service`}
                     style={{
-                      width: `${ringkasan.ketepatan.dinilai ? (e.jumlah / ringkasan.ketepatan.dinilai) * 100 : 0}%`,
+                      width: `${bulanRingkas.ketepatan.dinilai ? (e.jumlah / bulanRingkas.ketepatan.dinilai) * 100 : 0}%`,
                       background: e.color,
                     }}
                   />
                 ))}
               </div>
               <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5">
-                {(ringkasan.ketepatan.sebaran || []).map((e) => (
+                {(bulanRingkas.ketepatan.sebaran || []).map((e) => (
                   <span key={e.id} className="inline-flex items-center gap-1 text-[9px] text-slate-500">
                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: e.color }} />
                     {e.label} <span className="font-mono text-slate-300">{e.jumlah}</span>
@@ -731,9 +767,12 @@ export default function Service({ notify, openFormSignal = 0 }) {
         </Card>
 
         <Card className="xl:col-span-7">
-          <CardHeader title="Peta Minggu Service" sub="Kapan tiap jenis engine biasa diservice (minggu ke-1 s/d 5)" />
+          <CardHeader
+            title="Peta Minggu Service"
+            sub={`Service ${bulanAktif.acuan.label} per minggu ke-1 s/d 5 · ${bulanRingkas.sesiBulan} pencatatan`}
+          />
           <div className="px-3 pb-3 pt-2">
-            <PetaMingguService log={log} />
+            <PetaMingguService log={bulanRingkas.logBulan} />
             <p className="mt-1.5 text-[9.5px] leading-relaxed text-slate-500">
               Angka = jumlah pencatatan service pada minggu tersebut. Berguna untuk menyusun jadwal regu per minggu.
             </p>
@@ -822,6 +861,16 @@ export default function Service({ notify, openFormSignal = 0 }) {
           sub={`${filtered.length} dari ${units.length} engine · tb_service1`}
           icon={<IconEngine size={15} />}
         />
+        {fKode?.set && (
+          <div className="mt-3 flex flex-wrap items-center gap-2 px-3 text-[10px] sm:px-4">
+            <button
+              onClick={() => setFKode(null)}
+              className="inline-flex items-center gap-1 rounded-md border border-brand/40 bg-brand/10 px-1.5 py-0.5 font-semibold text-brand hover:bg-brand/20"
+            >
+              Dari grafik: {fKode.label} ({fKode.set.size}) <IconX size={10} />
+            </button>
+          </div>
+        )}
         <div className="mt-3 flex flex-col gap-2 px-3 sm:flex-row sm:flex-wrap sm:items-center sm:px-4">
           <div className="relative min-w-0 flex-1 sm:max-w-[220px]">
             <IconSearch size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />

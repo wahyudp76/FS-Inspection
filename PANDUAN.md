@@ -146,6 +146,24 @@ Cara pakai:
 4. Kolom **Aktivitas <bulan>** pada tabel (badge di tampilan HP) menuliskan status per engine, misal
    *Servis Okt*, *Jadwal Nov*, atau *2× service Agustus + Sep*.
 
+**Grafik ikut bulan, tabel tidak.** Selain kartu aktivitas, enam panel grafik ikut menghitung ulang
+untuk bulan acuan:
+
+| Panel | Cara membaca pada bulan acuan |
+|---|---|
+| **Komposisi Status** | status tiap engine *per akhir bulan itu* (atau per hari ini bila bulan berjalan). Judul kecilnya menulis **“Kondisi per 30 Sep 2026”** supaya tidak tertukar dengan kartu KPI yang selalu kondisi hari ini |
+| **Cakupan per Divisi** | untuk tiap posisi (PG2/FM4/FM3/OP2): berapa yang aman, jatuh tempo, lewat jadwal, dan belum pernah diservice *sampai bulan itu* |
+| **Sebaran Urgensi** | sisa hari menuju warning date pada titik waktu yang sama |
+| **10 Paling Terlambat** | engine yang paling lama lewat warning date pada bulan itu |
+| **Ringkasan Ketepatan Interval** | hanya service yang **terjadi pada bulan itu** (tepat / terlambat / lebih awal + sebaran selisih HM) |
+| **Peta Minggu Service** | hanya pencatatan service bulan itu, per minggu ke-1 s/d 5 |
+
+**Tren Service Engine** sengaja tetap menampilkan seluruh bulan (itu gunanya tren) dan **tabel Evaluasi**
+juga tidak berubah — tabel tetap menyaring lewat pencarian/filter kolom atau lewat klik kartu aktivitas.
+Klik potongan donut, batang urgensi, atau tile divisi tetap boleh untuk menyaring tabel; kalau klik itu
+berasal dari status “kondisi bulan”, tabel menampilkan chip **“Dari grafik: … (n)”** yang bisa diklik
+untuk membatalkan.
+
 Catatan data: `tb_service1` bisa memuat satu kode unit lebih dari sekali (saat ini 131 baris untuk
 127 kode). Aplikasi memakai baris dengan **HM terbesar** untuk tiap kode, dan header menampilkan badge
 kuning *“N baris ganda di tb_service1”* supaya baris ganda bisa dibersihkan di sheet.
