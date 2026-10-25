@@ -295,6 +295,23 @@ bash scripts/publish-pages.sh
 
 ---
 
+## 🧪 Perkakas uji (`tools/`)
+
+Semua uji jalan tanpa deployment (memakai `tools/mock.gs.mjs`, grid sheet tiruan dari CSV asli).
+
+| Perintah | Yang diuji |
+|---|---|
+| `node tools/assetcheck.mjs` | master `assets.json` ↔ sheet `Mesin`/`Irrigator` (komponen, ringkasan, status) |
+| `node tools/apicheck.mjs` | API `history` ↔ baris sheet `Data Inspeksi` (275 record, kompresi, `rev`) |
+| `node tools/datafix.mjs` | aksi `audit` & `repair` Code.gs: deteksi → perbaikan → bersih → idempoten |
+| `node tools/mastertest.mjs` | unit test `src/lib/master.js` (merge inspeksi baru, Rusak ⇒ Kritis, kode asing) |
+| `node tools/kualitas.mjs` | badge “catatan kualitas data” di halaman Service |
+| `node tools/datafixui.mjs` | kartu “Kualitas Data Sheet” di Pengaturan (butuh `PORT=8113 MASTER=1 node tools/mockapi.mjs`) |
+| `node tools/perf.mjs` | ukuran bundel + metrik muat Dashboard/Service (`LIVE=1` untuk membandingkan versi live) |
+| `node tools/logo.mjs` | 47 cek ikon/PWA (desktop & HP) |
+
+Data masukan uji dibaca dari `$DATA_DIR` (default `/home/user/data`): `di.csv`, `mesin.csv`, `irrigator.csv`.
+
 ## 🧪 Catatan operasional
 
 - **Skor master** dihitung dari kolom komponen pada spreadsheet sumber (kondisi

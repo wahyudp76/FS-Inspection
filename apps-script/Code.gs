@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.6.0'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.8.0'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -160,6 +160,15 @@ function doPost(e) {
     if (action === 'svcping') {
       var info = serviceInfo_();
       return json_({ ok: true, result: info, version: SCRIPT_VERSION });
+    }
+    if (action === 'audit') {
+      return json_({ ok: true, result: auditData_(), version: SCRIPT_VERSION });
+    }
+    if (action === 'repair') {
+      return json_({ ok: true, result: repairRingkasan_(body.payload || {}), version: SCRIPT_VERSION });
+    }
+    if (action === 'master') {
+      return json_({ ok: true, result: masterLive_(), version: SCRIPT_VERSION });
     }
     if (action === 'setup') {
       var sh = ensureSheet_(true);
@@ -301,6 +310,22 @@ function ensureSheet_(withFormatting) {
     sh.setFrozenRows(1);
   }
   return sh;
+}
+
+/** Peta {normKey(header): kolom 1-based} — tahan beda spasi/nbsp pada header. */
+function normalMap_(map) {
+  var out = {};
+  for (var k in map) {
+    if (map.hasOwnProperty(k)) out[normKey_(k)] = map[k];
+  }
+  return out;
+}
+
+/** Cari kolom: cocok persis dulu, lalu cocok setelah normalisasi spasi. */
+function colOf_(map, normMap, key) {
+  if (map[key]) return map[key];
+  var p = normMap[normKey_(key)];
+  return p || 0;
 }
 
 function headerMap_(sh) {
@@ -939,8 +964,17 @@ function bacaBaris_(sh, map, rowIndex) {
   return rowToRecord_(header, row, rowIndex, componentIndex_());
 }
 
+/**
+ * Angka dari sel sheet. Menerima number asli, "97,2" (desimal koma),
+ * "1.234,5" (ribuan titik), spasi/nbsp, dan persen.
+ */
 function num_(v) {
-  var n = Number(v);
+  if (typeof v === 'number') return isNaN(v) ? 0 : v;
+  var s = String(v == null ? '' : v).replace(/[\s\u00a0%]/g, '').trim();
+  if (!s) return 0;
+  if (s.indexOf(',') >= 0 && s.indexOf('.') >= 0) s = s.replace(/\./g, '').replace(',', '.');
+  else if (s.indexOf(',') >= 0) s = s.replace(',', '.');
+  var n = Number(s);
   return isNaN(n) ? 0 : n;
 }
 function normalizeGrade_(v) {
@@ -1302,14 +1336,17 @@ function readMasterAsset_(tipe) {
 function composeRow_(map, compIdx, cols, meta, komponen) {
   var row = [];
   for (var i = 0; i < cols; i++) row.push('');
+  /* header master & data bisa beda spasi/nbsp → cocokkan lewat normKey_ */
+  var normMap = normalMap_(map);
   for (var key in meta) {
-    if (map[key]) row[map[key] - 1] = meta[key];
+    var cMeta = colOf_(map, normMap, key);
+    if (cMeta) row[cMeta - 1] = meta[key];
   }
   var tipe = meta['Tipe Aset'];
   for (var label in compIdx) {
     var meta2 = compIdx[label];
     if (meta2.tipe !== tipe) continue;
-    var col = map[label];
+    var col = colOf_(map, normMap, label);
     if (!col) continue;
     var val = komponen ? komponen[meta2.name] : '';
     if (val) row[col - 1] = val;
@@ -1368,3 +1405,316 @@ function indexOfHeader_(header, name) {
 }
 
 function pad2_(n) { return (n < 10 ? '0' : '') + n; }
+
+
+/* ==================================================================
+ *  AUDIT & PERBAIKAN DATA  (v1.7.2)
+ *  Temuan audit 2026-10-25 (lihat AUDIT-2026-10-24.md §20):
+ *   - Ringkasan Mesin di sheet master selalu +1 dari jumlah sel komponen
+ *     (artefak rumus lama; skor & kondisi ikut salah).
+ *   - Sebagian baris Data Inspeksi kehilangan satu nilai komponen
+ *     ("Jack / Kaki Depan" di 123 unit Irrigator) karena header master
+ *     memakai 1 spasi sedangkan daftar komponen memakai 2 spasi.
+ *  Aksi `audit` melaporkan, aksi `repair` membetulkan:
+ *     1. isi ulang sel komponen kosong dari master (bila ada nilainya)
+ *     2. hitung ulang A/B/C/Total/Skor/Kondisi dari sel komponen
+ * ================================================================== */
+
+/** Hitung ulang ringkasan dari objek komponen {nama: 'A'|'B'|'C'}. */
+function hitungRingkasan_(komponen, status) {
+  var a = 0, b = 0, c = 0;
+  for (var k in komponen) {
+    if (!komponen.hasOwnProperty(k)) continue;
+    var v = komponen[k];
+    if (v === 'A') a++; else if (v === 'B') b++; else if (v === 'C') c++;
+  }
+  var total = a + b + c;
+  var skor = total ? Math.round(((a * 100 + b * 60) / total) * 10) / 10 : 0;
+  return { a: a, b: b, c: c, total: total, skor: skor, kondisi: kondisiDari_(skor, status) };
+}
+
+/** Peta komponen master {KODE: {namaKomponen: grade}} untuk satu tipe. */
+function petaKomponenMaster_(tipe) {
+  var peta = {};
+  var assets;
+  try {
+    assets = readMasterAsset_(tipe);
+  } catch (err) {
+    return peta;   /* sheet master tak terbaca → audit tetap jalan tanpa pembanding */
+  }
+  for (var i = 0; i < assets.length; i++) {
+    peta[String(assets[i].kode).trim().toUpperCase()] = assets[i].components || {};
+  }
+  return peta;
+}
+
+/**
+ * Audit seluruh data: ringkasan vs komponen, komponen hilang, ID ganda,
+ * kode asing, grade asing, tanggal tidak terbaca.
+ * @return {Object} ringkasan temuan (contoh dibatasi 80 baris)
+ */
+function auditData_() {
+  var sh = ensureSheet_(false);
+  var map = headerMap_(sh);
+  var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var last = sh.getLastRow();
+  var hasil = {
+    baris: 0,
+    hitung: { ringkasan: 0, skor: 0, kondisi: 0, komponenHilang: 0, komponenAsing: 0, idGanda: 0, kodeAsing: 0, tanggalRusak: 0 },
+    contoh: [],
+    master: { mesin: 0, irrigator: 0 }
+  };
+  if (last < 2) return hasil;
+
+  var rows = sh.getRange(2, 1, last - 1, header.length).getValues();
+  hasil.baris = rows.length;
+  var petaM = petaKomponenMaster_('Mesin');
+  var petaI = petaKomponenMaster_('Irrigator');
+  var compIdx = componentIndex_();
+  var idSeen = {};
+
+  function catat(baris, kode, jenis, pesan) {
+    hasil.hitung[jenis]++;
+    if (hasil.contoh.length < 80) hasil.contoh.push({ baris: baris, kode: kode, jenis: jenis, pesan: pesan });
+  }
+
+  for (var i = 0; i < rows.length; i++) {
+    var baris = i + 2;
+    var rec = rowToRecord_(header, rows[i], baris, compIdx);
+    var kode = String(rec.kode || '').trim();
+    var tipe = String(rec.tipe || '').trim();
+    var id = String(rec.id || '');
+    if (idSeen[id]) catat(baris, kode, 'idGanda', 'ID ganda: ' + id);
+    idSeen[id] = true;
+
+    if (rec.tanggal && !/^\d{4}-\d{2}-\d{2}$/.test(String(rec.tanggal))) {
+      catat(baris, kode, 'tanggalRusak', 'Tanggal tidak terbaca: ' + rec.tanggal);
+    }
+
+    var master = tipe === 'Irrigator' ? petaI : petaM;
+    var refKomponen = master[String(kode).toUpperCase()];
+    if (!refKomponen) {
+      if (kode) catat(baris, kode, 'kodeAsing', 'Kode tidak ada di sheet master ' + (tipe || '?'));
+    } else {
+      for (var nm in refKomponen) {
+        if (!refKomponen.hasOwnProperty(nm)) continue;
+        if (!rec.komponen[nm]) {
+          catat(baris, kode, 'komponenHilang', 'Komponen "' + nm + '" kosong di sheet, di master: ' + refKomponen[nm]);
+        }
+      }
+    }
+
+    var rekap = hitungRingkasan_(rec.komponen, rec.statusUnit || '');
+    var sa = num_(rows[i][map['A'] - 1]);
+    var sb = num_(rows[i][map['B'] - 1]);
+    var sc = num_(rows[i][map['C'] - 1]);
+    var st = num_(rows[i][map['Total'] - 1]);
+    var ss = num_(rows[i][map['Skor'] - 1]);
+    var sk = String(rows[i][map['Kondisi'] - 1] || '').trim();
+
+    if (sa !== rekap.a || sb !== rekap.b || sc !== rekap.c || st !== rekap.total) {
+      catat(baris, kode, 'ringkasan',
+        'Ringkasan A/B/C/Total ' + sa + '/' + sb + '/' + sc + '/' + st +
+        ' ≠ komponen ' + rekap.a + '/' + rekap.b + '/' + rekap.c + '/' + rekap.total);
+    }
+    if (ss !== rekap.skor) catat(baris, kode, 'skor', 'Skor ' + ss + ' ≠ hitungan ' + rekap.skor);
+    if (sk && sk !== rekap.kondisi) catat(baris, kode, 'kondisi', 'Kondisi "' + sk + '" ≠ aturan "' + rekap.kondisi + '"');
+  }
+
+  var am = auditMaster_('Mesin');
+  var ai = auditMaster_('Irrigator');
+  hasil.master = {
+    mesin: am.mesin || 0,
+    irrigator: ai.irrigator || 0,
+    contoh: (am.contoh || []).concat(ai.contoh || []),
+    error: am.error || ai.error || null
+  };
+  return hasil;
+}
+
+/** Audit ringkasan satu sheet master (hanya hitung + contoh). */
+function auditMaster_(tipe) {
+  var cfg = MASTER[tipe];
+  var out = { mesin: 0, irrigator: 0, contoh: [] };
+  try {
+    var sh = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID).getSheetByName(cfg.sheet);
+    if (!sh || sh.getLastRow() < 2) return out;
+    var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+      .map(function (h) { return String(h).trim(); });
+    var rows = sh.getRange(2, 1, sh.getLastRow() - 1, header.length).getValues();
+    var list = tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR;
+    var col = {};
+    list.forEach(function (nm) { var p = indexOfHeader_(header, nm); if (p > 0) col[nm] = p; });
+    var cKode = indexOfHeader_(header, cfg.kode);
+    var cStatus = indexOfHeader_(header, cfg.status);
+    var cA = indexOfHeader_(header, 'A'), cB = indexOfHeader_(header, 'B'), cC = indexOfHeader_(header, 'C');
+    var cSkor = indexOfHeader_(header, 'SKOR') > 0 ? indexOfHeader_(header, 'SKOR') : indexOfHeader_(header, 'Skor');
+    var cKond = indexOfHeader_(header, 'KONDISI') > 0 ? indexOfHeader_(header, 'KONDISI') : indexOfHeader_(header, 'Kondisi');
+    var key = tipe === 'Mesin' ? 'mesin' : 'irrigator';
+    for (var r = 0; r < rows.length; r++) {
+      var kode = cKode > 0 ? String(rows[r][cKode - 1] || '').trim() : '';
+      if (!kode) continue;
+      var komponen = {};
+      for (var nm in col) {
+        var g = normalizeGrade_(rows[r][col[nm] - 1]);
+        if (g) komponen[nm] = g;
+      }
+      var status = cStatus > 0 ? String(rows[r][cStatus - 1] || '') : '';
+      var rekap = hitungRingkasan_(komponen, status);
+      var beda = cA > 0 && (num_(rows[r][cA - 1]) !== rekap.a || num_(rows[r][cB - 1]) !== rekap.b || num_(rows[r][cC - 1]) !== rekap.c);
+      if (!beda && cSkor > 0 && num_(rows[r][cSkor - 1]) !== rekap.skor) beda = true;
+      if (!beda && cKond > 0 && String(rows[r][cKond - 1] || '').trim() !== rekap.kondisi) beda = true;
+      if (beda) {
+        out[key]++;
+        if (out.contoh.length < 20) out.contoh.push({ kode: kode, hitung: rekap });
+      }
+    }
+  } catch (err) {
+    out.error = String(err && err.message ? err.message : err);
+  }
+  return out;
+}
+
+/**
+ * Perbaiki data sheet.
+ * @param {Object} p {tulisKomponenHilang: boolean (default true), sheet: 'inspeksi'|'master'|'semua'}
+ * @return {Object} jumlah perubahan per bagian
+ */
+function repairRingkasan_(p) {
+  var opt = p || {};
+  var target = String(opt.sheet || 'semua');
+  var hasil = { inspeksi: 0, komponenDiisi: 0, mesin: 0, irrigator: 0 };
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    if (target === 'inspeksi' || target === 'semua') {
+      var r = repairInspeksi_(opt.tulisKomponenHilang !== false);
+      hasil.inspeksi = r.ringkasan;
+      hasil.komponenDiisi = r.komponenDiisi;
+    }
+    if (target === 'master' || target === 'semua') {
+      hasil.mesin = repairMaster_('Mesin');
+      hasil.irrigator = repairMaster_('Irrigator');
+    }
+  } finally {
+    lock.releaseLock();
+  }
+  bumpRev_();
+  return hasil;
+}
+
+function repairInspeksi_(isiKomponenHilang) {
+  var sh = ensureSheet_(false);
+  var map = headerMap_(sh);
+  var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var last = sh.getLastRow();
+  var out = { ringkasan: 0, komponenDiisi: 0 };
+  if (last < 2) return out;
+  var rows = sh.getRange(2, 1, last - 1, header.length).getValues();
+  var compIdx = componentIndex_();
+  var petaM = isiKomponenHilang ? petaKomponenMaster_('Mesin') : {};
+  var petaI = isiKomponenHilang ? petaKomponenMaster_('Irrigator') : {};
+  var normMap = normalMap_(map);
+
+  for (var i = 0; i < rows.length; i++) {
+    var baris = i + 2;
+    var rec = rowToRecord_(header, rows[i], baris, compIdx);
+    var kode = String(rec.kode || '').trim().toUpperCase();
+    var tipe = String(rec.tipe || '').trim();
+
+    if (isiKomponenHilang && kode) {
+      var ref = (tipe === 'Irrigator' ? petaI : petaM)[kode];
+      if (ref) {
+        for (var nm in ref) {
+          if (!ref.hasOwnProperty(nm)) continue;
+          if (rec.komponen[nm]) continue;
+          var col = normMap[normKey_(nm)];
+          if (!col) continue;
+          sh.getRange(baris, col).setValue(ref[nm]);
+          rec.komponen[nm] = ref[nm];
+          out.komponenDiisi++;
+        }
+      }
+    }
+
+    var rekap = hitungRingkasan_(rec.komponen, rec.statusUnit || '');
+    if (!rekap.total) continue;
+    var sa = num_(rows[i][map['A'] - 1]);
+    var sb = num_(rows[i][map['B'] - 1]);
+    var sc = num_(rows[i][map['C'] - 1]);
+    var st = num_(rows[i][map['Total'] - 1]);
+    var ss = num_(rows[i][map['Skor'] - 1]);
+    var sk = String(rows[i][map['Kondisi'] - 1] || '').trim();
+    if (sa === rekap.a && sb === rekap.b && sc === rekap.c && st === rekap.total && ss === rekap.skor && sk === rekap.kondisi) continue;
+    sh.getRange(baris, map['A']).setValue(rekap.a);
+    sh.getRange(baris, map['B']).setValue(rekap.b);
+    sh.getRange(baris, map['C']).setValue(rekap.c);
+    sh.getRange(baris, map['Total']).setValue(rekap.total);
+    sh.getRange(baris, map['Skor']).setValue(rekap.skor);
+    sh.getRange(baris, map['Kondisi']).setValue(rekap.kondisi);
+    out.ringkasan++;
+  }
+  return out;
+}
+
+function repairMaster_(tipe) {
+  var cfg = MASTER[tipe];
+  var sh = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID).getSheetByName(cfg.sheet);
+  if (!sh || sh.getLastRow() < 2) return 0;
+  var header = sh.getRange(1, 1, 1, sh.getLastColumn()).getValues()[0]
+    .map(function (h) { return String(h).trim(); });
+  var rows = sh.getRange(2, 1, sh.getLastRow() - 1, header.length).getValues();
+  var list = tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR;
+  var col = {};
+  list.forEach(function (nm) { var p = indexOfHeader_(header, nm); if (p > 0) col[nm] = p; });
+  var cKode = indexOfHeader_(header, cfg.kode);
+  var cStatus = indexOfHeader_(header, cfg.status);
+  var cA = indexOfHeader_(header, 'A'), cB = indexOfHeader_(header, 'B'), cC = indexOfHeader_(header, 'C');
+  var cSkor = indexOfHeader_(header, 'SKOR') > 0 ? indexOfHeader_(header, 'SKOR') : indexOfHeader_(header, 'Skor');
+  var cKond = indexOfHeader_(header, 'KONDISI') > 0 ? indexOfHeader_(header, 'KONDISI') : indexOfHeader_(header, 'Kondisi');
+  if (cA < 1 || cB < 1 || cC < 1) return 0;
+
+  var ubah = 0;
+  for (var r = 0; r < rows.length; r++) {
+    var kode = cKode > 0 ? String(rows[r][cKode - 1] || '').trim() : '';
+    if (!kode) continue;
+    var komponen = {};
+    for (var nm in col) {
+      var g = normalizeGrade_(rows[r][col[nm] - 1]);
+      if (g) komponen[nm] = g;
+    }
+    var status = cStatus > 0 ? String(rows[r][cStatus - 1] || '') : '';
+    var rekap = hitungRingkasan_(komponen, status);
+    if (!rekap.total) continue;
+    var beda = num_(rows[r][cA - 1]) !== rekap.a || num_(rows[r][cB - 1]) !== rekap.b || num_(rows[r][cC - 1]) !== rekap.c;
+    if (!beda && cSkor > 0 && num_(rows[r][cSkor - 1]) !== rekap.skor) beda = true;
+    if (!beda && cKond > 0 && String(rows[r][cKond - 1] || '').trim() !== rekap.kondisi) beda = true;
+    if (!beda) continue;
+    sh.getRange(r + 2, cA).setValue(rekap.a);
+    sh.getRange(r + 2, cB).setValue(rekap.b);
+    sh.getRange(r + 2, cC).setValue(rekap.c);
+    if (cSkor > 0) sh.getRange(r + 2, cSkor).setValue(rekap.skor);
+    if (cKond > 0) sh.getRange(r + 2, cKond).setValue(rekap.kondisi);
+    ubah++;
+  }
+  return ubah;
+}
+
+/** Master live (semua aset + ringkasan terhitung) — dipakai dashboard opsional. */
+function masterLive_() {
+  var hasil = { generatedAt: new Date().toISOString(), mesin: [], irrigator: [] };
+  ['Mesin', 'Irrigator'].forEach(function (tipe) {
+    var list = readMasterAsset_(tipe);
+    hasil[tipe.toLowerCase()] = list.map(function (a) {
+      var rekap = hitungRingkasan_(a.components, a.status);
+      return {
+        kode: a.kode, wilayah: a.wilayah, spec: a.spec, jenis: a.jenis, status: a.status,
+        components: a.components, a: rekap.a, b: rekap.b, c: rekap.c, total: rekap.total,
+        score: rekap.skor, kondisi: rekap.kondisi
+      };
+    });
+  });
+  return hasil;
+}

@@ -4,7 +4,7 @@ Checklist singkat. Detail lengkap ada di [`README.md`](README.md).
 
 ---
 
-## Logo & ikon aplikasi (v1.7.1)
+## Logo & ikon aplikasi (v1.7.1, penanda aset diperbarui di v1.8.0)
 
 Logo resmi **FS Inspection** — tetesan (irigasi) berisi gear + kunci (perawatan mesin) di atas ubin
 hijau–teal — dipakai di tiga tempat, mengikuti pola situs **FS-evaluation**:
@@ -22,10 +22,46 @@ Catatan teknis:
   ber-fringe. Versi `maskable` memakai ubin **penuh tanpa sudut membulat** supaya aman ketika Android
   memotongnya jadi lingkaran/bulat.
 - Mark putih (tetesan + gear + kunci) diambil terpisah dari ubin untuk logo di dalam aplikasi.
-- Semua tautan ikon memakai penanda versi `?v=20261025c`; service worker naik ke cache **`fsi-v4`** dan
+- Semua tautan ikon memakai penanda versi `?v=20261025d`; service worker naik ke cache **`fsi-v5`** dan
   mem-precache `favicon.svg`, `maskable` lama & baru, serta `favicon.ico`. Kalau logo diganti lagi,
   naikkan penanda versi itu + nama cache.
 - `theme_color` manifest ikut disetel `#0f766e` (teal) agar warna status bar PWA selaras dengan ikon.
+
+## Audit & perbaikan kualitas data sheet (v1.8.0)
+
+Spreadsheet adalah acuan kebenaran, tetapi kolom ringkasan (`A`, `B`, `C`, `Total`, `Skor`, `Kondisi`)
+bisa tidak sesuai dengan nilai komponen di baris yang sama. Aplikasi sekarang bisa mendeteksi dan
+membetulkannya sendiri.
+
+**Cara pakai (web ▸ Pengaturan ▸ Kualitas Data Sheet)**
+
+1. **Audit data sheet** — memeriksa sheet `Data Inspeksi`, `Mesin`, dan `Irrigator`:
+   ringkasan vs komponen, komponen kosong yang ada di master, ID ganda, kode asing, tanggal rusak.
+   Hasil muncul sebagai 9 kotak angka + tabel temuan (contoh 40 baris pertama).
+2. **Perbaiki otomatis** — dua langkah, tanpa menimpa nilai komponen:
+   - sel komponen **kosong** diisi dari sheet master (hanya yang kosong);
+   - lalu `A/B/C/Total/Skor/Kondisi` dihitung ulang dari sel komponen (aturan **Rusak ⇒ Kritis**).
+3. Audit lagi → chip berubah **Bersih** bila sudah sinkron. Aman diulang (idempoten).
+
+**Yang ditemukan pada data 25 Okt 2026** (rincian di `AUDIT-2026-10-24.md` §20):
+
+| Temuan | Jumlah |
+|---|---|
+| Ringkasan `Data Inspeksi` tidak sesuai sel komponen | 275 baris |
+| `Skor` salah / `Kondisi` salah | 23 / 6 baris |
+| Komponen kosong padahal master punya nilai (sebagian besar `Jack / Kaki Depan`) | 168 sel |
+| Ringkasan master **Mesin** selalu +1 dari komponen (artefak rumus lama) | 151 baris |
+| Ringkasan master **Irrigator** basi | 9 baris |
+
+Setelah tombol **Perbaiki otomatis** ditekan sekali, seluruh angka di atas menjadi 0 dan
+`node tools/datafix.mjs`/`tools/assetcheck.mjs`/`tools/apicheck.mjs` lulus.
+
+**Penting:** aksi `audit`/`repair` ada di Apps Script versi **1.8.0**. Setelah menempel ulang
+`apps-script/Code.gs`, jangan lupa **Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version**.
+
+Badge **“N catatan kualitas data”** di halaman Service memakai audit yang sama untuk data service
+(`tb_service1`/`tb_service2`): tanggal tak terbaca, kode asing, pencatatan tanpa HM, dan kenaikan HM
+tidak wajar. Klik badge untuk melihat rinciannya.
 
 ## Pasang sebagai aplikasi (PWA)
 

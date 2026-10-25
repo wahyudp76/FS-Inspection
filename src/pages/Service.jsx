@@ -19,6 +19,7 @@ import {
   labelAktivitas,
   readServiceCache,
   ringkasService,
+  kualitasService,
   catatService,
   tarikSetelahCatat,
   INTERVAL_HM,
@@ -169,6 +170,9 @@ export default function Service({ notify, openFormSignal = 0 }) {
   const bulanAktif = useMemo(() => analisaBulan(units, log, acuanAktif), [units, log, acuanAktif])
   /* grafik “kondisi per bulan”: status dihitung per akhir bulan acuan */
   const bulanRingkas = useMemo(() => ringkasBulan(units, log, acuanAktif), [units, log, acuanAktif])
+  /* audit ringan kualitas data sheet (dipakai badge di header) */
+  const kualitas = useMemo(() => kualitasService(units, log, { duplikat }), [units, log, duplikat])
+  const [bukaKualitas, setBukaKualitas] = useState(false)
 
   const muat = useCallback(
     async ({ diam = false } = {}) => {
@@ -341,18 +345,49 @@ export default function Service({ notify, openFormSignal = 0 }) {
           <span className="inline-flex items-center gap-1">
             <IconEngine size={11} /> {fmt(ringkasan.totalUnit)} engine · {fmt(ringkasan.totalPencatatan)} pencatatan service
           </span>
-          {!!duplikat && (
-            <span
-              className="inline-flex items-center gap-1 rounded border border-amber-500/35 bg-amber-500/10 px-1.5 py-0.5 text-amber-300"
-              title={`tb_service1 punya ${barisEvalRaw || ringkasan.totalUnit + duplikat} baris untuk ${ringkasan.totalUnit} kode unit unik. Baris ganda diabaikan (dipakai HM terbesar).`}
+          {kualitas.masalah.length > 0 && (
+            <button
+              onClick={() => setBukaKualitas((v) => !v)}
+              className={cx(
+                'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 transition',
+                kualitas.masalah.some((m) => m.level === 'error')
+                  ? 'border-rose-500/35 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
+                  : 'border-amber-500/35 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+              )}
+              aria-expanded={bukaKualitas}
             >
-              <IconAlert size={10} /> {duplikat} baris ganda di tb_service1
-            </span>
+              <IconAlert size={10} /> {kualitas.masalah.length} catatan kualitas data
+              <IconChevron size={10} className={bukaKualitas ? 'rotate-180' : ''} />
+            </button>
           )}
           <a href={SERVICE_SHEET.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand/90 hover:text-brand">
             Buka sheet <IconExternal size={10} />
           </a>
         </p>
+        {bukaKualitas && kualitas.masalah.length > 0 && (
+          <div className="mx-3 mb-3 space-y-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5 sm:mx-4">
+            <p className="text-[10px] uppercase tracking-wider text-slate-500">
+              Hasil audit data sheet ({kualitas.totalMasalah} temuan) — perbaiki di spreadsheet, lalu tekan “Tarik dari Sheet”
+            </p>
+            {kualitas.masalah.map((m) => (
+              <div key={m.kode} className="flex items-start gap-2 text-[11px] leading-relaxed">
+                <span
+                  className={cx(
+                    'mt-1 h-1.5 w-1.5 shrink-0 rounded-full',
+                    m.level === 'error' ? 'bg-rose-400' : 'bg-amber-400'
+                  )}
+                />
+                <span className="min-w-0 flex-1 text-slate-400">
+                  {m.pesan}
+                  {m.contoh?.length > 0 && (
+                    <span className="ml-1 font-mono text-[10px] text-slate-500">· {m.contoh.join(', ')}</span>
+                  )}
+                </span>
+                <span className="shrink-0 rounded bg-white/[0.06] px-1 font-mono text-[10px] text-slate-300">{fmt(m.jumlah)}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {galat && (

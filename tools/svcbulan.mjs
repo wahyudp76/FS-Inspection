@@ -20,6 +20,13 @@ const keIso = (v) => {
   if (m) return `${m[1]}-${m[2]}-${m[3]}`
   m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
   if (m) return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  /* tahun 2 digit (ketik manual di sheet): "17/09/26" → 2026-09-17 */
+  m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/)
+  if (m) {
+    const yy = Number(m[3])
+    const y = yy >= 70 ? 1900 + yy : 2000 + yy
+    return `${y}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`
+  }
   m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/)
   if (m) { const i = BULAN.findIndex((b) => b.toLowerCase().startsWith(m[2].toLowerCase().slice(0, 3))); if (i >= 0) return `${m[3]}-${String(i + 1).padStart(2, '0')}-${m[1].padStart(2, '0')}` }
   return ''

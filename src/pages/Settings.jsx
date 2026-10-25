@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
 import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, getAutoRefresh, setAutoRefresh, REFRESH_MS, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
-import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster } from '../lib/api'
+import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster, auditData, repairData } from '../lib/api'
 import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark } from '../components/icons'
 import { cx } from '../lib/analytics'
 
@@ -21,6 +21,9 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
   const [autoMaster, setAutoMaster] = useState(() => getAutoSyncMaster())
   const [autoRefresh, setAutoRefreshState] = useState(() => getAutoRefresh())
   const [busyAwal, setBusyAwal] = useState(false)
+  const [audit, setAudit] = useState(null)
+  const [busyAudit, setBusyAudit] = useState(false)
+  const [busyRepair, setBusyRepair] = useState(false)
 
   const save = () => {
     if (url && !/^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(url.trim())) {
@@ -65,6 +68,11 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
   }
 
   const pending = pendingCount()
+  const auditTotal = audit
+    ? ['ringkasan', 'skor', 'kondisi', 'komponenHilang', 'komponenAsing', 'idGanda', 'kodeAsing', 'tanggalRusak'].reduce((n, k) => n + (audit.hitung?.[k] || 0), 0) +
+      (audit.master?.mesin || 0) + (audit.master?.irrigator || 0)
+    : 0
+  const auditBermasalah = auditTotal > 0
 
   return (
     <div className="mx-auto max-w-4xl space-y-4">
@@ -220,6 +228,115 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
             Menyalin kondisi seluruh unit master (±274 baris) sebagai inspeksi awal. Aman dijalankan berulang —
             baris yang sudah ada tidak diduplikasi. Unit berstatus <span className="font-semibold text-rose-300">Rusak</span>{' '}
             otomatis dinilai <span className="font-semibold text-rose-300">Kritis</span>.
+          </p>
+        </div>
+      </Card>
+
+      <Card>
+        <CardHeader
+          title="Kualitas Data Sheet"
+          sub="Cari & perbaiki selisih antara nilai komponen dan ringkasan A/B/C/Skor/Kondisi"
+          icon={<IconShield size={15} />}
+          right={
+            audit ? (
+              <span className={cx('chip', auditBermasalah ? '!border-amber-500/30 !text-amber-300' : '!border-emerald-500/30 !text-emerald-300')}>
+                {auditBermasalah ? `${auditTotal} temuan` : 'Bersih'}
+              </span>
+            ) : null
+          }
+        />
+        <div className="card-pad space-y-3 pt-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              className="btn-ghost"
+              disabled={busyAudit || !isConfigured()}
+              onClick={async () => {
+                setBusyAudit(true)
+                try {
+                  const r = await auditData()
+                  setAudit(r)
+                  setToast({ type: 'info', message: `Audit selesai: ${r.baris ?? 0} baris diperiksa.` })
+                } catch (e) {
+                  setToast({ type: 'error', message: `Audit gagal: ${e.message}` })
+                } finally {
+                  setBusyAudit(false)
+                }
+              }}
+            >
+              <IconRefresh size={14} /> {busyAudit ? 'Mengaudit…' : 'Audit data sheet'}
+            </button>
+            <button
+              className="btn-primary"
+              disabled={busyRepair || !isConfigured()}
+              onClick={async () => {
+                if (!window.confirm('Perbaiki sheet? Nilai komponen yang kosong akan diisi dari master, lalu A/B/C/Total/Skor/Kondisi dihitung ulang dari komponen.')) return
+                setBusyRepair(true)
+                try {
+                  const r = await repairData()
+                  setToast({
+                    type: 'success',
+                    message: `Perbaikan selesai · ${r.komponenDiisi ?? 0} sel komponen diisi · ${r.inspeksi ?? 0} baris inspeksi · ${(r.mesin ?? 0) + (r.irrigator ?? 0)} baris master`,
+                  })
+                  const ulang = await auditData()
+                  setAudit(ulang)
+                  onSync?.()
+                } catch (e) {
+                  setToast({ type: 'error', message: `Perbaikan gagal: ${e.message}` })
+                } finally {
+                  setBusyRepair(false)
+                }
+              }}
+            >
+              <IconCheck size={14} /> {busyRepair ? 'Memperbaiki…' : 'Perbaiki otomatis'}
+            </button>
+          </div>
+
+          {audit && (
+            <div className="space-y-2.5">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {[
+                  ['Baris diperiksa', audit.baris ?? 0],
+                  ['Ringkasan salah', audit.hitung?.ringkasan ?? 0],
+                  ['Skor salah', audit.hitung?.skor ?? 0],
+                  ['Kondisi salah', audit.hitung?.kondisi ?? 0],
+                  ['Komponen kosong', audit.hitung?.komponenHilang ?? 0],
+                  ['Kode asing', audit.hitung?.kodeAsing ?? 0],
+                  ['ID ganda', audit.hitung?.idGanda ?? 0],
+                  ['Master Mesin', audit.master?.mesin ?? 0],
+                  ['Master Irrigator', audit.master?.irrigator ?? 0],
+                ].map(([label, val]) => (
+                  <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                    <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
+                    <p className={cx('mt-0.5 font-mono text-[15px] font-bold', val ? 'text-amber-300' : 'text-emerald-300')}>{val}</p>
+                  </div>
+                ))}
+              </div>
+              {audit.contoh?.length > 0 && (
+                <div className="max-h-72 overflow-y-auto rounded-xl border border-white/[0.06]">
+                  <table className="w-full text-left text-[11px]">
+                    <thead className="sticky top-0 bg-[#0d1420] text-[10px] uppercase tracking-wider text-slate-500">
+                      <tr><th className="px-3 py-1.5">Baris</th><th className="px-3 py-1.5">Unit</th><th className="px-3 py-1.5">Temuan</th></tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/[0.04] text-slate-400">
+                      {audit.contoh.slice(0, 40).map((c, i) => (
+                        <tr key={i}>
+                          <td className="px-3 py-1.5 font-mono text-[10.5px] text-slate-500">{c.baris}</td>
+                          <td className="px-3 py-1.5 font-mono text-[10.5px] text-slate-300">{c.kode}</td>
+                          <td className="px-3 py-1.5">{c.pesan}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            Audit membandingkan <span className="font-semibold text-slate-300">sel komponen</span> dengan kolom ringkasan
+            (A/B/C/Total/Skor/Kondisi) di sheet “Data Inspeksi”, sheet <span className="font-mono text-[10.5px]">Mesin</span>, dan
+            sheet <span className="font-mono text-[10.5px]">Irrigator</span>. Perbaikan mengisi komponen kosong dari master
+            lebih dulu, baru menghitung ulang ringkasan — jadi nilai komponen tidak pernah ditimpa.
           </p>
         </div>
       </Card>

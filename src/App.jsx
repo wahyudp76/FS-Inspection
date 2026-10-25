@@ -13,6 +13,7 @@ import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
 import { releaseScrollLock } from './lib/scrollLock'
 import QuickInspect from './components/QuickInspect'
+import { terapkanInspeksiTerbaru } from './lib/master'
 
 const readHash = () => {
   const h = (window.location.hash || '').replace(/^#\/?/, '')
@@ -139,7 +140,19 @@ export default function App() {
 
   const notify = useCallback((toastData) => setToast(toastData), [])
 
-  const data = useMemo(() => ({ ...assetsData, mesin: assetsData.mesin || [], irrigator: assetsData.irrigator || [] }), [])
+  /* Master dari snapshot build + inspeksi yang lebih baru (sumber kebenaran) */
+  const merged = useMemo(() => terapkanInspeksiTerbaru(assetsData, records), [records])
+  const data = useMemo(
+    () => ({
+      ...assetsData,
+      mesin: merged.mesin,
+      irrigator: merged.irrigator,
+      diterapkan: merged.diterapkan,
+      kodeBaru: merged.kodeBaru,
+      tanggalInspeksiTerbaru: merged.tanggalTerbaru,
+    }),
+    [merged]
+  )
 
   const demoRecords = useMemo(() => (demo ? buildDemoRecords(data) : []), [demo, data])
   const allRecords = useMemo(() => [...demoRecords, ...records], [demoRecords, records])

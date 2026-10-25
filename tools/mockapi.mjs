@@ -3,10 +3,28 @@ const HERE = path.dirname(new URL(import.meta.url).pathname)
 const R = (...p) => path.join(HERE, ...p)
 /* Server tiruan Apps Script Web App untuk uji end-to-end di browser. */
 import http from 'node:http'
-import { makeEnv, loadCode, post, rowCount } from './mock.gs.mjs'
+import { makeEnv, loadCode, post, rowCount, parseCSV } from './mock.gs.mjs'
 
 const env = makeEnv()
 const ctx = loadCode(env)
+
+/* Dengan MASTER=1, sheet "Mesin" & "Irrigator" ikut disediakan dari CSV asli
+   supaya aksi audit / repair bisa diuji end-to-end di browser. */
+if (process.env.MASTER === '1') {
+  const fs = await import('node:fs')
+  const DATA_DIR = process.env.DATA_DIR || '/home/user/data'
+  const muat = (sheet, file) => {
+    const rows = parseCSV(fs.readFileSync(path.join(DATA_DIR, file), 'utf8')).filter((r) => r.some((v) => v !== ''))
+    rows.forEach((line, r) => line.forEach((v, c) => sheet.setCell(r + 1, c + 1, v)))
+    return sheet
+  }
+  const mesin = muat(env.ss.insertSheet('Mesin'), 'mesin.csv')
+  const irrigator = muat(env.ss.insertSheet('Irrigator'), 'irrigator.csv')
+  ctx.SpreadsheetApp.openById = () => ({
+    getSheetByName: (n) => (n === 'Mesin' ? mesin : n === 'Irrigator' ? irrigator : env.ss.getSheetByName(n)),
+    getSpreadsheetTimeZone: () => 'Asia/Jakarta',
+  })
+}
 let submitCount = 0
 
 const server = http.createServer((req, res) => {
@@ -30,4 +48,5 @@ const server = http.createServer((req, res) => {
     res.end(out)
   })
 })
-server.listen(8111, '0.0.0.0', () => console.log('mock Apps Script di :8111, baris=', rowCount(env.sheet)))
+const PORT = Number(process.env.PORT || 8111)
+server.listen(PORT, '0.0.0.0', () => console.log(`mock Apps Script di :${PORT}, baris=${rowCount(env.sheet)}`))

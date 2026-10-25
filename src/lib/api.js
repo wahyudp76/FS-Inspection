@@ -245,6 +245,18 @@ export async function syncMaster() {
   return json.result || []
 }
 
+/** Audit kualitas data sheet: ringkasan vs komponen, komponen hilang, ID ganda */
+export async function auditData() {
+  const json = await post({ action: 'audit' }, 120000)
+  return json.result || {}
+}
+
+/** Perbaiki data sheet (isi komponen kosong dari master + hitung ulang ringkasan) */
+export async function repairData({ sheet = 'semua', tulisKomponenHilang = true } = {}) {
+  const json = await post({ action: 'repair', payload: { sheet, tulisKomponenHilang } }, 180000)
+  return json.result || {}
+}
+
 /** Cek koneksi endpoint */
 export async function ping() {
   const json = await post({ action: 'ping' }, 15000)

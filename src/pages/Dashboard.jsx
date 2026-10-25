@@ -131,8 +131,20 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
             ]}
           />
         </div>
-        <span className="ml-auto hidden items-center gap-1.5 text-[11px] text-slate-500 sm:flex">
-          <IconCalendar size={13} /> Snapshot master: {new Date(data.generatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+        <span
+          className="ml-auto hidden items-center gap-1.5 text-[11px] text-slate-500 sm:flex"
+          title={
+            data.diterapkan
+              ? `${data.diterapkan} unit memakai hasil inspeksi yang lebih baru daripada snapshot master`
+              : 'Belum ada inspeksi yang lebih baru daripada snapshot master'
+          }
+        >
+          <IconCalendar size={13} /> Master: {new Date(data.generatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+          {!!data.diterapkan && (
+            <span className="rounded-md border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-emerald-300">
+              +{data.diterapkan} dari inspeksi
+            </span>
+          )}
         </span>
         <button onClick={onSync} className="btn-ghost !py-1.5 !text-[12px]">
           <IconRefresh size={13} className={syncing ? 'animate-spin' : ''} /> Sinkron

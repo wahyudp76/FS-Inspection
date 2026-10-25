@@ -70,6 +70,14 @@ export function parseTanggal(v) {
   if (m) return { iso: `${m[1]}-${m[2]}-${m[3]}`, y: +m[1], m: +m[2], d: +m[3] }
   m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
   if (m) return { iso: `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`, y: +m[3], m: +m[2], d: +m[1] }
+  /* tanggal ketik manual dengan tahun 2 digit di sheet: "17/09/26" (= 17 Sep 2026).
+     Sheet memakai format Indonesia (dd/mm), jadi urutannya hari dulu. */
+  m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/)
+  if (m) {
+    const yy = +m[3]
+    const y = yy >= 70 ? 1900 + yy : 2000 + yy
+    return { iso: `${y}-${pad(+m[2])}-${pad(+m[1])}`, y, m: +m[2], d: +m[1] }
+  }
   m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/)
   if (m) {
     const idx = BULAN.findIndex((b) => norm(b).startsWith(norm(m[2]).slice(0, 3)))
@@ -136,7 +144,16 @@ export function parseService1(header = [], rows = []) {
     warning: colIndex(header, ['Warning Date']),
     note: colIndex(header, ['NOTE', 'Catatan']),
   }
-  const bulanIx = BULAN.map((b, i) => (header.findIndex((h) => norm(h) === norm(b)) >= 0 ? header.findIndex((h) => norm(h) === norm(b)) : 9 + i))
+  /* Header sheet asli berupa "Januari Januari" (nama bulan dobel) → cocokkan dengan
+     awalan nama bulan, lalu jatuh ke posisi baku (kolom ke-11 = Januari). */
+  const cariKolomBulan = (b, i) => {
+    const target = norm(b)
+    let pos = header.findIndex((h) => norm(h) === target)
+    if (pos < 0) pos = header.findIndex((h) => norm(h).startsWith(target))
+    if (pos < 0) pos = header.findIndex((h) => norm(h).startsWith(target.slice(0, 3)) && norm(h).length <= target.length + 4)
+    return pos >= 0 ? pos : 10 + i
+  }
+  const bulanIx = BULAN.map((b, i) => cariKolomBulan(b, i))
 
   const units = rows
     .map((r) => {
@@ -226,6 +243,7 @@ export function parseService2(header = [], rows = []) {
         posisi: String(r[ix.posisi] ?? '').trim().toUpperCase(),
         no: numOrNull(r[ix.no]),
         tanggal: tgl?.iso || '',
+        tanggalRaw: String(r[ix.tanggal] ?? '').trim(),
         tanggalMs: tsMs(tgl?.iso),
         bulanNum: tgl?.m || numOrNull(r[ix.bulanNum]),
         bulan: tgl ? namaBulan(tgl.m) : String(r[ix.bulan] ?? '').trim(),
@@ -773,6 +791,71 @@ export function ringkasBulan(units = [], log = [], acuanKey, opsi = {}) {
     setsStatus,
     setsUrgensi,
   }
+}
+
+/**
+ * Ringkasan kualitas data modul service — dipakai untuk badge di header.
+ * Mengembalikan daftar masalah {level, kode, pesan, jumlah, contoh[]}.
+ */
+export function kualitasService(units = [], log = [], meta = {}) {
+  const masalah = []
+  const kodeUnit = new Set(units.map((u) => u.kode))
+
+  if (meta.duplikat) {
+    masalah.push({
+      level: 'warn',
+      kode: 'baris-ganda',
+      jumlah: meta.duplikat,
+      pesan: `${meta.duplikat} baris ganda di tb_service1 (dipakai HM terbesar)`,
+      contoh: units.filter((u) => u.duplikat).slice(0, 4).map((u) => u.kode),
+    })
+  }
+
+  const tanggalRusak = log.filter((r) => r.tanggalRaw && !r.tanggal)
+  if (tanggalRusak.length) {
+    masalah.push({
+      level: 'error',
+      kode: 'tanggal-rusak',
+      jumlah: tanggalRusak.length,
+      pesan: `${tanggalRusak.length} tanggal di tb_service2 tidak terbaca`,
+      contoh: tanggalRusak.slice(0, 4).map((r) => `${r.kode} “${r.tanggalRaw}”`),
+    })
+  }
+
+  const kodeAsing = [...new Set(log.map((r) => r.kode))].filter((k) => !kodeUnit.has(k))
+  if (kodeAsing.length) {
+    masalah.push({
+      level: 'error',
+      kode: 'kode-asing',
+      jumlah: kodeAsing.length,
+      pesan: `${kodeAsing.length} kode di tb_service2 tidak ada di tb_service1`,
+      contoh: kodeAsing.slice(0, 4),
+    })
+  }
+
+  const tanpaHm = log.filter((r) => r.hm == null)
+  if (tanpaHm.length) {
+    masalah.push({
+      level: 'warn',
+      kode: 'tanpa-hm',
+      jumlah: tanpaHm.length,
+      pesan: `${tanpaHm.length} pencatatan tanpa HM (tidak bisa dinilai intervalnya)`,
+      contoh: tanpaHm.slice(0, 4).map((r) => r.kode),
+    })
+  }
+
+  const janggal = log.filter((r) => r.hmAnomali)
+  if (janggal.length) {
+    masalah.push({
+      level: 'warn',
+      kode: 'hm-janggal',
+      jumlah: janggal.length,
+      pesan: `${janggal.length} kenaikan HM tidak wajar (> ${BATAS_DELTA_HM} HM sekali service)`,
+      contoh: janggal.slice(0, 4).map((r) => r.kode),
+    })
+  }
+
+  return { masalah, totalMasalah: masalah.reduce((a, m) => a + m.jumlah, 0) }
 }
 
 export const riwayatUnit = (log = [], kode = '') =>

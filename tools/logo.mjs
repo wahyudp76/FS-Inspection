@@ -19,7 +19,7 @@ const pngSize = (p) => {
 }
 const wajib = [
   ['favicon.ico', null],
-  ['icon.svg', null],
+  ['favicon.svg', null],
   ['apple-touch-icon.png', 180],
   ['icons/favicon-16.png', 16],
   ['icons/favicon-32.png', 32],
@@ -67,6 +67,7 @@ for (const vp of [{ w: 390, h: 844, n: 'HP' }, { w: 1440, h: 950, n: 'Desktop' }
     const img = [...document.querySelectorAll('img[alt="FS Inspection"]')]
       .map((el) => ({ el, r: el.getBoundingClientRect() }))
       .filter((x) => x.r.width > 0)[0]
+    const verCache = (document.querySelector('link[rel="icon"]')?.getAttribute('href') || '').match(/v=(\w+)/)?.[1] || ''
     const muat = img ? img.el.complete && img.el.naturalWidth > 0 : false
     const rect = img ? img.r : null
     let manifest = null
@@ -77,6 +78,7 @@ for (const vp of [{ w: 390, h: 844, n: 'HP' }, { w: 1440, h: 950, n: 'Desktop' }
       manifest = { error: String(e) }
     }
     return {
+      verCache,
       favicon: link('link[rel="icon"]'),
       apple: link('link[rel="apple-touch-icon"]'),
       logoMuat: muat,
@@ -84,13 +86,15 @@ for (const vp of [{ w: 390, h: 844, n: 'HP' }, { w: 1440, h: 950, n: 'Desktop' }
       logoSrc: img ? img.el.currentSrc || img.el.src : null,
       jumlahLogo: document.querySelectorAll('img[alt="FS Inspection"]').length,
       manifestIkon: (manifest?.icons || []).map((i) => `${i.sizes}:${i.purpose || 'any'}`),
-      manifestVersi: JSON.stringify(manifest).match(/20261025b/g)?.length || 0,
+      /* versi cache diambil dari index.html supaya uji tidak usang saat ?v= dinaikkan */
+      manifestVersi: JSON.stringify(manifest).match(new RegExp(verCache, 'g'))?.length || 0,
       swAktif: !!(await navigator.serviceWorker?.getRegistration?.()),
     }
   })
   cek(`[${vp.n}] logo baru tampil di sidebar`, halaman.logoMuat && halaman.logoUkuran?.[0] >= 24, JSON.stringify({ src: halaman.logoSrc, ukuran: halaman.logoUkuran }))
-  cek(`[${vp.n}] favicon menunjuk berkas versi baru (v=20261025b)`, (halaman.favicon || []).every((h) => /20261025b/.test(h)), JSON.stringify(halaman.favicon))
-  cek(`[${vp.n}] apple-touch-icon v=20261025b`, (halaman.apple || []).every((h) => /20261025b/.test(h)), JSON.stringify(halaman.apple))
+  const vNow = halaman.verCache
+  cek(`[${vp.n}] semua favicon memakai ?v= yang sama (${vNow})`, (halaman.favicon || []).every((h) => h.includes(`v=${vNow}`)), JSON.stringify(halaman.favicon))
+  cek(`[${vp.n}] apple-touch-icon memakai ?v= yang sama (${vNow})`, (halaman.apple || []).every((h) => h.includes(`v=${vNow}`)), JSON.stringify(halaman.apple))
   cek(
     `[${vp.n}] manifest memuat ikon 192/512 + maskable`,
     ['192x192:any', '512x512:any', '192x192:maskable', '512x512:maskable'].every((x) => halaman.manifestIkon.includes(x)),
