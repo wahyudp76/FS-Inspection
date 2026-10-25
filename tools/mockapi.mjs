@@ -13,8 +13,11 @@ const ctx = loadCode(env)
 if (process.env.MASTER === '1') {
   const fs = await import('node:fs')
   const DATA_DIR = process.env.DATA_DIR || '/home/user/data'
+  /* MASTER_DIR: sumber CSV master saja (mis. salinan dengan SPC0224 sudah
+     diperbaiki) sementara data inspeksi tetap dari DATA_DIR. */
+  const MASTER_DIR = process.env.MASTER_DIR || DATA_DIR
   const muat = (sheet, file) => {
-    const rows = parseCSV(fs.readFileSync(path.join(DATA_DIR, file), 'utf8')).filter((r) => r.some((v) => v !== ''))
+    const rows = parseCSV(fs.readFileSync(path.join(MASTER_DIR, file), 'utf8')).filter((r) => r.some((v) => v !== ''))
     rows.forEach((line, r) => line.forEach((v, c) => sheet.setCell(r + 1, c + 1, v)))
     return sheet
   }

@@ -7,13 +7,13 @@ import History from './pages/History'
 import Service from './pages/Service'
 import Settings from './pages/Settings'
 import assetsData from './data/assets.json'
-import { fetchHistory, readLocalHistory, flushQueue, sortRecords } from './lib/api'
+import { fetchHistory, readLocalHistory, flushQueue, sortRecords, fetchMasterLive, readMasterCache } from './lib/api'
 import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
 import { releaseScrollLock } from './lib/scrollLock'
 import QuickInspect from './components/QuickInspect'
-import { terapkanInspeksiTerbaru } from './lib/master'
+import { terapkanInspeksiTerbaru, gabungMasterLive } from './lib/master'
 
 const readHash = () => {
   const h = (window.location.hash || '').replace(/^#\/?/, '')
@@ -33,6 +33,9 @@ export default function App() {
   const [toast, setToast] = useState(null)
   const [quickOpen, setQuickOpen] = useState(false)
   const [svcSignal, setSvcSignal] = useState(0)
+  /* master terkini dari sheet (aksi `master`); snapshot build hanya cadangan */
+  const [masterLive, setMasterLive] = useState(() => readMasterCache()?.live || null)
+  const [masterSyncedAt, setMasterSyncedAt] = useState(() => readMasterCache()?.syncedAt || null)
 
   const navigate = useCallback((r, p) => {
     const qs = p?.kode ? `?tipe=${encodeURIComponent(p.tipe || 'Mesin')}&kode=${encodeURIComponent(p.kode)}` : ''
@@ -80,11 +83,17 @@ export default function App() {
           if (q.sent > 0 && !silent) setToast({ type: 'success', message: `${q.sent} inspeksi lokal berhasil dikirim ke sheet.` })
         } catch { /* queue flush opsional */ }
       }
+      /* master ditarik lebih dulu supaya status unit (mis. Rusak → Terpasang) ikut segar */
+      const mst = await fetchMasterLive({ silent: true })
+      if (mst.live) setMasterLive(mst.live)
+      if (mst.syncedAt) setMasterSyncedAt(mst.syncedAt)
       const res = await fetchHistory({ silent: true })
       setRecords(res.records || [])
       setSync({ syncing: false, syncedAt: res.syncedAt, offline: res.offline || !!res.error })
       if (res.error && !silent) setToast({ type: 'error', message: `Gagal tarik data: ${res.error}` })
-      else if (!res.offline && !silent) setToast({ type: 'success', message: 'Riwayat inspeksi tersinkron dari Google Sheets.' })
+      else if (!res.offline && !silent) {
+        setToast({ type: 'success', message: 'Master & riwayat inspeksi tersinkron dari Google Sheets.' })
+      }
     } catch (e) {
       setSync((s) => ({ ...s, syncing: false, offline: true }))
       if (!silent) setToast({ type: 'error', message: e.message })
@@ -140,8 +149,12 @@ export default function App() {
 
   const notify = useCallback((toastData) => setToast(toastData), [])
 
-  /* Master dari snapshot build + inspeksi yang lebih baru (sumber kebenaran) */
-  const merged = useMemo(() => terapkanInspeksiTerbaru(assetsData, records), [records])
+  /* Urutan sumber kebenaran:
+       1. snapshot build (assets.json)         — cadangan bila sheet tak terbaca
+       2. master live (sheet Mesin/Irrigator)  — status, komponen, skor terkini
+       3. record inspeksi yang lebih baru      — mengalahkan master bila lebih baru */
+  const masterGabung = useMemo(() => gabungMasterLive(assetsData, masterLive), [masterLive])
+  const merged = useMemo(() => terapkanInspeksiTerbaru(masterGabung, records), [masterGabung, records])
   const data = useMemo(
     () => ({
       ...assetsData,
@@ -150,8 +163,13 @@ export default function App() {
       diterapkan: merged.diterapkan,
       kodeBaru: merged.kodeBaru,
       tanggalInspeksiTerbaru: merged.tanggalTerbaru,
+      masterLive: !!masterLive && !masterLive.unchanged,
+      masterSyncedAt,
+      masterDiterapkan: masterGabung.diterapkan,
+      masterUnitBaru: masterGabung.unitBaru,
+      masterUnitHilang: masterGabung.unitHilang,
     }),
-    [merged]
+    [merged, masterLive, masterSyncedAt, masterGabung]
   )
 
   const demoRecords = useMemo(() => (demo ? buildDemoRecords(data) : []), [demo, data])

@@ -12,13 +12,20 @@ const bundel = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fsi-master-')), 
 execFileSync('npx', ['esbuild', 'src/lib/master.js', '--bundle', '--format=esm', '--platform=node', `--outfile=${bundel}`, '--log-level=error'], {
   cwd: path.join(path.dirname(new URL(import.meta.url).pathname), '..'),
 })
-const { rekapKomponen, kondisiDari, snapshotMs, terapkanInspeksiTerbaru, ringkasKualitasMaster } = await import(bundel)
+const { rekapKomponen, kondisiDari, snapshotMs, terapkanInspeksiTerbaru, ringkasKualitasMaster, gabungMasterLive, normalStatus } = await import(bundel)
 
 let gagal = 0
 const cek = (nama, ok, info = '') => {
   if (!ok) gagal++
   console.log(`${ok ? '✅' : '❌'} ${nama}${info ? ' — ' + info : ''}`)
 }
+
+/* ---------- normalStatus ---------- */
+cek('normal: nilai baku tetap', normalStatus('Terpasang') === 'Terpasang' && normalStatus('Standby') === 'Standby' && normalStatus('Rusak') === 'Rusak')
+cek('normal: huruf besar & spasi', normalStatus('  RUSAK ') === 'Rusak' && normalStatus('terpasang') === 'Terpasang', normalStatus('  RUSAK '))
+cek('normal: NBSP & spasi ganda', normalStatus('Ter\u00a0pasang') === 'Terpasang' && normalStatus('Stand by') === 'Standby')
+cek('normal: rusak/perbaikan dikenali Rusak', normalStatus('Rusak / Perbaikan') === 'Rusak', normalStatus('Rusak / Perbaikan'))
+cek('normal: kosong / tak dikenal → kosong', normalStatus('') === '' && normalStatus(null) === '' && normalStatus('Ngawur') === '')
 
 /* ---------- rekapKomponen ---------- */
 cek('rekap: A=100 B=60 C=0', (() => {
@@ -50,10 +57,35 @@ const data = {
   irrigator: [{ kode: 'I1', status: 'Terpasang', components: { a: 'B' }, a: 0, b: 1, c: 0, total: 1, score: 60, inspeksiTerakhir: '2026-03-05' }],
 }
 
-/* record lebih tua dari snapshot → diabaikan */
+/* record lebih tua dari snapshot & dari inspeksi terakhir master → diabaikan */
 const lama = [{ id: 'x1', kode: 'M1', tipe: 'Mesin', tanggal: '2026-10-20', komponen: { a: 'C', b: 'C' }, statusUnit: 'Rusak' }]
 const h0 = terapkanInspeksiTerbaru(data, lama)
-cek('record ≤ snapshot diabaikan', h0.diterapkan === 0 && h0.mesin[0].score === 100 && !h0.mesin[0].dariInspeksi)
+cek('record lebih lama dari master diabaikan', h0.diterapkan === 0 && h0.mesin[0].score === 100 && !h0.mesin[0].dariInspeksi)
+
+/* perbaikan manual di master tidak boleh dibatalkan baris inspeksi yang sama tuanya */
+const dataBaru = {
+  ...data,
+  mesin: [
+    { ...data.mesin[0], status: 'Terpasang', inspeksiTerakhir: '2026-10-24' },
+    data.mesin[1],
+  ],
+}
+/* perbaikan manual di master tidak dibatalkan baris inspeksi LAMA (bertimestamp) */
+const lebihTua = [{ id: 'y0', kode: 'M1', tipe: 'Mesin', timestamp: '2026-10-23T03:00:00+07:00', tanggal: '2026-10-23', komponen: { a: 'C' }, statusUnit: 'Rusak' }]
+const hTua = terapkanInspeksiTerbaru(dataBaru, lebihTua)
+cek('record bertimestamp lebih tua dari master diabaikan', hTua.diterapkan === 0 && hTua.mesin[0].status === 'Terpasang',
+  `${hTua.mesin[0].status} · diterapkan ${hTua.diterapkan}`)
+
+/* inspeksi baru setelah tanggal master tetap menang */
+const sesudah = [{ id: 'y1', kode: 'M1', tipe: 'Mesin', timestamp: '2026-10-25T08:00:00+07:00', tanggal: '2026-10-25', komponen: { a: 'B' }, statusUnit: 'Terpasang' }]
+const hSama = terapkanInspeksiTerbaru(dataBaru, sesudah)
+cek('inspeksi setelah tanggal master dipakai', hSama.diterapkan === 1 && hSama.mesin[0].score === 60,
+  `skor ${hSama.mesin[0].score} · diterapkan ${hSama.diterapkan}`)
+
+const lebihBaruHari = [{ id: 'y2', kode: 'M1', tipe: 'Mesin', tanggal: '2026-10-26', komponen: { a: 'C' }, statusUnit: 'Rusak' }]
+const hBaru = terapkanInspeksiTerbaru(dataBaru, lebihBaruHari)
+cek('record lebih baru dari master menang', hBaru.diterapkan === 1 && hBaru.mesin[0].status === 'Rusak' && hBaru.mesin[0].score === 0,
+  `${hBaru.mesin[0].status} · skor ${hBaru.mesin[0].score}`)
 
 /* record lebih baru → menimpa komponen & ringkasan */
 const baru = [{ id: 'x2', kode: 'M1', tipe: 'Mesin', tanggal: '2026-10-24', komponen: { a: 'B', b: 'A' }, statusUnit: 'Rusak' }]
@@ -108,6 +140,42 @@ cek('tanggal tak terbaca tidak melempar error', aman)
 /* input aneh */
 cek('records null aman', (() => { const h = terapkanInspeksiTerbaru(data, null); return h.diterapkan === 0 && h.mesin.length === 2 })())
 cek('data kosong aman', (() => { const h = terapkanInspeksiTerbaru({}, []); return h.mesin.length === 0 && h.irrigator.length === 0 })())
+
+/* ---------- gabungMasterLive (master live dari sheet) ---------- */
+const live = {
+  rev: 'x',
+  generatedAt: '2026-10-25T10:00:00.000Z',
+  kmap: { Mesin: ['a', 'b'], Irrigator: ['a'] },
+  mesin: [['M1', 'PG2', 'Cat 3306', 'SPC', 'Terpasang', 'AA', '2026-10-24', 'Pump X', '150', 'Sumur', 'Tebu', '']],
+  irrigator: [],
+}
+const g1 = gabungMasterLive(data, live)
+const m1g = g1.mesin.find((u) => u.kode === 'M1')
+cek('gabung: status master menimpa snapshot', m1g.status === 'Terpasang' && m1g.kondisi === 'Baik', `${m1g.status}/${m1g.kondisi}`)
+cek('gabung: komponen master dipakai', m1g.components.a === 'A' && m1g.components.b === 'A' && m1g.total === 2)
+cek('gabung: metadata master terbawa', m1g.pump === 'Pump X' && m1g.power === '150' && m1g.komoditi === 'Tebu')
+cek('gabung: unit di luar master tetap ada', g1.mesin.length === 2 && g1.unitHilang[0] === 'M2', JSON.stringify(g1.unitHilang))
+cek('gabung: ditandai dari master live', m1g.dariMasterLive === true && g1.diterapkan === 1)
+
+const liveTambahan = {
+  ...live,
+  mesin: [...live.mesin, ['M3', 'FM4', 'Baru', 'DEC', 'Standby', 'A-', '2026-10-20']],
+}
+const g2 = gabungMasterLive(data, liveTambahan)
+cek('gabung: unit baru dari master ditambahkan', g2.mesin.some((u) => u.kode === 'M3') && g2.unitBaru.includes('M3'),
+  JSON.stringify(g2.unitBaru))
+cek('gabung: tanpa master live → snapshot apa adanya', gabungMasterLive(data, null).mesin.length === 2)
+
+/* bentuk lama (objek) tetap didukung supaya Apps Script versi lama tidak merusak tampilan */
+const liveLama = {
+  mesin: [{ kode: 'M1', wilayah: 'PG2', spec: 'Cat 3306', status: 'RUSAK', components: { a: 'C', b: 'C' } }],
+  irrigator: [],
+}
+const g3 = gabungMasterLive(data, liveLama)
+const m1l = g3.mesin.find((u) => u.kode === 'M1')
+cek('gabung: bentuk objek lama didukung + status dinormalkan', m1l.status === 'Rusak' && m1l.score === 0 && m1l.kondisi === 'Kritis',
+  `${m1l.status} · skor ${m1l.score} · ${m1l.kondisi}`)
+cek('gabung: master unchanged → snapshot apa adanya', gabungMasterLive(data, { unchanged: true }).diterapkan === 0)
 
 /* ---------- ringkasKualitasMaster ---------- */
 const kualitas = ringkasKualitasMaster({ mesin: h1.mesin, irrigator: h1.irrigator, diterapkan: h1.diterapkan, kodeBaru: h6.kodeBaru })

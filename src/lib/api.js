@@ -245,6 +245,55 @@ export async function syncMaster() {
   return json.result || []
 }
 
+/* ---------------- master live (sheet Mesin & Irrigator terkini) ---------------- */
+const LS_MASTER = 'fsi:master-live'
+
+export function readMasterCache() {
+  try {
+    const c = JSON.parse(localStorage.getItem(LS_MASTER) || 'null')
+    return c && Array.isArray(c.live?.mesin) ? c : null
+  } catch {
+    return null
+  }
+}
+
+function writeMasterCache(cache) {
+  try {
+    localStorage.setItem(LS_MASTER, JSON.stringify(cache))
+  } catch { /* kuota penuh: cache master opsional */ }
+}
+
+/**
+ * Ambil keadaan master terkini dari spreadsheet (aksi `master`).
+ * Mengirim `rev` terakhir supaya balasan bisa sangat kecil saat tidak berubah.
+ * @returns {Promise<{live: Object, syncedAt: string, offline: boolean, error?: string}>}
+ */
+export async function fetchMasterLive({ silent = false } = {}) {
+  const cache = readMasterCache()
+  if (!getEndpoint()) {
+    return { live: cache?.live || null, syncedAt: cache?.syncedAt || null, offline: true }
+  }
+  try {
+    const json = await post({ action: 'master', payload: { rev: cache?.live?.rev || '' } }, 45000)
+    const hasil = json.result || {}
+    /* `unchanged` boleh dikirim di tingkat atas maupun di dalam result */
+    if (json.unchanged || hasil.unchanged) {
+      const syncedAt = new Date().toISOString()
+      if (cache) writeMasterCache({ ...cache, syncedAt })
+      return { live: cache?.live || null, syncedAt, offline: false, unchanged: true }
+    }
+    /* jangan pernah menimpa cache dengan balasan yang tidak berisi data unit */
+    if (!Array.isArray(hasil.mesin) && !Array.isArray(hasil.irrigator)) {
+      return { live: cache?.live || null, syncedAt: cache?.syncedAt || null, offline: false, error: 'Balasan master kosong' }
+    }
+    const syncedAt = new Date().toISOString()
+    writeMasterCache({ live: hasil, syncedAt })
+    return { live: hasil, syncedAt, offline: false }
+  } catch (e) {
+    return { live: cache?.live || null, syncedAt: cache?.syncedAt || null, offline: true, error: e.message }
+  }
+}
+
 /** Perbaiki kolom D/E/F (Month, Bulan Service, Minggu Service) di tb_service2 yang error/kosong */
 export async function serviceRepair() {
   const json = await post({ action: 'svcrepair' }, 180000)

@@ -134,12 +134,26 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
         <span
           className="ml-auto hidden items-center gap-1.5 text-[11px] text-slate-500 sm:flex"
           title={
-            data.diterapkan
-              ? `${data.diterapkan} unit memakai hasil inspeksi yang lebih baru daripada snapshot master`
-              : 'Belum ada inspeksi yang lebih baru daripada snapshot master'
+            data.masterLive
+              ? `Status & komponen diambil langsung dari sheet Mesin/Irrigator (${data.masterDiterapkan || 0} unit) — tarik ulang dengan tombol Sinkron`
+              : 'Memakai snapshot build (assets.json). Tekan Sinkron untuk mengambil master terkini dari sheet.'
           }
         >
-          <IconCalendar size={13} /> Master: {new Date(data.generatedAt).toLocaleDateString('id-ID', { day: '2-digit', month: 'short', year: 'numeric' })}
+          <IconCalendar size={13} /> Master:{' '}
+          {new Date(data.masterLive && data.masterSyncedAt ? data.masterSyncedAt : data.generatedAt).toLocaleDateString('id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+          })}
+          <span
+            className={
+              data.masterLive
+                ? 'rounded-md border border-sky-500/35 bg-sky-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-sky-300'
+                : 'rounded-md border border-white/15 bg-white/[0.05] px-1.5 py-0.5 text-[9.5px] font-semibold text-slate-400'
+            }
+          >
+            {data.masterLive ? 'live' : 'snapshot'}
+          </span>
           {!!data.diterapkan && (
             <span className="rounded-md border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-emerald-300">
               +{data.diterapkan} dari inspeksi

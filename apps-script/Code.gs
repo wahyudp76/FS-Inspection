@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.8.1'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.8.2'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -171,7 +171,7 @@ function doPost(e) {
       return json_({ ok: true, result: repairRingkasan_(body.payload || {}), version: SCRIPT_VERSION });
     }
     if (action === 'master') {
-      return json_({ ok: true, result: masterLive_(), version: SCRIPT_VERSION });
+      return json_({ ok: true, result: masterLive_((body.payload || {}).rev), version: SCRIPT_VERSION });
     }
     if (action === 'setup') {
       var sh = ensureSheet_(true);
@@ -1519,6 +1519,21 @@ function hitungRingkasan_(komponen, status) {
   return { a: a, b: b, c: c, total: total, skor: skor, kondisi: kondisiDari_(skor, status) };
 }
 
+/** Peta status master {KODE: status} untuk satu tipe. */
+function petaStatusMaster_(tipe) {
+  var peta = {};
+  var assets;
+  try {
+    assets = readMasterAsset_(tipe);
+  } catch (err) {
+    return peta;
+  }
+  for (var i = 0; i < assets.length; i++) {
+    peta[String(assets[i].kode).trim().toUpperCase()] = assets[i].status;
+  }
+  return peta;
+}
+
 /** Peta komponen master {KODE: {namaKomponen: grade}} untuk satu tipe. */
 function petaKomponenMaster_(tipe) {
   var peta = {};
@@ -1547,7 +1562,7 @@ function auditData_() {
   var last = sh.getLastRow();
   var hasil = {
     baris: 0,
-    hitung: { ringkasan: 0, skor: 0, kondisi: 0, komponenHilang: 0, komponenAsing: 0, idGanda: 0, kodeAsing: 0, tanggalRusak: 0 },
+    hitung: { ringkasan: 0, skor: 0, kondisi: 0, komponenHilang: 0, komponenAsing: 0, idGanda: 0, kodeAsing: 0, tanggalRusak: 0, statusBeda: 0 },
     contoh: [],
     master: { mesin: 0, irrigator: 0 }
   };
@@ -1610,6 +1625,34 @@ function auditData_() {
 
   var am = auditMaster_('Mesin');
   var ai = auditMaster_('Irrigator');
+  /* Bandingkan status terbaru di Data Inspeksi dengan status di sheet master.
+     Kalau berbeda, dashboard memakai master (acuan kebenaran) — jadi selisih ini
+     perlu terlihat supaya bisa dibetulkan di sheet yang benar. */
+  var terbaruPerUnit = {};
+  for (var v = 0; v < rows.length; v++) {
+    var recV = rowToRecord_(header, rows[v], v + 2, compIdx);
+    if (!recV.kode) continue;
+    var kunciUnit = String(recV.tipe || 'Mesin') + ':' + String(recV.kode).trim().toUpperCase();
+    var msV = Date.parse(recV.timestamp || recV.tanggal || '');
+    var adaV = terbaruPerUnit[kunciUnit];
+    if (!adaV || (isFinite(msV) && msV >= adaV.ms)) {
+      terbaruPerUnit[kunciUnit] = { ms: isFinite(msV) ? msV : 0, status: String(recV.statusUnit || '').trim(), kode: recV.kode, tipe: recV.tipe };
+    }
+  }
+  var cekStatus = function (statusMaster, tipe) {
+    for (var kk in statusMaster) {
+      if (!statusMaster.hasOwnProperty(kk)) continue;
+      var t = terbaruPerUnit[tipe + ':' + kk];
+      if (!t || !t.status) continue;
+      if (t.status.toLowerCase() !== String(statusMaster[kk] || '').trim().toLowerCase()) {
+        catat(0, t.kode, 'statusBeda',
+          'Status terbaru di Data Inspeksi “' + t.status + '” ≠ master “' + (statusMaster[kk] || '-') + '”');
+      }
+    }
+  };
+  cekStatus(petaStatusMaster_('Mesin'), 'Mesin');
+  cekStatus(petaStatusMaster_('Irrigator'), 'Irrigator');
+
   hasil.master = {
     mesin: am.mesin || 0,
     irrigator: ai.irrigator || 0,
@@ -1788,21 +1831,111 @@ function repairMaster_(tipe) {
   return ubah;
 }
 
-/** Master live (semua aset + ringkasan terhitung) — dipakai dashboard opsional. */
-function masterLive_() {
-  var hasil = { generatedAt: new Date().toISOString(), mesin: [], irrigator: [] };
-  ['Mesin', 'Irrigator'].forEach(function (tipe) {
-    var list = readMasterAsset_(tipe);
-    hasil[tipe.toLowerCase()] = list.map(function (a) {
-      var rekap = hitungRingkasan_(a.components, a.status);
-      return {
-        kode: a.kode, wilayah: a.wilayah, spec: a.spec, jenis: a.jenis, status: a.status,
-        components: a.components, a: rekap.a, b: rekap.b, c: rekap.c, total: rekap.total,
-        score: rekap.skor, kondisi: rekap.kondisi
-      };
-    });
-  });
+/**
+ * MASTER LIVE — keadaan aset terkini langsung dari sheet `Mesin` & `Irrigator`.
+ *
+ * Dashboard memakai snapshot `src/data/assets.json` yang dibekukan saat build,
+ * sehingga perubahan di spreadsheet (mis. status unit Rusak → Terpasang) tidak
+ * pernah sampai ke web. Aksi ini mengirim master terkini dalam bentuk ringkas
+ * supaya web bisa menyamakan diri setiap kali “Sinkron” ditekan.
+ *
+ * Bentuk balasan (posisional, hemat ukuran):
+ *   { generatedAt, rev, kmap:{Mesin:[…],Irrigator:[…]}, mesin:[[…]], irrigator:[[…]] }
+ *   mesin : [kode, wilayah, spec, jenis, status, grades, tglInspeksi, pump, power, pompa, komoditi, keterangan]
+ *   irrigator: [kode, wilayah, jenis, status, grades, tglInspeksi, nozzle]
+ *   `grades` = satu huruf per komponen (A/B/C, '-' = belum dinilai) sesuai kmap.
+ *
+ * @param {string} [rev] revisi yang sudah dimiliki klien → balas `unchanged`
+ */
+function masterLive_(rev) {
+  var kunci = 'master:' + revisiMaster_();
+  if (rev && String(rev) === kunci) {
+    return { unchanged: true, rev: kunci, generatedAt: new Date().toISOString() };
+  }
+  var hasil = {
+    rev: kunci,
+    generatedAt: new Date().toISOString(),
+    kmap: { Mesin: KOMPONEN_MESIN, Irrigator: KOMPONEN_IRRIGATOR },
+    mesin: bacaMasterRingkas_('Mesin'),
+    irrigator: bacaMasterRingkas_('Irrigator')
+  };
   return hasil;
+}
+
+/** Satu baris ringkas per aset pada sheet master. */
+function bacaMasterRingkas_(tipe) {
+  var cfg = MASTER[tipe];
+  var ss = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
+  var sh = ss.getSheetByName(cfg.sheet);
+  if (!sh) return [];
+  var lastRow = sh.getLastRow();
+  var lastCol = sh.getLastColumn();
+  if (lastRow < 2) return [];
+  var values = sh.getRange(1, 1, lastRow - 1 + 1, lastCol).getValues();
+  var header = values[0].map(function (v) { return String(v).trim(); });
+
+  var col = {};
+  ['kode', 'wilayah', 'spec', 'jenis', 'status'].forEach(function (k) {
+    col[k] = indexOfHeader_(header, cfg[k]);
+  });
+  var colTgl = indexOfHeader_(header, 'TGL INSPEKSI TERAKHIR');
+  var extraMesin = { pump: 'Pump', power: 'Power', pompa: 'Pompa', komoditi: 'Komoditi', keterangan: 'Keterangan' };
+  var colExtra = {};
+  if (tipe === 'Mesin') {
+    for (var e in extraMesin) colExtra[e] = indexOfHeader_(header, extraMesin[e]);
+  } else {
+    colExtra.nozzle = indexOfHeader_(header, 'Nozzle');
+  }
+
+  var list = tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR;
+  var colKomponen = [];
+  for (var i = 0; i < list.length; i++) colKomponen.push(indexOfHeader_(header, list[i]));
+
+  var sel = function (row, c) { return c > 0 ? row[c - 1] : ''; };
+  var teks = function (row, c) { return String(sel(row, c) == null ? '' : sel(row, c)).trim(); };
+  var out = [];
+  for (var r = 1; r < values.length; r++) {
+    var row = values[r];
+    var kode = col.kode > 0 ? teks(row, col.kode) : '';
+    if (!kode) continue;
+    var grades = '';
+    for (var j = 0; j < colKomponen.length; j++) {
+      var g = colKomponen[j] > 0 ? normalizeGrade_(row[colKomponen[j] - 1]) : '';
+      grades += g || '-';
+    }
+    var tgl = sel(row, colTgl);
+    if (tgl instanceof Date) tgl = Utilities.formatDate(tgl, 'Asia/Jakarta', 'yyyy-MM-dd');
+    var dasar = [kode, teks(row, col.wilayah), teks(row, col.spec), teks(row, col.jenis), teks(row, col.status), grades, String(tgl || '').trim()];
+    if (tipe === 'Mesin') {
+      dasar.push(teks(row, colExtra.pump), teks(row, colExtra.power), teks(row, colExtra.pompa), teks(row, colExtra.komoditi), teks(row, colExtra.keterangan));
+    } else {
+      dasar.push(teks(row, colExtra.nozzle));
+    }
+    out.push(dasar);
+  }
+  return out;
+}
+
+/**
+ * Revisi master = jumlah baris kedua sheet + cap waktu file sumber.
+ * Dipakai klien untuk melewati unduhan master yang tidak berubah.
+ */
+function revisiMaster_() {
+  var segel = 0;
+  try {
+    segel = DriveApp.getFileById(SOURCE_SPREADSHEET_ID).getLastUpdated().getTime();
+  } catch (e) {
+    segel = 0;
+  }
+  var jumlah = '';
+  try {
+    var ss = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
+    ['Mesin', 'Irrigator'].forEach(function (nama) {
+      var sh = ss.getSheetByName(nama);
+      jumlah += (sh ? sh.getLastRow() : 0) + '/';
+    });
+  } catch (e2) {}
+  return jumlah + String(segel);
 }
 
 

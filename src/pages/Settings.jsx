@@ -42,8 +42,9 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
     try {
       const r = await ping()
       const v = r.version || '1.0.0 (lama)'
-      const peringatan = String(r.version || '').localeCompare('1.4.0', undefined, { numeric: true }) < 0
-        ? ' · ⚠ deployment masih versi lama (min. 1.4.0) — sinkron belum idempoten & selalu mengunduh data penuh'
+      const perlu = String(r.version || '').localeCompare('1.8.2', undefined, { numeric: true }) < 0
+      const peringatan = perlu
+        ? ' · ⚠ deployment masih versi lama (perlu 1.8.2) — master live (status unit dari sheet), audit & perbaikan data belum tersedia. Tempel ulang Code.gs lalu Deploy ▸ New version.'
         : ''
       setStatus({ ok: true, message: `Terhubung · sheet "${r.sheet || 'Data Inspeksi'}" · ${r.records ?? 0} baris · versi ${v}${peringatan}` })
       setToast({ type: 'success', message: 'Koneksi ke Apps Script berhasil.' })
@@ -70,6 +71,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
 
   const pending = pendingCount()
   const auditTotal = audit
+    /* statusBeda bersifat informasi (master tetap acuan) → tidak dihitung sebagai temuan */
     ? ['ringkasan', 'skor', 'kondisi', 'komponenHilang', 'komponenAsing', 'idGanda', 'kodeAsing', 'tanggalRusak'].reduce((n, k) => n + (audit.hitung?.[k] || 0), 0) +
       (audit.master?.mesin || 0) + (audit.master?.irrigator || 0)
     : 0
@@ -107,7 +109,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
               <IconCloud size={14} /> {testing ? 'Menguji…' : 'Uji Koneksi'}
             </button>
             <button className="btn-ghost" onClick={() => fetchHistory().then(() => onSync?.()).catch((e) => setToast({ type: 'error', message: e.message }))}>
-              <IconRefresh size={14} /> Tarik riwayat
+              <IconRefresh size={14} /> Tarik master &amp; riwayat
             </button>
             <button
               className="btn-ghost"
@@ -115,6 +117,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
                 try {
                   const r = await syncMaster()
                   setToast({ type: 'success', message: `Sheet master diperbarui: ${r.join(' · ')}` })
+                  onSync?.()
                 } catch (e) {
                   setToast({ type: 'error', message: `Gagal sinkron master: ${e.message}` })
                 }
@@ -301,6 +304,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
                   ['Skor salah', audit.hitung?.skor ?? 0],
                   ['Kondisi salah', audit.hitung?.kondisi ?? 0],
                   ['Komponen kosong', audit.hitung?.komponenHilang ?? 0],
+                  ['Beda status vs inspeksi *', audit.hitung?.statusBeda ?? 0],
                   ['Kode asing', audit.hitung?.kodeAsing ?? 0],
                   ['ID ganda', audit.hitung?.idGanda ?? 0],
                   ['Master Mesin', audit.master?.mesin ?? 0],
@@ -308,10 +312,14 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
                 ].map(([label, val]) => (
                   <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
                     <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
-                    <p className={cx('mt-0.5 font-mono text-[15px] font-bold', val ? 'text-amber-300' : 'text-emerald-300')}>{val}</p>
+                    <p className={cx('mt-0.5 font-mono text-[15px] font-bold', val ? (label.endsWith('*') ? 'text-sky-300' : 'text-amber-300') : 'text-emerald-300')}>{val}</p>
                   </div>
                 ))}
               </div>
+              <p className="text-[10.5px] leading-relaxed text-slate-500">
+                * Beda status: baris inspeksi terakhir mencatat status berbeda dari sheet master. Ini informasi, bukan
+                kesalahan data — dashboard selalu memakai status master (acuan kebenaran), dan tidak menulis ulang riwayat.
+              </p>
               {audit.contoh?.length > 0 && (
                 <div className="max-h-72 overflow-y-auto rounded-xl border border-white/[0.06]">
                   <table className="w-full text-left text-[11px]">

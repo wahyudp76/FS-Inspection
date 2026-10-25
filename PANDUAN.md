@@ -83,6 +83,39 @@ Sejak v1.8.1:
 > Jalankan tombol itu sekali setelah memasang `Code.gs` **1.8.1** ke Apps Script
 > (**Deploy ▸ Manage deployments ▸ ✏️ ▸ New version**).
 
+## Status unit mengikuti spreadsheet (v1.8.2)
+
+Sebelum v1.8.2, **Sinkron** hanya menarik riwayat inspeksi. Data unit (status, komponen,
+skor) berasal dari snapshot yang dibekukan saat aplikasi dibangun — jadi kalau status di
+sheet `Mesin`/`Irrigator` diubah (mis. `SPC0224`: `Rusak` → `Terpasang`), web tetap
+menampilkan yang lama sampai aplikasi di-build ulang.
+
+Sejak v1.8.2, **Sinkron** menarik **master live** lebih dulu (aksi `master`), baru riwayat
+inspeksi. Artinya:
+
+- status, komponen, skor, A/B/C, dan kondisi yang tampil = isi spreadsheet saat itu,
+- perubahan di sheet langsung terlihat tanpa build ulang, cukup tekan **Sinkron**
+  (atau tunggu tarikan otomatis 5 menit / buka kembali tabnya),
+- chip di dashboard menunjukkan **`live`** (dari sheet) atau **`snapshot`** (cadangan offline)
+  beserta tanggal tarikan terakhir,
+- unit baru di sheet otomatis muncul; unit yang dihapus dari sheet tetap tampil beserta
+  riwayatnya (tidak ada data yang hilang),
+- rekaman inspeksi hanya menimpa master bila **lebih baru** dari tanggal inspeksi terakhir
+  unit itu — jadi perbaikan manual di sheet tidak dibatalkan baris inspeksi lama,
+- status dinormalkan: `RUSAK`, `Rusak ` (spasi/NBSP), `Rusak / Perbaikan` semuanya
+  dihitung sebagai **Rusak** (dan tetap ⇒ **Kritis**).
+
+> Butuh `Code.gs` **1.8.2** di Apps Script (**Deploy ▸ Manage deployments ▸ ✏️ ▸ New version**).
+> Bila endpoint masih versi lama, dashboard tetap jalan memakai snapshot (`snapshot`).
+
+### Beda status master vs inspeksi terakhir
+
+Di **Pengaturan ▸ Kualitas Data Sheet** ada baris **“Beda status vs inspeksi \*”**.
+Angka itu berarti baris inspeksi terakhir mencatat status berbeda dari sheet master.
+Ini **informasi, bukan kesalahan data**: dashboard selalu memakai master, dan riwayat
+inspeksi sengaja tidak ditulis ulang. Contoh nyata: `SPC0224` (baris inspeksi 5 Mar
+mencatat `Rusak`, sheet master sekarang `Terpasang`).
+
 ## Pasang sebagai aplikasi (PWA)
 
 - **Android (Chrome)**: menu ⋮ ▸ **Add to Home screen / Instal aplikasi**.

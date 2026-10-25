@@ -1,3 +1,4 @@
+import pkg from '../../package.json'
 import React, { useEffect, useState } from 'react'
 import { cx, relativeTime } from '../lib/analytics'
 import {
@@ -63,6 +64,8 @@ function BackToTop() {
     </button>
   )
 }
+
+const VERSI = pkg.version
 
 export default function Shell({ children, route, navigate, sync, onSync, offline, demo, onAddInspect, onAddService }) {
   const [open, setOpen] = useState(false)
@@ -144,7 +147,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
           </a>
         </div>
         <p className="sidebar-ver px-1 text-center text-[9.5px] leading-relaxed text-slate-600">
-          FS Inspection v1.6 · Inspeksi (tb_mesin / tb_irrigator)<br />+ Service engine (tb_service1 / tb_service2)
+          FS Inspection v{VERSI} · Inspeksi (tb_mesin / tb_irrigator)<br />+ Service engine (tb_service1 / tb_service2)
         </p>
       </div>
         </div>

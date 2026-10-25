@@ -49,6 +49,7 @@ cek('audit menemukan selisih ringkasan di master', a1.result.master.mesin + a1.r
 cek('audit melaporkan contoh temuan', Array.isArray(a1.result.contoh) && a1.result.contoh.length > 0, `${a1.result.contoh.length} contoh`)
 cek('tidak ada ID ganda', h.idGanda === 0, `${h.idGanda}`)
 cek('tidak ada kode asing di Data Inspeksi', h.kodeAsing === 0, `${h.kodeAsing}`)
+cek('status Data Inspeksi vs master dilaporkan', typeof h.statusBeda === 'number', `status beda ${h.statusBeda}`)
 
 /* ---- 2. repair ---- */
 const r1 = post(ctx, { action: 'repair', payload: { sheet: 'semua' } })
@@ -64,6 +65,8 @@ const a2 = post(ctx, { action: 'audit' })
 const h2 = a2.result.hitung
 console.log('   ringkasan akhir:', JSON.stringify(h2), '| master Mesin/Irrigator:', a2.result.master.mesin, '/', a2.result.master.irrigator)
 cek('ringkasan Data Inspeksi bersih', h2.ringkasan === 0 && h2.skor === 0 && h2.kondisi === 0)
+/* statusBeda bersifat informasi (riwayat inspeksi tidak ditulis ulang) */
+cek('status beda dilaporkan terpisah dari temuan', h2.statusBeda === 0 || h2.statusBeda > 0, `${h2.statusBeda} baris info`)
 cek('komponen kosong bersih', h2.komponenHilang === 0)
 cek('master bersih', a2.result.master.mesin === 0 && a2.result.master.irrigator === 0)
 
