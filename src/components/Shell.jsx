@@ -5,7 +5,7 @@ import {
   IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus, IconChevron, IconWrench,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
-import logoUrl from '../assets/logo.png'
+import logoUrl from '../assets/logo-white-192.png'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: IconGauge, desc: 'Ringkasan & analitik' },
@@ -80,9 +80,13 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
   const SidebarInner = (
     <div className="flex h-full flex-col overflow-hidden">
       <div className="sidebar-head flex shrink-0 items-center gap-2.5 px-4 py-5">
-        <span className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-[2px] shadow-md shadow-black/30 ring-1 ring-white/25">
-          <img src={logoUrl} alt="FS Inspection" className="h-full w-full object-contain" width="40" height="40" />
-        </span>
+        <img
+          src={logoUrl}
+          alt="FS Inspection"
+          width={30}
+          height={30}
+          className="h-[30px] w-[30px] shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
+        />
         <div className="min-w-0">
           <p className="text-[13px] font-bold leading-tight text-white">FS Inspection</p>
           <p className="truncate text-[10px] uppercase tracking-[0.14em] text-slate-500">Engine &amp; Irrigator</p>
@@ -180,9 +184,13 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               <IconMenu size={16} />
             </button>
             {/* logo di topbar (HP/tablet) — desktop sudah punya di sidebar */}
-            <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-full bg-white p-[1.5px] ring-1 ring-white/15 lg:hidden">
-              <img src={logoUrl} alt="FS Inspection" className="h-full w-full object-contain" width="36" height="36" />
-            </span>
+            <img
+              src={logoUrl}
+              alt="FS Inspection"
+              width={26}
+              height={26}
+              className="h-[26px] w-[26px] shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)] lg:hidden"
+            />
             <div className="min-w-0 flex-1">
               <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-white">
                 {current.label}

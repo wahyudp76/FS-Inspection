@@ -2,16 +2,17 @@
    Navigasi: network-first (selalu coba versi terbaru, fallback ke cache saat offline)
    Aset ber-hash & ikon: cache-first
    Permintaan ke Google (Apps Script / Sheets) TIDAK pernah di-cache. */
-const CACHE = 'fsi-v3'
+const CACHE = 'fsi-v4'
 const PRECACHE = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './icon.svg',
+  './favicon.svg',
   './apple-touch-icon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/maskable-512.png',
+  './icons/icon-maskable-512.png',
   './favicon.ico',
 ]
 

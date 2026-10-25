@@ -4,27 +4,28 @@ Checklist singkat. Detail lengkap ada di [`README.md`](README.md).
 
 ---
 
-## Logo & ikon aplikasi (v1.7.0)
+## Logo & ikon aplikasi (v1.7.1)
 
-Logo resmi **FS Inspection** (mesin + irrigator + papan checklist di dalam lingkaran biru–hijau) dipakai
-di tiga tempat:
+Logo resmi **FS Inspection** — tetesan (irigasi) berisi gear + kunci (perawatan mesin) di atas ubin
+hijau–teal — dipakai di tiga tempat, mengikuti pola situs **FS-evaluation**:
 
-| Tempat | Berkas |
-|---|---|
-| Ikon tab browser (favicon) | `public/favicon.ico`, `public/icons/favicon-16.png`, `favicon-32.png`, `favicon-48.png`, `public/icon.svg` |
-| Ikon aplikasi / PWA (home screen Android, iOS, desktop) | `public/icons/icon-72…512.png` + `public/icons/maskable-192.png` & `maskable-512.png` + `public/apple-touch-icon.png` |
-| Logo di dalam aplikasi | sidebar (desktop) dan topbar (HP/tablet), dari `src/assets/logo.png` |
+| Tempat | Berkas | Gaya |
+|---|---|---|
+| Ikon tab browser (favicon) | `public/favicon.svg`, `public/favicon.ico`, `public/icons/favicon-16/32/48.png` | ubin teal penuh agar tetap terbaca di 16 px |
+| Ikon aplikasi / PWA | `public/icons/icon-72…512.png` (versi `any`, ubin membulat) + `maskable-192/512.png` dan `icon-maskable-192/512.png` (teal penuh, `purpose: maskable`) + `apple-touch-icon.png` 180 & `icons/icon-152.png` | Android/iOS/desktop |
+| Logo di dalam aplikasi | `src/assets/logo-white-192.png` (mark putih transparan) | sidebar desktop 30 px + topbar HP 26 px, tanpa kotak latar — sama seperti header FS-evaluation |
 
 Catatan teknis:
 
-- Ikon dibuat dari satu gambar sumber 1254×1254: latar putih dibuang jadi transparan, lalu ditempel di
-  kanvas putih (ikon PWA versi `any` memakai 80 % area + sudut membulat, versi **maskable** 62 % supaya
-  aman saat Android memotong bentuk lingkaran/bulat).
-- Semua tautan ikon memakai penanda versi `?v=20261025b`, dan service worker naik ke cache **`fsi-v3`**,
-  jadi ikon baru langsung muncul walau browser menyimpan cache lama. Kalau nanti logo diganti lagi,
-  naikkan penanda versi itu dan nama cache-nya.
-- Untuk mengganti logo: timpa `public/icons/*`, `public/favicon.ico`, `public/apple-touch-icon.png`, dan
-  `src/assets/logo.png`, lalu `npm run build:pages` + `touch docs/.nojekyll`.
+- Ikon dibuat dari satu berkas sumber 2048×2048: ubin teal dideteksi (piksel berwarna) lalu lubang di
+  dalamnya ditutup, latar putih di luar ubin dibuang, dan area luar diisi warna tepi supaya tepinya tidak
+  ber-fringe. Versi `maskable` memakai ubin **penuh tanpa sudut membulat** supaya aman ketika Android
+  memotongnya jadi lingkaran/bulat.
+- Mark putih (tetesan + gear + kunci) diambil terpisah dari ubin untuk logo di dalam aplikasi.
+- Semua tautan ikon memakai penanda versi `?v=20261025c`; service worker naik ke cache **`fsi-v4`** dan
+  mem-precache `favicon.svg`, `maskable` lama & baru, serta `favicon.ico`. Kalau logo diganti lagi,
+  naikkan penanda versi itu + nama cache.
+- `theme_color` manifest ikut disetel `#0f766e` (teal) agar warna status bar PWA selaras dengan ikon.
 
 ## Pasang sebagai aplikasi (PWA)
 

@@ -322,7 +322,7 @@ Mark: **perisai + centang** di atas squircle gradien cyan → biru — perisai =
 
 | Berkas | Fungsi |
 |---|---|
-| `public/icon.svg` | logo aplikasi (sidebar) + favicon SVG modern |
+| `public/favicon.svg` | favicon SVG (ubin teal, dari logo resmi) |
 | `public/favicon.ico` | favicon 16/32/48 px (browser lama, bookmark) |
 | `public/icons/favicon-{16,32,48}.png` | favicon PNG |
 | `public/icons/icon-{72,96,144,192,256,384,512}.png` | ikon "any" — Android/Chrome/desktop install, taskbar |
