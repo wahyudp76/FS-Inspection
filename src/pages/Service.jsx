@@ -1,7 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell } from 'recharts'
 import { Card, CardHeader, Kpi, Empty, Segmented, MultiSelect, Skeleton } from '../components/ui'
-import { TipBox, Donut } from '../components/charts'
+import { Donut } from '../components/charts'
+import {
+  TrenServiceChart, DivisiCakupanChart, UrgensiChart, TopTerlambatChart, PetaMingguService,
+} from '../components/ServiceCharts'
 import ServiceForm from '../components/ServiceForm'
 import ServiceDetail from '../components/ServiceDetail'
 import { cx, relativeTime } from '../lib/analytics'
@@ -16,7 +18,7 @@ import {
 } from '../lib/service'
 import {
   IconWrench, IconRefresh, IconDownload, IconAlert, IconCheck, IconClock, IconCalendar,
-  IconEngine, IconSearch, IconChevron, IconExternal, IconSheet,
+  IconEngine, IconSearch, IconChevron, IconExternal, IconSheet, IconTrend,
 } from '../components/icons'
 
 const fmt = (n) => (n == null || n === '' ? '—' : new Intl.NumberFormat('id-ID').format(n))
@@ -363,6 +365,13 @@ export default function Service({ notify, openFormSignal = 0 }) {
           icon={<IconCalendar size={14} />}
           accent="#a78bfa"
         />
+        <Kpi
+          label="Tepat Waktu"
+          value={`${ringkasan.ketepatan.pct}%`}
+          hint={`${fmt(ringkasan.ketepatan.tepat)} dari ${fmt(ringkasan.ketepatan.dinilai)} service sesuai interval 250 HM`}
+          icon={<IconTrend size={14} />}
+          accent="#22c55e"
+        />
       </div>
 
       {/* ---------------- grafik ---------------- */}
@@ -406,50 +415,151 @@ export default function Service({ notify, openFormSignal = 0 }) {
           </div>
         </Card>
 
-        <Card className="xl:col-span-4">
-          <CardHeader title="Status per Posisi" sub="PG2 · OP2 · FM3 · FM4" />
+        <Card className="xl:col-span-7">
+          <CardHeader
+            title="Tren Service Engine"
+            sub="Per bulan, dari sheet “Monitor Kasie FS” (tb_service2)"
+            icon={<IconTrend size={15} />}
+            right={<span className="hidden rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-400 sm:inline">interval target 250 HM</span>}
+          />
           <div className="px-1 pb-3 pt-2">
-            {ringkasan.perPosisi.length ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={ringkasan.perPosisi} margin={{ top: 8, right: 6, left: -24, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-                  <XAxis dataKey="posisi" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
-                  <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 10 }} />
-                  <Bar dataKey="terlambat" name="Lewat" stackId="a" fill="#f43f5e" />
-                  <Bar dataKey="segera" name="Tempo" stackId="a" fill="#f59e0b" />
-                  <Bar dataKey="aman" name="Aman" stackId="a" fill="#22c55e" />
-                  <Bar dataKey="tanpaJadwal" name="HM?" stackId="a" fill="#a78bfa" />
-                  <Bar dataKey="belum" name="Belum" stackId="a" fill="#475569" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <Empty title="Belum ada data" />
-            )}
+            <TrenServiceChart data={ringkasan.perBulan} height={250} />
+          </div>
+        </Card>
+      </div>
+
+      {/* ---------------- analitik service ---------------- */}
+      <div className="grid gap-4 xl:grid-cols-12">
+        <Card className="xl:col-span-5">
+          <CardHeader
+            title="Cakupan per Divisi"
+            sub="Berapa engine tiap posisi yang belum pernah diservice"
+            icon={<IconEngine size={15} />}
+          />
+          <div className="px-2 pb-3 pt-2">
+            <DivisiCakupanChart
+              data={ringkasan.perPosisi}
+              height={168}
+              onPick={(posisi) => {
+                setFPosisi([posisi])
+                setFStatus([])
+                setHalEval(0)
+              }}
+            />
+          </div>
+        </Card>
+
+        <Card className="xl:col-span-4">
+          <CardHeader title="Sebaran Urgensi" sub="Sisa hari menuju warning date (tb_service1)" icon={<IconAlert size={15} />} />
+          <div className="px-1 pb-3 pt-2">
+            <UrgensiChart
+              data={ringkasan.urgensi}
+              height={168}
+              onClickEmber={(id) => {
+                const map = { lewat30: 'terlambat', lewat8: 'terlambat', lewat7: 'terlambat', tempo: 'segera', aman30: 'aman', aman: 'aman' }
+                setFStatus([map[id]])
+                setHalEval(0)
+              }}
+            />
           </div>
         </Card>
 
         <Card className="xl:col-span-3">
-          <CardHeader title="Volume Service" sub="Pencatatan per bulan (tb_service2)" />
+          <CardHeader title="10 Paling Terlambat" sub="Hari lewat warning date" icon={<IconWrench size={15} />} />
           <div className="px-1 pb-3 pt-2">
-            {ringkasan.perBulan.length ? (
-              <ResponsiveContainer width="100%" height={250}>
-                <BarChart data={ringkasan.perBulan} margin={{ top: 8, right: 8, left: -28, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-                  <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
-                  <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
-                  <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" service" />} />
-                  <Bar dataKey="sesi" name="Service" radius={[4, 4, 0, 0]} fill="#38bdf8">
-                    {ringkasan.perBulan.map((_, i) => (
-                      <Cell key={i} fill={i === ringkasan.perBulan.length - 1 ? '#38bdf8' : 'rgba(56,189,248,0.45)'} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            ) : (
-              <Empty title="Belum ada pencatatan" />
-            )}
+            <TopTerlambatChart
+              data={ringkasan.topTerlambat}
+              height={214}
+              onPick={(kode) => {
+                const u = units.find((x) => x.kode === kode)
+                if (u) setDetailUnit(u)
+              }}
+            />
+          </div>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-12">
+        <Card className="xl:col-span-5">
+          <CardHeader title="Ringkasan Ketepatan Interval" sub="Dihitung dari selisih HM antar service tiap unit" />
+          <div className="px-3 pb-3 pt-2">
+            <div className="flex items-center gap-3">
+              <div className="relative grid h-[86px] w-[86px] shrink-0 place-items-center">
+                <svg viewBox="0 0 36 36" className="absolute inset-0 h-full w-full -rotate-90">
+                  <circle cx="18" cy="18" r="15.5" fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth="3.5" />
+                  <circle
+                    cx="18"
+                    cy="18"
+                    r="15.5"
+                    fill="none"
+                    stroke={ringkasan.ketepatan.pct >= 70 ? '#22c55e' : ringkasan.ketepatan.pct >= 40 ? '#f59e0b' : '#f43f5e'}
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                    strokeDasharray={`${(ringkasan.ketepatan.pct / 100) * 97.4} 97.4`}
+                  />
+                </svg>
+                <div className="text-center">
+                  <p className="font-mono text-[15px] font-semibold text-white">{ringkasan.ketepatan.pct}%</p>
+                  <p className="text-[8.5px] uppercase tracking-wider text-slate-500">tepat</p>
+                </div>
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                {[
+                  ['Tepat 225–275 HM', ringkasan.ketepatan.tepat, '#22c55e'],
+                  ['Terlambat > 275 HM', ringkasan.ketepatan.telat, '#f43f5e'],
+                  ['Lebih awal < 225 HM', ringkasan.ketepatan.awal, '#38bdf8'],
+                ].map(([label, n, color]) => (
+                  <div key={label} className="flex items-center gap-1.5 text-[10.5px]">
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
+                    <span className="min-w-0 flex-1 truncate text-slate-400">{label}</span>
+                    <span className="font-mono font-semibold text-slate-200">{n}</span>
+                  </div>
+                ))}
+                <p className="pt-0.5 text-[9.5px] leading-relaxed text-slate-500">
+                  Rata-rata selisih HM <span className="font-mono text-slate-300">{ringkasan.ketepatan.rata ?? '—'}</span> ·
+                  {' '}{ringkasan.ketepatan.dikecualikan} baris HM janggal tidak dihitung
+                </p>
+              </div>
+            </div>
+
+            {/* sebaran selisih HM per service */}
+            <div className="mt-3">
+              <p className="mb-1 text-[9.5px] uppercase tracking-wider text-slate-500">Sebaran selisih HM antar service</p>
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-white/[0.05]">
+                {(ringkasan.ketepatan.sebaran || []).map((e) => (
+                  <div
+                    key={e.id}
+                    title={`${e.label} HM: ${e.jumlah} service`}
+                    style={{
+                      width: `${ringkasan.ketepatan.dinilai ? (e.jumlah / ringkasan.ketepatan.dinilai) * 100 : 0}%`,
+                      background: e.color,
+                    }}
+                  />
+                ))}
+              </div>
+              <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5">
+                {(ringkasan.ketepatan.sebaran || []).map((e) => (
+                  <span key={e.id} className="inline-flex items-center gap-1 text-[9px] text-slate-500">
+                    <span className="h-1.5 w-1.5 rounded-full" style={{ background: e.color }} />
+                    {e.label} <span className="font-mono text-slate-300">{e.jumlah}</span>
+                  </span>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[9.5px] leading-relaxed text-slate-500">
+                Target sheet: service tiap <span className="text-slate-300">250 HM</span>. Selisih di bawah 225 HM berarti
+                service dilakukan lebih awal (biaya perawatan naik), di atas 275 HM berarti terlambat (risiko kerusakan).
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="xl:col-span-7">
+          <CardHeader title="Peta Minggu Service" sub="Kapan tiap jenis engine biasa diservice (minggu ke-1 s/d 5)" />
+          <div className="px-3 pb-3 pt-2">
+            <PetaMingguService log={log} />
+            <p className="mt-1.5 text-[9.5px] leading-relaxed text-slate-500">
+              Angka = jumlah pencatatan service pada minggu tersebut. Berguna untuk menyusun jadwal regu per minggu.
+            </p>
           </div>
         </Card>
       </div>

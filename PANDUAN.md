@@ -100,6 +100,23 @@ Rumus yang ditiru dashboard (sama dengan sheet):
 5. **Riwayat Pencatatan Service**: seluruh baris `tb_service2` (terbaru dulu), dengan kenaikan HM antar
    service. Kenaikan **> 1.000 HM** atau negatif diberi tanda ⚠ — biasanya salah input HM di sheet.
 
+### Grafik analitik (v1.6.1)
+
+Di bawah grafik utama ada enam panel analitik yang bisa dibaca cepat:
+
+| Panel | Isi | Bisa diklik |
+|---|---|---|
+| **Tren Service Engine** | batang bertumpuk per bulan: *Tepat (225–275 HM)*, *Terlambat (> 275 HM)*, *Lebih awal (< 225 HM)* + garis **% tepat waktu**; mode **Volume & unit** menampilkan jumlah service, unit berbeda, dan rata-rata selisih HM | – |
+| **Cakupan per Divisi** | batang 100 % per posisi (PG2/FM4/FM3/OP2) dengan warna **Belum service** paling gelap + angka *“23 dari 131 engine belum diservice (18%)”* dan tile per divisi (mis. *PG2 · 12 belum · 37/49 pernah diservice · 76 %*) | tile divisi → tabel evaluasi tersaring |
+| **Sebaran Urgensi** | 6 ember sisa hari menuju warning date (Lewat > 30 hr … Aman > 30 hr) | batang → saring tabel |
+| **10 Paling Terlambat** | 10 engine dengan hari keterlambatan terbesar | batang atau tombol kode → detail engine |
+| **Ringkasan Ketepatan Interval** | cincin % tepat waktu + rincian tepat/terlambat/lebih awal + **sebaran selisih HM** (per 50 HM) + rata-rata selisih | – |
+| **Peta Minggu Service** | matriks jenis engine × minggu 1–5: kapan service biasa dilakukan (untuk menyusun jadwal regu) | – |
+
+Dasar hitungan ketepatan: `selisih HM = HM service − HM service sebelumnya` untuk unit yang sama.
+Interval target sheet = **250 HM**, toleransi ±10 % dianggap tepat (225–275 HM). Baris dengan lonjakan
+HM tidak wajar (> 1.000 HM) dikeluarkan dari perhitungan agar angkanya tidak menyesatkan.
+
 ### Mencatat service (masuk ke `tb_service2`)
 
 Tombol **+ Catat Service** (header, juga di dalam tab) membuka pop-up:

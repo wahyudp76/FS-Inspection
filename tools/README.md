@@ -55,3 +55,7 @@ python3 -m http.server 8099 --bind 0.0.0.0 --directory docs
 PW_DIR=$PWD/node_modules EP=http://127.0.0.1:8112/exec node tools/svce2e.mjs   # 14 pemeriksaan
 node tools/svcprobe.mjs      # tangkapan layar + hitung baris tabel di 390 px & 1440 px
 ```
+
+```bash
+node tools/svccharts.mjs     # 6 panel analitik service (HP + desktop), 12 pemeriksaan
+```
