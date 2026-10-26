@@ -307,6 +307,7 @@ Semua uji jalan tanpa deployment (memakai `tools/mock.gs.mjs`, grid sheet tiruan
 | `node tools/mastertest.mjs` | unit test `src/lib/master.js` (merge inspeksi baru, Rusak ⇒ Kritis, kode asing, `normalStatus`, `gabungMasterLive`) |
 | `node tools/masterlive.mjs` | uji aksi `master` + penggabungan master live (kasus `SPC0224`: sheet `Terpasang`, snapshot `Rusak`) |
 | `ENDPOINT=… node tools/masterui.mjs` | uji browser: setelah Sinkron, Data Unit & KPI memakai status sheet (build `docs` + mock) |
+| `node tools/syncui.mjs` | uji browser: hanya ada satu tombol Sinkron di header, satu klik menjalankan 4 tahap (kirim → master → riwayat → service), dan kegagalan satu sheet dilaporkan |
 | `node tools/kualitas.mjs` | badge “catatan kualitas data” di halaman Service |
 | `node tools/datafixui.mjs` | kartu “Kualitas Data Sheet” di Pengaturan (butuh `PORT=8113 MASTER=1 node tools/mockapi.mjs`) |
 | `node tools/svcrumus.mjs` | penulisan “Catat Service” ke tb_service2: pemisah rumus (`;` vs `,`), nilai D/E/F, `svcrepair` |

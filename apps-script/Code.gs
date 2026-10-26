@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.8.2'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.8.3'; // naikkan setiap kali kode berubah besar
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';

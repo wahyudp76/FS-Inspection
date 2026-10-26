@@ -7,13 +7,15 @@ import History from './pages/History'
 import Service from './pages/Service'
 import Settings from './pages/Settings'
 import assetsData from './data/assets.json'
-import { fetchHistory, readLocalHistory, flushQueue, sortRecords, fetchMasterLive, readMasterCache } from './lib/api'
+import { readLocalHistory, sortRecords, readMasterCache } from './lib/api'
+import { readServiceCache } from './lib/service'
 import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
 import { releaseScrollLock } from './lib/scrollLock'
 import QuickInspect from './components/QuickInspect'
 import { terapkanInspeksiTerbaru, gabungMasterLive } from './lib/master'
+import { syncAll, ringkasSync } from './lib/sync'
 
 const readHash = () => {
   const h = (window.location.hash || '').replace(/^#\/?/, '')
@@ -36,6 +38,13 @@ export default function App() {
   /* master terkini dari sheet (aksi `master`); snapshot build hanya cadangan */
   const [masterLive, setMasterLive] = useState(() => readMasterCache()?.live || null)
   const [masterSyncedAt, setMasterSyncedAt] = useState(() => readMasterCache()?.syncedAt || null)
+  /* hasil sinkron terakhir (dipakai Pengaturan untuk rincian per sumber) */
+  const [syncLaporan, setSyncLaporan] = useState(null)
+  /* data service terakhir (dipakai halaman Service; satu tarikan untuk semua halaman) */
+  const [serviceSync, setServiceSync] = useState(() => {
+    const c = readServiceCache()
+    return c ? { data: c, at: c.syncedAt || null } : null
+  })
 
   const navigate = useCallback((r, p) => {
     const qs = p?.kode ? `?tipe=${encodeURIComponent(p.tipe || 'Mesin')}&kode=${encodeURIComponent(p.kode)}` : ''
@@ -61,6 +70,10 @@ export default function App() {
      ditekan bersamaan dengan auto-refresh / event focus */
   const inFlight = useRef(null)
 
+  /**
+   * SATU-SATUNYA jalur sinkron (dipicu tombol **Sinkron** di header).
+   * Mencakup: antrean lokal → sheet, master aset, riwayat inspeksi, dan service engine.
+   */
   const doSync = useCallback(async ({ silent = false } = {}) => {
     if (inFlight.current) return inFlight.current
     /* tanpa endpoint: beri umpan balik jelas, jangan diam saja */
@@ -76,30 +89,40 @@ export default function App() {
     }
     setSync((s) => ({ ...s, syncing: true }))
     inFlight.current = (async () => {
-    try {
-      if (getEndpoint()) {
-        try {
-          const q = await flushQueue()
-          if (q.sent > 0 && !silent) setToast({ type: 'success', message: `${q.sent} inspeksi lokal berhasil dikirim ke sheet.` })
-        } catch { /* queue flush opsional */ }
+      try {
+        const lap = await syncAll()
+
+        /* web → sheet: antrean inspeksi yang tertunda */
+        if (lap.kirim.terkirim && !silent) {
+          setToast({ type: 'success', message: `${lap.kirim.terkirim} inspeksi lokal berhasil dikirim ke sheet.` })
+        }
+
+        /* sheet → web: master aset (status unit, komponen, skor) */
+        if (lap.master.liveData) setMasterLive(lap.master.liveData)
+        if (lap.master.syncedAt) setMasterSyncedAt(lap.master.syncedAt)
+
+        /* sheet → web: riwayat inspeksi */
+        if (lap.riwayat.records) setRecords(lap.riwayat.records)
+
+        /* sheet → web: service engine (tb_service1 + tb_service2) */
+        if (lap.service.data) setServiceSync({ data: lap.service.data, at: new Date().toISOString() })
+
+        setSyncLaporan(lap)
+        setSync({
+          syncing: false,
+          syncedAt: lap.riwayat.syncedAt || lap.master.syncedAt || lap.selesai,
+          offline: lap.offline,
+        })
+
+        if (!silent) {
+          setToast({ type: lap.ok ? 'success' : 'error', message: ringkasSync(lap) })
+        }
+      } catch (e) {
+        setSync((s) => ({ ...s, syncing: false, offline: true }))
+        if (!silent) setToast({ type: 'error', message: `Sinkron gagal: ${e.message}` })
+      } finally {
+        inFlight.current = null
       }
-      /* master ditarik lebih dulu supaya status unit (mis. Rusak → Terpasang) ikut segar */
-      const mst = await fetchMasterLive({ silent: true })
-      if (mst.live) setMasterLive(mst.live)
-      if (mst.syncedAt) setMasterSyncedAt(mst.syncedAt)
-      const res = await fetchHistory({ silent: true })
-      setRecords(res.records || [])
-      setSync({ syncing: false, syncedAt: res.syncedAt, offline: res.offline || !!res.error })
-      if (res.error && !silent) setToast({ type: 'error', message: `Gagal tarik data: ${res.error}` })
-      else if (!res.offline && !silent) {
-        setToast({ type: 'success', message: 'Master & riwayat inspeksi tersinkron dari Google Sheets.' })
-      }
-    } catch (e) {
-      setSync((s) => ({ ...s, syncing: false, offline: true }))
-      if (!silent) setToast({ type: 'error', message: e.message })
-    } finally {
-      inFlight.current = null
-    }
     })()
     return inFlight.current
   }, [])
@@ -193,7 +216,6 @@ export default function App() {
             data={data}
             navigate={navigate}
             onSync={() => doSync()}
-            syncing={sync.syncing}
             onUpdated={handleUpdated}
             onDeleted={handleDeleted}
             notify={notify}
@@ -201,11 +223,21 @@ export default function App() {
           />
         )
       case 'service':
-        return <Service notify={notify} openFormSignal={svcSignal} />
+        return <Service notify={notify} openFormSignal={svcSignal} serviceSync={serviceSync} />
       case 'pengaturan':
-        return <Settings onSync={() => doSync()} records={records} demo={demo} onToggleDemo={toggleDemo} />
+        return (
+          <Settings
+            onSync={() => doSync()}
+            records={records}
+            demo={demo}
+            onToggleDemo={toggleDemo}
+            syncLaporan={syncLaporan}
+            syncing={sync.syncing}
+            syncedAt={sync.syncedAt}
+          />
+        )
       default:
-        return <Dashboard data={data} records={allRecords} navigate={navigate} onSync={() => doSync()} syncing={sync.syncing} />
+        return <Dashboard data={data} records={allRecords} navigate={navigate} />
     }
   }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted, handleUpdated, handleDeleted, notify, svcSignal])
 

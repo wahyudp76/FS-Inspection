@@ -83,6 +83,31 @@ Sejak v1.8.1:
 > Jalankan tombol itu sekali setelah memasang `Code.gs` **1.8.1** ke Apps Script
 > (**Deploy ▸ Manage deployments ▸ ✏️ ▸ New version**).
 
+## Sinkron: satu tombol untuk semua sheet (v1.8.3)
+
+Tombol **Sinkron** di header adalah **satu-satunya** tombol sinkron di aplikasi. Satu klik
+menjalankan semuanya, dua arah:
+
+| # | Tahap | Arah |
+|---|---|---|
+| 1 | Kirim inspeksi yang masih di antrean lokal (offline) | web → sheet “Data Inspeksi” (+ master) |
+| 2 | Master aset: status, komponen, skor, kondisi unit | sheet Mesin & Irrigator → web |
+| 3 | Riwayat inspeksi | sheet “Data Inspeksi” → web |
+| 4 | Service engine: evaluasi + pencatatan service | sheet “Monitor Kasie FS” → web |
+
+Tahap 2–4 berjalan bersamaan, jadi satu klik biasanya selesai dalam hitungan detik. Bila
+salah satu sheet bermasalah, tahap lain tetap jalan dan hasilnya dilaporkan — mis.
+`Sinkron sebagian (1,2 dtk): master 274 unit · 276 inspeksi · gagal: Service engine`.
+
+Tempat melihat rinciannya: **Pengaturan ▸ Sinkronisasi (satu tombol)** — ada status tiap
+tahap, jumlah baris/unit yang ditarik, pesan galat, dan sisa antrean lokal.
+
+Tombol lama (**Tarik dari Sheet** di Riwayat & Service, **Tarik master & riwayat**,
+**Sinkron ke sheet Mesin & Irrigator**, **Kirim antrean lokal**) sudah dihapus; halaman
+Dashboard, Data Unit, Riwayat, dan Service semuanya ikut memakai hasil satu tombol ini.
+Sinkron juga tetap berjalan otomatis setiap 5 menit / saat tab kembali aktif bila opsi
+**Muat ulang data terbaru** di Pengaturan dicentang.
+
 ## Status unit mengikuti spreadsheet (v1.8.2)
 
 Sebelum v1.8.2, **Sinkron** hanya menarik riwayat inspeksi. Data unit (status, komponen,

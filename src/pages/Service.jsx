@@ -25,7 +25,7 @@ import {
   INTERVAL_HM,
 } from '../lib/service'
 import {
-  IconWrench, IconRefresh, IconDownload, IconAlert, IconCheck, IconClock, IconCalendar,
+  IconWrench, IconDownload, IconAlert, IconCheck, IconClock, IconCalendar,
   IconEngine, IconSearch, IconChevron, IconExternal, IconSheet, IconTrend, IconX,
 } from '../components/icons'
 
@@ -115,7 +115,7 @@ const MingguChips = ({ mingguBulan }) => {
   )
 }
 
-export default function Service({ notify, openFormSignal = 0 }) {
+export default function Service({ notify, openFormSignal = 0, serviceSync = null }) {
   const cached = useMemo(() => readServiceCache(), [])
   const [units, setUnits] = useState(cached?.units || [])
   const [log, setLog] = useState(cached?.log || [])
@@ -174,28 +174,41 @@ export default function Service({ notify, openFormSignal = 0 }) {
   const kualitas = useMemo(() => kualitasService(units, log, { duplikat }), [units, log, duplikat])
   const [bukaKualitas, setBukaKualitas] = useState(false)
 
+  /* terapkan satu set data service (cache lokal, hasil tombol Sinkron, atau tarikan manual) */
+  const terapkan = useCallback((data) => {
+    if (!data) return
+    setUnits(data.units || [])
+    setLog(data.log || [])
+    setDuplikat(data.duplikat || 0)
+    setBarisEvalRaw(data.barisEval || 0)
+    setSyncedAt(data.syncedAt || null)
+    setGalat('')
+    setMemuat(false)
+  }, [])
+
+  /* tarik sendiri hanya sebagai cadangan bila header belum punya data — bukan tombol tersendiri */
   const muat = useCallback(
     async ({ diam = false } = {}) => {
       if (!diam) setMemuat(true)
       try {
-        const data = await fetchServiceData()
-        setUnits(data.units)
-        setLog(data.log)
-        setDuplikat(data.duplikat || 0)
-        setBarisEvalRaw(data.barisEval || 0)
-        setSyncedAt(data.syncedAt)
-        setGalat('')
+        terapkan(await fetchServiceData())
       } catch (e) {
         setGalat(e?.message || 'Gagal menarik data service dari Google Sheets.')
       } finally {
         setMemuat(false)
       }
     },
-    []
+    [terapkan]
   )
 
+  /* hasil tombol Sinkron di header selalu menang atas cache lokal */
   useEffect(() => {
-    muat()
+    if (!serviceSync?.data) return
+    terapkan(serviceSync.data)
+  }, [serviceSync, terapkan])
+
+  useEffect(() => {
+    if (!serviceSync?.data) muat()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -330,9 +343,6 @@ export default function Service({ notify, openFormSignal = 0 }) {
             <button onClick={() => bukaForm('')} className="btn-primary !px-3 !py-2 !text-[12px]">
               <IconWrench size={14} /> Catat Service
             </button>
-            <button onClick={() => muat()} className="btn-ghost !px-3 !py-2 !text-[12px]" disabled={memuat}>
-              <IconRefresh size={13} className={memuat ? 'animate-spin' : ''} /> Tarik dari Sheet
-            </button>
             <button onClick={unduhCsv} className="btn-ghost !px-3 !py-2 !text-[12px]">
               <IconDownload size={13} /> CSV
             </button>
@@ -340,7 +350,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
         </div>
         <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10.5px] text-slate-500">
           <span className="inline-flex items-center gap-1">
-            <IconClock size={11} /> {syncedAt ? `Terakhir ditarik ${relativeTime(syncedAt)}` : 'Belum pernah ditarik'}
+            <IconClock size={11} /> {syncedAt ? `Tersinkron ${relativeTime(syncedAt)}` : 'Belum tersinkron — tekan Sinkron di header'}
           </span>
           <span className="inline-flex items-center gap-1">
             <IconEngine size={11} /> {fmt(ringkasan.totalUnit)} engine · {fmt(ringkasan.totalPencatatan)} pencatatan service
@@ -367,7 +377,7 @@ export default function Service({ notify, openFormSignal = 0 }) {
         {bukaKualitas && kualitas.masalah.length > 0 && (
           <div className="mx-3 mb-3 space-y-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5 sm:mx-4">
             <p className="text-[10px] uppercase tracking-wider text-slate-500">
-              Hasil audit data sheet ({kualitas.totalMasalah} temuan) — perbaiki di spreadsheet, lalu tekan “Tarik dari Sheet”
+              Hasil audit data sheet ({kualitas.totalMasalah} temuan) — perbaiki di spreadsheet, lalu tekan “Sinkron” di header
             </p>
             {kualitas.masalah.map((m) => (
               <div key={m.kode} className="flex items-start gap-2 text-[11px] leading-relaxed">

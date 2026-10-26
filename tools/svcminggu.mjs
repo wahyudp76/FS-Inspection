@@ -3,7 +3,9 @@ const require = createRequire(import.meta.url)
 const { chromium } = require('/home/user/tools/node_modules/playwright-core')
 const EP = process.env.EP || 'http://127.0.0.1:8112/exec'
 const BASE = process.env.BASE || 'http://127.0.0.1:8099'
-const b = await chromium.launch({ executablePath: process.env.HOME + '/.cache/ms-playwright/chromium-1117/chrome-linux/chrome', args: ['--no-sandbox'] })
+const CHROME = process.env.CHROME
+  || process.env.HOME + '/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome'
+const b = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] })
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
 await ctx.addInitScript((ep) => { try { localStorage.setItem('fsi:endpoint', ep) } catch (e) {} }, EP)
 const p = await ctx.newPage()

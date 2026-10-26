@@ -10,12 +10,12 @@ import BucketModal from '../components/BucketModal'
 import DetailDrawer from './UnitsDetail'
 import {
   IconTruck, IconDroplet, IconShield, IconAlert, IconClipboard, IconTrend, IconChevron, IconSpark,
-  IconCalendar, IconUser, IconRefresh, IconGauge, IconList,
+  IconCalendar, IconUser, IconGauge, IconList,
 } from '../components/icons'
 
 const STATUS_COLORS = { Terpasang: '#38bdf8', Standby: '#a78bfa', Rusak: '#f43f5e' }
 
-export default function Dashboard({ data, records, navigate, onSync, syncing }) {
+export default function Dashboard({ data, records, navigate }) {
   const [tipe, setTipe] = useState('Semua')
   const [period, setPeriod] = useState('bulan')
   const [issueTab, setIssueTab] = useState('Mesin')
@@ -135,8 +135,8 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
           className="ml-auto hidden items-center gap-1.5 text-[11px] text-slate-500 sm:flex"
           title={
             data.masterLive
-              ? `Status & komponen diambil langsung dari sheet Mesin/Irrigator (${data.masterDiterapkan || 0} unit) — tarik ulang dengan tombol Sinkron`
-              : 'Memakai snapshot build (assets.json). Tekan Sinkron untuk mengambil master terkini dari sheet.'
+              ? `Status & komponen diambil langsung dari sheet Mesin/Irrigator (${data.masterDiterapkan || 0} unit) — tarik ulang dengan tombol Sinkron di header`
+              : 'Memakai snapshot build (assets.json). Tekan Sinkron di header untuk mengambil master terkini dari sheet.'
           }
         >
           <IconCalendar size={13} /> Master:{' '}
@@ -160,9 +160,6 @@ export default function Dashboard({ data, records, navigate, onSync, syncing }) 
             </span>
           )}
         </span>
-        <button onClick={onSync} className="btn-ghost !py-1.5 !text-[12px]">
-          <IconRefresh size={13} className={syncing ? 'animate-spin' : ''} /> Sinkron
-        </button>
       </div>
 
       {/* ---------------- KPI ---------------- */}

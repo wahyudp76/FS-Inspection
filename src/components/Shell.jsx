@@ -126,9 +126,9 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               {offline ? <IconCloudOff size={13} className="text-amber-400" /> : <IconCloud size={13} className="text-emerald-400" />}
               Google Sheets
             </span>
-            <button onClick={onSync} className="grid h-9 w-9 place-items-center rounded-md text-slate-400 transition hover:bg-white/[0.06] hover:text-brand" title="Sinkronkan data" aria-label="Sinkronkan data">
-              <IconRefresh size={13} />
-            </button>
+            <span className="flex items-center gap-1 text-[10px] text-slate-500" title="Semua sinkronisasi dijalankan dari tombol Sinkron di header">
+              <IconRefresh size={12} className={sync?.syncing ? 'animate-spin text-brand' : ''} />
+            </span>
           </div>
           <p className="mt-1 text-[10px] leading-relaxed text-slate-500">
             {sync?.syncing
@@ -210,9 +210,16 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               {route === 'service' ? <IconWrench size={15} /> : <IconPlus size={15} />}
               <span className="hidden sm:inline">{route === 'service' ? 'Catat Service' : 'Tambah Inspeksi'}</span>
             </button>
-            <button onClick={onSync} className="btn-ghost !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0" title="Sinkronkan riwayat inspeksi" aria-label="Sinkronkan riwayat inspeksi">
+            <button
+              onClick={onSync}
+              disabled={sync?.syncing}
+              className="btn-ghost !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0"
+              title="Sinkron semua: kirim antrean inspeksi ke sheet, lalu tarik master aset, riwayat inspeksi, dan service engine"
+              aria-label="Sinkron semua data dari dan ke Google Sheets"
+              data-sync="all"
+            >
               <IconRefresh size={14} className={sync?.syncing ? 'animate-spin' : ''} />
-              <span className="hidden md:inline">Sinkron</span>
+              <span className="hidden md:inline">{sync?.syncing ? 'Menyinkronkan…' : 'Sinkron'}</span>
             </button>
             <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0" title="Buka Google Sheets" aria-label="Buka Google Sheets">
               <IconExternal size={14} />

@@ -3,13 +3,13 @@ import { cx, fmtDateTime, trendByPeriod, periodKey, pct, kondisiOf, scoreColor }
 import { GRADES } from '../lib/config'
 import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, Empty, Segmented, Select } from '../components/ui'
 import { TrendChart, GradeStack } from '../components/charts'
-import { IconDownload, IconSearch, IconHistory, IconChevronDown, IconClipboard, IconAlert, IconSheet, IconRefresh } from '../components/icons'
+import { IconDownload, IconSearch, IconHistory, IconChevronDown, IconClipboard, IconAlert, IconSheet } from '../components/icons'
 import { TARGET_SHEET, getAutoSyncMaster } from '../lib/config'
 import { updateInspection, deleteInspection, syncMaster } from '../lib/api'
 import EditInspectionModal, { ConfirmDelete } from '../components/EditInspectionModal'
 import { IconEdit, IconTrash } from '../components/icons'
 
-export default function History({ records, data, navigate, onSync, syncing, onUpdated, onDeleted, notify, offline }) {
+export default function History({ records, data, navigate, onSync, onUpdated, onDeleted, notify, offline }) {
   const [tipe, setTipe] = useState('Semua')
   const [q, setQ] = useState('')
   const [period, setPeriod] = useState('minggu')
@@ -163,9 +163,6 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
         </div>
         <Select value={inspector} onChange={setInspector} placeholder="Semua petugas" options={inspectors} className="min-w-[140px]" />
         <div className="ml-auto flex gap-2">
-          <button onClick={onSync} className="btn-ghost !py-2 !text-[12px]">
-            <IconRefresh size={13} className={syncing ? 'animate-spin' : ''} /> Tarik dari Sheet
-          </button>
           <button onClick={exportCsv} className="btn-ghost !py-2 !text-[12px]"><IconDownload size={14} /> CSV</button>
         </div>
       </div>
@@ -173,10 +170,10 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
       {summary.pending > 0 && (
         <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3.5 py-2.5 text-[11.5px] text-amber-200">
           <IconAlert size={14} />
-          <span>{summary.pending} inspeksi masih di antrean lokal (belum terkirim ke Google Sheets).</span>
-          <button onClick={() => navigate('pengaturan')} className="ml-auto rounded-lg border border-amber-500/40 px-2 py-1 text-[10.5px] font-semibold hover:bg-amber-500/15">
-            Atur koneksi
-          </button>
+          <span>
+            {summary.pending} inspeksi masih di antrean lokal — tekan <span className="font-semibold">Sinkron</span> di header
+            untuk mengirimnya ke Google Sheets.
+          </span>
         </div>
       )}
 
@@ -434,7 +431,6 @@ export default function History({ records, data, navigate, onSync, syncing, onUp
             action={
               <div className="mt-1 flex flex-wrap justify-center gap-2">
                 <button className="btn-primary" onClick={() => navigate('inspeksi')}>Mulai Inspeksi</button>
-                <button className="btn-ghost" onClick={onSync}>Tarik dari Sheet</button>
                 <button className="btn-ghost" onClick={() => navigate('pengaturan')}>Isi inspeksi awal dari master</button>
               </div>
             }

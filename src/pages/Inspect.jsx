@@ -254,7 +254,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                 ) : (
                   <>
                     <p>
-                      Sinkron ke sheet <span className="font-semibold">Mesin &amp; Irrigator</span> belum berhasil.
+                      Penulisan otomatis ke sheet <span className="font-semibold">Mesin &amp; Irrigator</span> belum berhasil.
                       {' '}Data inspeksi unit <span className="font-mono font-semibold">{result.payload.kode}</span> sudah
                       tersimpan di sheet “Data Inspeksi”.
                     </p>
@@ -303,11 +303,11 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                     setToast({ type: 'error', message: `Gagal: ${err.message}` })
                     setResult((prev) => ({ ...prev, masterError: err.message }))
                     btn.disabled = false
-                    btn.textContent = 'Sinkronkan ke sheet Mesin & Irrigator'
+                    btn.textContent = 'Kirim ulang ke sheet master'
                   }
                 }}
               >
-                Sinkronkan ke sheet Mesin &amp; Irrigator
+                Kirim ulang ke sheet master
               </button>
             )}
           </div>

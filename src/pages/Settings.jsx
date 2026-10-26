@@ -1,9 +1,11 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
 import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, getAutoRefresh, setAutoRefresh, REFRESH_MS, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
-import { ping, flushQueue, pendingCount, fetchHistory, syncMaster, backfillMaster, auditData, repairData, serviceRepair } from '../lib/api'
-import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark, IconEngine } from '../components/icons'
-import { cx } from '../lib/analytics'
+import { ping, pendingCount, backfillMaster, auditData, repairData, serviceRepair } from '../lib/api'
+import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark, IconEngine, IconWrench } from '../components/icons'
+import { TAHAP_SYNC } from '../lib/sync'
+import { cx, relativeTime } from '../lib/analytics'
+
 
 const STEPS = [
   { t: 'Buka spreadsheet tujuan', d: `Buka "Update ZPAS637" lalu menu Extensions → Apps Script.` },
@@ -12,7 +14,7 @@ const STEPS = [
   { t: 'Tempel URL di sini', d: 'Simpan endpoint, lalu uji koneksi. Sheet "Data Inspeksi" akan dibuat/diperbarui otomatis.' },
 ]
 
-export default function Settings({ onSync, records, demo, onToggleDemo }) {
+export default function Settings({ onSync, records, demo, onToggleDemo, syncLaporan = null, syncing = false, syncedAt = null }) {
   const [url, setUrl] = useState(getEndpoint())
   const [testing, setTesting] = useState(false)
   const [toast, setToast] = useState(null)
@@ -56,20 +58,21 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
     }
   }
 
-  const pushQueue = async () => {
-    try {
-      const r = await flushQueue()
-      setToast({
-        type: r.failed ? 'error' : 'success',
-        message: r.sent ? `${r.sent} inspeksi lokal terkirim ke sheet.` : r.failed ? 'Gagal mengirim antrean.' : 'Tidak ada antrean.',
-      })
-      onSync?.()
-    } catch (e) {
-      setToast({ type: 'error', message: e.message })
-    }
-  }
-
   const pending = pendingCount()
+  const nf = new Intl.NumberFormat('id-ID')
+  /* ringkasan angka per tahap sinkron (kosong bila belum pernah sinkron) */
+  const infoTahap = (id) => {
+    const r = syncLaporan?.[id]
+    if (!r) return ''
+    if (id === 'kirim') {
+      if (r.terkirim) return `${nf.format(r.terkirim)} inspeksi terkirim${r.sisa ? ` · ${nf.format(r.sisa)} masih antre` : ''}`
+      return r.sisa ? `${nf.format(r.sisa)} inspeksi menunggu dikirim` : 'tidak ada antrean'
+    }
+    if (id === 'master') return r.ok ? `${nf.format(r.unit)} unit dari sheet master` : 'gagal ditarik'
+    if (id === 'riwayat') return r.ok ? `${nf.format(r.jumlah)} baris inspeksi` : 'gagal ditarik'
+    if (id === 'service') return r.ok ? `${nf.format(r.log)} pencatatan · ${nf.format(r.unit)} unit` : 'gagal ditarik'
+    return ''
+  }
   const auditTotal = audit
     /* statusBeda bersifat informasi (master tetap acuan) → tidak dihitung sebagai temuan */
     ? ['ringkasan', 'skor', 'kondisi', 'komponenHilang', 'komponenAsing', 'idGanda', 'kodeAsing', 'tanggalRusak'].reduce((n, k) => n + (audit.hitung?.[k] || 0), 0) +
@@ -108,28 +111,10 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
             <button className="btn-ghost" onClick={test} disabled={testing || !url}>
               <IconCloud size={14} /> {testing ? 'Menguji…' : 'Uji Koneksi'}
             </button>
-            <button className="btn-ghost" onClick={() => fetchHistory().then(() => onSync?.()).catch((e) => setToast({ type: 'error', message: e.message }))}>
-              <IconRefresh size={14} /> Tarik master &amp; riwayat
-            </button>
-            <button
-              className="btn-ghost"
-              onClick={async () => {
-                try {
-                  const r = await syncMaster()
-                  setToast({ type: 'success', message: `Sheet master diperbarui: ${r.join(' · ')}` })
-                  onSync?.()
-                } catch (e) {
-                  setToast({ type: 'error', message: `Gagal sinkron master: ${e.message}` })
-                }
-              }}
-            >
-              <IconSheet size={14} /> Sinkron ke sheet Mesin &amp; Irrigator
-            </button>
-            {pending > 0 && (
-              <button className="btn-ghost !border-amber-500/30 !text-amber-300" onClick={pushQueue}>
-                Kirim {pending} antrean lokal
-              </button>
-            )}
+            <span className="flex items-center gap-1.5 self-center text-[11px] text-slate-500">
+              <IconRefresh size={13} className={syncing ? 'animate-spin text-brand' : ''} />
+              Sinkron semua data lewat tombol <span className="font-semibold text-slate-300">Sinkron</span> di header.
+            </span>
           </div>
           {status && (
             <div className={cx('whitespace-pre-line rounded-xl border px-3 py-2 text-[11.5px] leading-relaxed', status.ok ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-200' : 'border-rose-500/30 bg-rose-500/[0.08] text-rose-200')}>
@@ -161,6 +146,71 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
           </div>
         </Card>
       </div>
+
+      <Card>
+        <CardHeader
+          title="Sinkronisasi (satu tombol)"
+          sub="Tombol Sinkron di header menjalankan semua tahap di bawah sekaligus"
+          icon={<IconRefresh size={15} />}
+          right={
+            <span className={cx('chip', syncing ? '!border-sky-500/30 !text-sky-300' : syncedAt ? '!border-emerald-500/30 !text-emerald-300' : '!border-amber-500/30 !text-amber-300')}>
+              {syncing ? 'Berjalan…' : syncedAt ? `Tersinkron ${relativeTime(syncedAt)}` : 'Belum tersinkron'}
+            </span>
+          }
+        />
+        <div className="card-pad space-y-2.5 pt-3">
+          {TAHAP_SYNC.map((t) => {
+            const r = syncLaporan?.[t.id]
+            const gagal = r && !r.ok
+            return (
+              <div key={t.id} className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+                <span
+                  className={cx(
+                    'mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg',
+                    gagal ? 'bg-rose-500/15 text-rose-300' : r ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.06] text-slate-500'
+                  )}
+                >
+                  {gagal ? <IconAlert size={13} /> : r ? <IconCheck size={13} /> : <IconRefresh size={13} />}
+                </span>
+                <div className="min-w-0">
+                  <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-slate-200">
+                    {t.judul}
+                    <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9.5px] font-normal text-slate-400">
+                      {t.arah}
+                    </span>
+                    {infoTahap(t.id) && (
+                      <span className={cx('font-mono text-[10px]', gagal ? 'text-rose-300' : 'text-emerald-300/90')}>{infoTahap(t.id)}</span>
+                    )}
+                  </p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{t.detail}</p>
+                  {gagal && r.error && (
+                    <p className="mt-1 rounded-lg bg-rose-500/10 px-2 py-1 font-mono text-[10px] leading-relaxed text-rose-300">{r.error}</p>
+                  )}
+                </div>
+              </div>
+            )
+          })}
+          <p className="text-[11px] leading-relaxed text-slate-500">
+            Tidak ada lagi tombol tarik/kirim terpisah di Dashboard, Riwayat, atau Service — semuanya memakai hasil tombol
+            <span className="font-semibold text-slate-300"> Sinkron </span>
+            di header. Sinkron juga berjalan otomatis tiap {Math.round(REFRESH_MS / 60000)} menit bila opsi di bawah aktif.
+          </p>
+          {pending > 0 && (
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-200">
+              <IconAlert size={13} className="mt-0.5 shrink-0" />
+              <span>
+                {nf.format(pending)} inspeksi masih tersimpan di perangkat ini dan akan dikirim ke sheet pada Sinkron berikutnya.
+              </span>
+            </div>
+          )}
+          {!isConfigured() && (
+            <div className="flex items-start gap-2 rounded-xl border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2 text-[11px] leading-relaxed text-sky-200">
+              <IconWrench size={13} className="mt-0.5 shrink-0" />
+              <span>Isi endpoint Apps Script di kartu atas agar Sinkron bisa bekerja. Tanpa endpoint, aplikasi memakai data lokal.</span>
+            </div>
+          )}
+        </div>
+      </Card>
 
       <Card>
         <CardHeader
@@ -196,20 +246,6 @@ export default function Settings({ onSync, records, demo, onToggleDemo }) {
               }}
             >
               {busyAwal ? 'Mengisi…' : 'Isi inspeksi awal'}
-            </button>
-            <button
-              className="btn-ghost"
-              disabled={!isConfigured()}
-              onClick={async () => {
-                try {
-                  const r = await syncMaster()
-                  setToast({ type: 'success', message: `Sheet master diperbarui: ${r.join(' · ')}` })
-                } catch (e) {
-                  setToast({ type: 'error', message: `Gagal: ${e.message}` })
-                }
-              }}
-            >
-              Sinkron ke Mesin &amp; Irrigator
             </button>
           </div>
           <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
