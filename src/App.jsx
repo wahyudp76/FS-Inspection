@@ -7,7 +7,7 @@ import History from './pages/History'
 import Service from './pages/Service'
 import Settings from './pages/Settings'
 import assetsData from './data/assets.json'
-import { readLocalHistory, sortRecords, readMasterCache } from './lib/api'
+import { readLocalHistory, sortRecords, readMasterCache, masterCacheAge } from './lib/api'
 import { readServiceCache } from './lib/service'
 import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
@@ -176,6 +176,25 @@ export default function App() {
        1. snapshot build (assets.json)         — cadangan bila sheet tak terbaca
        2. master live (sheet Mesin/Irrigator)  — status, komponen, skor terkini
        3. record inspeksi yang lebih baru      — mengalahkan master bila lebih baru */
+  /* Status kesegaran data master untuk ditampilkan di sidebar:
+       · live  → baru ditarik dari sheet
+       · basi  → ada cache tapi umurnya > 30 menit (atau gagal ditarik)
+       · snapshot → belum pernah menarik master sama sekali */
+  const masterInfo = useMemo(() => {
+    const umur = masterCacheAge()
+    const menit = umur == null ? null : Math.round(umur / 60000)
+    const teks =
+      umur == null
+        ? 'snapshot build'
+        : menit < 1
+        ? 'baru saja'
+        : menit < 60
+        ? `${menit} menit lalu`
+        : `${Math.round(menit / 60)} jam lalu`
+    const stale = !masterLive || umur == null || umur > 30 * 60 * 1000
+    return { stale, teks: masterLive ? teks : 'snapshot build' }
+  }, [masterLive, masterSyncedAt, sync.syncedAt])
+
   const masterGabung = useMemo(() => gabungMasterLive(assetsData, masterLive), [masterLive])
   const merged = useMemo(() => terapkanInspeksiTerbaru(masterGabung, records), [masterGabung, records])
   const data = useMemo(
@@ -249,6 +268,7 @@ export default function App() {
       onSync={() => doSync()}
       offline={sync.offline}
       demo={demo}
+      master={masterInfo}
       onAddInspect={() => setQuickOpen(true)}
       onAddService={() => {
         if (route !== 'service') navigate('service')

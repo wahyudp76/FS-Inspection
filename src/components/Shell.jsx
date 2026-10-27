@@ -4,6 +4,7 @@ import { cx, relativeTime } from '../lib/analytics'
 import {
   IconGauge, IconClipboard, IconList, IconHistory, IconSettings, IconMenu, IconX,
   IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus, IconChevron, IconWrench,
+  IconAlert, IconCheck,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
 import logoUrl from '../assets/logo-white-192.png'
@@ -67,7 +68,7 @@ function BackToTop() {
 
 const VERSI = pkg.version
 
-export default function Shell({ children, route, navigate, sync, onSync, offline, demo, onAddInspect, onAddService }) {
+export default function Shell({ children, route, navigate, sync, onSync, offline, demo, onAddInspect, onAddService, master }) {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
 
@@ -136,6 +137,22 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               : sync?.syncedAt
               ? `Tersinkron ${relativeTime(sync.syncedAt)}`
               : 'Belum tersinkron'}
+          </p>
+          {/* status data master: chip peringatan bila layar memakai data lama */}
+          <p className="mt-1 flex flex-wrap items-center gap-1 text-[10px] leading-relaxed">
+            {master?.stale ? (
+              <button
+                onClick={onSync}
+                className="tap-sm inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 font-semibold text-amber-300 hover:bg-amber-500/20"
+                title="Data master di layar berasal dari cache. Tekan untuk menarik ulang dari sheet."
+              >
+                <IconAlert size={11} /> Master {master.teks} — tekan Sinkron
+              </button>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-emerald-400/80">
+                <IconCheck size={11} /> Master live {master?.teks || ''}
+              </span>
+            )}
           </p>
           <a
             href={TARGET_SHEET.url}

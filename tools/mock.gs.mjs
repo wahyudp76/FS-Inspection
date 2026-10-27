@@ -118,12 +118,20 @@ class Range {
     return out
   }
   getValue() { return this.sheet.cell(this.row, this.col) }
+  getRow() { return this.row }
+  getColumn() { return this.col }
+  getNumRows() { return this.nRows }
+  getNumColumns() { return this.nCols }
   setValues(vals) {
     vals.forEach((line, r) => line.forEach((v, c) => this.sheet.setCell(this.row + r, this.col + c, v)))
     return this
   }
   setValue(v) { this.sheet.setCell(this.row, this.col, v); return this }
-  setBackground() { return this }
+  setBackground(warna) {
+    if (warna === undefined) return this
+    for (let r = 0; r < this.nRows; r++) for (let c = 0; c < this.nCols; c++) this.sheet.setCellBackground(this.row + r, this.col + c, warna)
+    return this
+  }
   setFontColor() { return this }
   setFontWeight() { return this }
   setNumberFormat() { return this }
@@ -176,6 +184,35 @@ class Sheet {
   insertColumnsAfter() { return this }
   setFrozenRows() { return this }
   getRange(row, col, nRows = 1, nCols = 1) { return new Range(this, row, col, nRows, nCols) }
+  /* ---- format bersyarat (dipakai Code.gs 1.9.1 untuk warna kolom KONDISI) ---- */
+  getConditionalFormatRules() { return (this.cfRules || []).slice() }
+  setConditionalFormatRules(rules) { this.cfRules = (rules || []).slice(); return this }
+  /* warna efektif sebuah sel: aturan CF PERTAMA yang cocok menang (perilaku Sheets) */
+  effective(row, col) {
+    const teks = String(this.cell(row, col) == null ? '' : this.cell(row, col)).trim()
+    for (const r of this.cfRules || []) {
+      const crit = r.cond
+      const cocok =
+        crit.kriteria === 'TEXT_EQ'
+          ? String(crit.nilai) === teks
+          : crit.kriteria === 'TEXT_CONTAINS'
+          ? teks.toLowerCase().includes(String(crit.nilai).toLowerCase())
+          : false
+      const kena = (r.ranges || []).some(
+        (rg) => col >= rg.getColumn() && col < rg.getColumn() + rg.getNumColumns() && row >= rg.getRow() && row < rg.getRow() + rg.getNumRows()
+      )
+      if (cocok && kena) return { background: r.bg, fontColor: r.fg, dari: 'cf' }
+    }
+    const b = this.bg && this.bg[row - 1] ? this.bg[row - 1][col - 1] : null
+    return { background: b || null, fontColor: null, dari: b ? 'sel' : 'none' }
+  }
+  setCellBackground(r, c, warna) {
+    this.bg = this.bg || []
+    while (this.bg.length < r) this.bg.push([])
+    const line = this.bg[r - 1]
+    while (line.length < c) line.push(null)
+    line[c - 1] = warna
+  }
   appendRow(vals) {
     const r = this.getLastRow() + 1
     vals.forEach((v, i) => this.setCell(r, i + 1, v))
@@ -259,6 +296,30 @@ export function makeEnv({ extraSheets = {}, locale = process.env.SHEET_LOCALE ||
     getActiveSpreadsheet: () => ss,
     openById: () => ss,
     flush: () => {},
+    newConditionalFormatRule() {
+      const r = { ranges: [], cond: { kriteria: '', nilai: '' }, bg: null, fg: null }
+      const api = {
+        whenTextEqualTo(v) { r.cond = { kriteria: 'TEXT_EQ', nilai: String(v) }; return api },
+        whenTextContains(v) { r.cond = { kriteria: 'TEXT_CONTAINS', nilai: String(v) }; return api },
+        setBackground(v) { r.bg = v; return api },
+        setFontColor(v) { r.fg = v; return api },
+        setRanges(v) { r.ranges = v || []; return api },
+        build() {
+          return {
+            ranges: r.ranges,
+            cond: r.cond,
+            bg: r.bg,
+            fg: r.fg,
+            getRanges: () => r.ranges,
+            getBooleanCondition: () => ({
+              getCriteriaType: () => r.cond.kriteria,
+              getCriteriaValues: () => [{ getValue: () => r.cond.nilai }, r.cond.nilai],
+            }),
+          }
+        },
+      }
+      return api
+    },
   }
 
   const sandbox = {

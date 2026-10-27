@@ -213,13 +213,20 @@ export function terapkanInspeksiTerbaru(data = {}, records = []) {
   const batasHari = batas ? dayKeyWIB(batas) : ''
   const daftar = Array.isArray(records) ? records : []
 
-  /* Batas per unit: tanggal inspeksi terakhir yang sudah tercatat di master.
-     Record hanya dipakai bila LEBIH BARU dari itu — jadi perbaikan manual di
-     spreadsheet (mis. status unit yang sudah tidak Rusak) tidak dibatalkan oleh
-     baris inspeksi lama, sementara inspeksi baru tetap menang. */
+  /* Batas per unit: tanggal inspeksi terakhir yang SUDAH tercatat di master.
+     Record hanya dipakai bila HARI-nya lebih baru dari itu — jadi perbaikan
+     manual di spreadsheet (mis. status unit yang diubah jadi “Rusak”) tidak
+     dibatalkan oleh baris inspeksi lama, sementara inspeksi baru tetap menang.
+     Catatan perbaikan v1.9.1:
+       · dulu ambangnya `max(tanggal master, waktu snapshot)` sehingga record
+         yang lebih baru dari master tetapi lebih lama dari build snapshot
+         dibuang, dan record di hari yang sama (jam berapa pun) selalu menang
+         sehingga status master hasil edit manual bisa “kembali” ke status lama;
+       · sekarang: unit yang punya tanggal inspeksi di master → ambang = tanggal
+         itu saja, dan perbandingan memakai HARI (bukan jam). */
   const batasUnit = (unit) => {
     const t = tsMs(unit?.inspeksiTerakhir)
-    return Number.isNaN(t) ? batas : Math.max(t, batas)
+    return Number.isNaN(t) ? { ms: batas, dariMaster: false } : { ms: t, dariMaster: true }
   }
   const mesin = data.mesin || []
   const irrigator = data.irrigator || []
@@ -247,11 +254,21 @@ export function terapkanInspeksiTerbaru(data = {}, records = []) {
     const adaJam = !Number.isNaN(tsMs(r.timestamp))
     const hari = hariRecord(r)
     const key = `${r.tipe === 'Irrigator' ? 'Irrigator' : 'Mesin'}:${String(r.kode).trim().toUpperCase()}`
-    const ambang = tglUnit.has(key) ? tglUnit.get(key) : batas
+    const info = tglUnit.has(key) ? tglUnit.get(key) : { ms: batas, dariMaster: false }
+    const ambang = info.ms
     const ambangHari = ambang ? dayKeyWIB(ambang) : batasHari
-    /* Bertimestamp → bandingkan tepat (detik). Tanpa jam (ketik manual) → per hari,
-       dan hari yang sama masih dianggap baru supaya inspeksi hari itu tidak hilang. */
-    const lebihBaru = adaJam ? ms > ambang : ambangHari ? hari >= ambangHari : true
+    /* Master sudah punya tanggal inspeksi → hanya inspeksi di HARI YANG LEBIH BARU
+       yang menimpa master (master hasil sinkron/ edit manual menang untuk hari itu).
+       Tanpa tanggal master (baris lama) → pakai perbandingan waktu seperti dulu. */
+    const lebihBaru = info.dariMaster
+      ? ambangHari
+        ? hari > ambangHari
+        : true
+      : adaJam
+      ? ms > ambang
+      : ambangHari
+      ? hari >= ambangHari
+      : true
     if (!lebihBaru) continue
     const ada = terbaru.get(key)
     if (!ada || ms > recordMs(ada) || (ms === recordMs(ada) && String(r.id) > String(ada.id))) terbaru.set(key, r)

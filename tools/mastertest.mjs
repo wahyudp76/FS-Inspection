@@ -57,10 +57,18 @@ const data = {
   irrigator: [{ kode: 'I1', status: 'Terpasang', components: { a: 'B' }, a: 0, b: 1, c: 0, total: 1, score: 60, inspeksiTerakhir: '2026-03-05' }],
 }
 
-/* record lebih tua dari snapshot & dari inspeksi terakhir master → diabaikan */
-const lama = [{ id: 'x1', kode: 'M1', tipe: 'Mesin', tanggal: '2026-10-20', komponen: { a: 'C', b: 'C' }, statusUnit: 'Rusak' }]
+/* record yang lebih TUA dari tanggal inspeksi terakhir di master → diabaikan */
+const lama = [{ id: 'x1', kode: 'M1', tipe: 'Mesin', tanggal: '2026-02-20', komponen: { a: 'C', b: 'C' }, statusUnit: 'Rusak' }]
 const h0 = terapkanInspeksiTerbaru(data, lama)
-cek('record lebih lama dari master diabaikan', h0.diterapkan === 0 && h0.mesin[0].score === 100 && !h0.mesin[0].dariInspeksi)
+cek('record lebih tua dari tanggal master diabaikan', h0.diterapkan === 0 && h0.mesin[0].score === 100 && !h0.mesin[0].dariInspeksi,
+  `diterapkan ${h0.diterapkan}`)
+
+/* v1.9.1: record yang LEBIH BARU dari master tetapi lebih tua dari build snapshot
+   tetap dipakai (dulu ambangnya max(tanggal master, waktu snapshot) → dibuang) */
+const antara = [{ id: 'x2', kode: 'M1', tipe: 'Mesin', tanggal: '2026-10-20', komponen: { a: 'C', b: 'A' }, statusUnit: 'Rusak' }]
+const hAntara = terapkanInspeksiTerbaru(data, antara)
+cek('record di antara tanggal master & build snapshot tetap dipakai', hAntara.diterapkan === 1 && hAntara.mesin[0].status === 'Rusak',
+  `diterapkan ${hAntara.diterapkan} · status ${hAntara.mesin[0].status}`)
 
 /* perbaikan manual di master tidak boleh dibatalkan baris inspeksi yang sama tuanya */
 const dataBaru = {
@@ -197,6 +205,41 @@ const hAsli = terapkanInspeksiTerbaru(aset, [])
 cek('snapshot asli tetap 151 mesin + 123 irrigator', hAsli.mesin.length === 151 && hAsli.irrigator.length === 123)
 const semuaAda = hAsli.mesin.every((u) => u.components && Object.keys(u.components).length > 0)
 cek('semua unit punya komponen', semuaAda)
+/* ---------- v1.9.1: status master tidak boleh dibatalkan inspeksi lama ---------- */
+{
+  const aset = {
+    generatedAt: '2026-10-23T18:09:52.854Z',
+    mesin: [{ id: 'M-DEM0074', kode: 'DEM0074', wilayah: 'OP2', status: 'Standby', components: { Mesin: 'C', Accu: 'A' }, a: 1, b: 0, c: 1, total: 2, score: 50 }],
+    irrigator: [],
+  }
+  const live = {
+    rev: 'x',
+    generatedAt: '2026-10-27T00:00:00Z',
+    kmap: { Mesin: ['Mesin', 'Accu'], Irrigator: [] },
+    mesin: [['DEM0074', 'OP2', 'MITS. 6D19T', 'DEM', 'Rusak', 'CA', '2026-03-05', '', '220', 'Sumur', '', '']],
+    irrigator: [],
+  }
+  const recHariSama = {
+    id: 'FSI-INIT-Mesin-DEM0074', tipe: 'Mesin', kode: 'DEM0074', statusUnit: 'Terpasang',
+    tanggal: '2026-03-05', timestamp: '2026-03-05T09:42:00+07:00', komponen: { Mesin: 'C', Accu: 'A' }, skor: 50,
+  }
+  const g = gabungMasterLive(aset, live)
+  cek('master live: status master dipakai', g.mesin[0].status === 'Rusak', g.mesin[0].status)
+  const out = terapkanInspeksiTerbaru({ ...g, generatedAt: g.generatedAt }, [recHariSama])
+  cek('inspeksi di HARI yang sama tidak menimpa status master', out.mesin[0].status === 'Rusak', out.mesin[0].status)
+  cek('kondisi mengikuti status master (Rusak ⇒ Kritis)', out.mesin[0].kondisi === 'Kritis', out.mesin[0].kondisi)
+
+  /* inspeksi satu hari setelah tanggal master → HARUS menang */
+  const recBesok = { ...recHariSama, id: 'FSI-NEW', tanggal: '2026-03-06', timestamp: '2026-03-06T08:00:00+07:00', statusUnit: 'Terpasang' }
+  const out2 = terapkanInspeksiTerbaru({ ...g, generatedAt: g.generatedAt }, [recBesok])
+  cek('inspeksi hari berikutnya menimpa master', out2.mesin[0].status === 'Terpasang', out2.mesin[0].status)
+
+  /* record lebih baru dari master tetapi lebih lama dari build snapshot → dulu dibuang */
+  const recAntara = { ...recHariSama, id: 'FSI-MID', tanggal: '2026-06-01', timestamp: '2026-06-01T08:00:00+07:00', statusUnit: 'Standby' }
+  const out3 = terapkanInspeksiTerbaru({ ...g, generatedAt: g.generatedAt }, [recAntara])
+  cek('record antara tanggal master & snapshot tetap dipakai', out3.mesin[0].status === 'Standby', out3.mesin[0].status)
+}
+
 
 console.log(gagal ? `\n❌ ${gagal} cek gagal` : '\n✅ semua cek lulus')
 process.exit(gagal ? 1 : 0)

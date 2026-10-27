@@ -248,18 +248,41 @@ export async function syncMaster() {
 /* ---------------- master live (sheet Mesin & Irrigator terkini) ---------------- */
 const LS_MASTER = 'fsi:master-live'
 
+/* Naikkan bila bentuk data master berubah → cache lama otomatis dibuang. */
+const MASTER_CACHE_V = '1.9.1'
+
 export function readMasterCache() {
   try {
     const c = JSON.parse(localStorage.getItem(LS_MASTER) || 'null')
-    return c && Array.isArray(c.live?.mesin) ? c : null
+    if (!c || !Array.isArray(c.live?.mesin)) return null
+    /* cache dari bundel versi lain / tanpa cap waktu → jangan dipercaya */
+    if (c.v !== MASTER_CACHE_V || !c.syncedAt) return null
+    return c
   } catch {
     return null
   }
 }
 
+/** Usia cache master (ms). `null` bila belum pernah ditarik. */
+export function masterCacheAge() {
+  const c = readMasterCache()
+  if (!c?.syncedAt) return null
+  const t = Date.parse(c.syncedAt)
+  return Number.isNaN(t) ? null : Date.now() - t
+}
+
+/** Buang cache master (dipakai setelah sheet diperbaiki / ganti endpoint). */
+export function clearMasterCache() {
+  try {
+    localStorage.removeItem(LS_MASTER)
+  } catch {
+    /* abaikan */
+  }
+}
+
 function writeMasterCache(cache) {
   try {
-    localStorage.setItem(LS_MASTER, JSON.stringify(cache))
+    localStorage.setItem(LS_MASTER, JSON.stringify({ ...cache, v: MASTER_CACHE_V }))
   } catch { /* kuota penuh: cache master opsional */ }
 }
 
@@ -306,11 +329,26 @@ export async function auditData() {
   return json.result || {}
 }
 
-/** Perbaiki data sheet (isi komponen kosong dari master + hitung ulang ringkasan) */
+/** Perbaiki data sheet (isi komponen kosong dari master + hitung ulang ringkasan).
+ *  Setelah sheet diubah, cache lokal pasti basi → dibuang supaya layar tidak
+ *  menampilkan angka/status lama (inilah sebab “sudah diperbaiki tapi tidak berubah”). */
 export async function repairData({ sheet = 'semua', tulisKomponenHilang = true } = {}) {
   const json = await post({ action: 'repair', payload: { sheet, tulisKomponenHilang } }, 180000)
-  return json.result || {}
+  const hasil = json.result || {}
+  if (!hasil.error) {
+    clearMasterCache()
+    writeRev('')
+    try {
+      localStorage.removeItem(LS_SERVICE)
+    } catch {
+      /* abaikan */
+    }
+  }
+  return hasil
 }
+
+/* naikkan bila bentuk data service berubah → cache service lama dibuang */
+export const SERVICE_CACHE_V = '1.9.1'
 
 /** Cek koneksi endpoint */
 export async function ping() {

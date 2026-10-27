@@ -13,7 +13,7 @@
  *        lalu sheet menghitung ulang tb_service1 dengan rumusnya sendiri.
  */
 import { getEndpoint, SERVICE_SHEET } from './config'
-import { postApi } from './api'
+import { postApi, SERVICE_CACHE_V } from './api'
 import { tsMs } from './time'
 
 const LS_SERVICE = 'fsi:service-cache'
@@ -1019,6 +1019,8 @@ export function readServiceCache() {
   try {
     const c = JSON.parse(localStorage.getItem(LS_SERVICE) || 'null')
     if (!c || !Array.isArray(c.units)) return null
+    /* cache dari versi bundel lain dibuang (bentuk data bisa berubah) */
+    if (c.v && c.v !== SERVICE_CACHE_V) return null
     return c
   } catch {
     return null
@@ -1027,7 +1029,7 @@ export function readServiceCache() {
 
 function writeServiceCache(data) {
   try {
-    localStorage.setItem(LS_SERVICE, JSON.stringify(data))
+    localStorage.setItem(LS_SERVICE, JSON.stringify({ ...data, v: SERVICE_CACHE_V }))
   } catch {
     /* kuota penuh: simpan versi tanpa riwayat panjang */
     try {

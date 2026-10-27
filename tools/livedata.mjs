@@ -137,7 +137,14 @@ console.log('   repair #1:', JSON.stringify(rep1))
 console.log('   audit #2 :', JSON.stringify(audit2.hitung), '| master', JSON.stringify({ m: audit2.master.mesin, i: audit2.master.irrigator }))
 console.log('   repair #2:', JSON.stringify(rep2))
 console.log('   audit #3 :', JSON.stringify(audit3.hitung), '| master', JSON.stringify({ m: audit3.master.mesin, i: audit3.master.irrigator }))
-cek('repair #1 mengubah baris ringkasan', rep1.inspeksi > 0, `${rep1.inspeksi} baris`)
+/* Sheet bisa saja sudah pernah di-repair (mis. setelah pengguna menekan
+   “Perbaiki otomatis”): saat itu repair WAJAR tidak mengubah apa pun. */
+const kotor = sebelum.hitung.ringkasan + sebelum.hitung.skor + sebelum.hitung.kondisi + sebelum.hitung.komponenHilang
+cek(
+  kotor ? 'repair #1 mengubah baris yang salah' : 'sheet sudah bersih → repair #1 tidak mengubah apa pun',
+  kotor ? rep1.inspeksi > 0 : rep1.inspeksi === 0,
+  `${rep1.inspeksi} baris · temuan awal ${kotor}`
+)
 cek('audit setelah repair: ringkasan 0', audit2.hitung.ringkasan === 0, `${audit2.hitung.ringkasan} sisa`)
 cek('audit setelah repair: skor 0', audit2.hitung.skor === 0, `${audit2.hitung.skor} sisa`)
 cek('audit setelah repair: kondisi 0', audit2.hitung.kondisi === 0, `${audit2.hitung.kondisi} sisa`)
@@ -282,6 +289,78 @@ console.log('   status:', JSON.stringify(hitungStatus))
 cek('setiap unit punya status valid', gab.units.every((u) => ['terlambat', 'segera', 'aman', 'tanpaJadwal', 'belum'].includes(u.status)))
 cek('unit hasil turunan log punya tanggal service terakhir', gab.units.filter((u) => u.sumber === 'log' && u.status !== 'belum').every((u) => !!u.terakhirIso))
 cek('unit tanpa jadwal ditandai, bukan dianggap aman', gab.units.filter((u) => u.sumber === 'log' && u.rerata == null).every((u) => u.status === 'belum' || u.status === 'tanpaJadwal'))
+
+/* ---------------- 7. warna KONDISI di sheet master (format bersyarat) ---------------- */
+console.log('\n== 7. Warna kolom KONDISI (Kritis tidak boleh hijau) ==')
+{
+  const envC = buatEnv()
+  const mesinC = envC.sheets.Mesin
+  const headC = mesinC.grid[0]
+  const kol = (nama) => headC.findIndex((h) => String(h || '').trim() === nama) + 1
+  const cKond = kol('KONDISI')
+  const cSkor = kol('SKOR')
+  const cKode = kol('Kode Unit')
+
+  /* Tiru kondisi sheet asli: ada aturan format bersyarat LAMA yang mewarnai
+     seluruh blok ringkasan hijau bila teksnya mengandung “Baik”, dan satu aturan
+     hijau untuk sel berisi “Baik” pada kolom KONDISI. Aturan CF selalu menang
+     atas warna sel → dulu sel “Kritis” tetap hijau. */
+  const lebarRange = mesinC.getRange(2, 1, 151, 40)
+  const rngKond = mesinC.getRange(2, cKond, 151, 1)
+  const buat = (teks, bg, ranges) =>
+    envC.sandbox.SpreadsheetApp.newConditionalFormatRule()
+      .whenTextContains(teks).setBackground(bg).setRanges(ranges).build()
+  mesinC.setConditionalFormatRules([
+    buat('Baik', '#00ff00', [rngKond]),
+    buat('Kritis', '#00ff00', [lebarRange]), // aturan “nakal” yang menimpa semua
+  ])
+
+  /* baris uji: unit berstatus Rusak dengan komponen C → KONDISI harus Kritis */
+  const barisUji = (kode) => mesinC.grid.findIndex((r) => String(r?.[cKode - 1] || '').trim() === kode) + 1
+  const rD = barisUji('DEM0074')
+  mesinC.setCell(rD, cKond, 'Kritis')
+  const sebelum = mesinC.effective(rD, cKond)
+  cek('reproduksi: sel “Kritis” tampil hijau karena aturan lama', sebelum.background !== '#f4c7c3', `warna efektif ${sebelum.background}`)
+
+  const ctxC = loadCode(envC)
+  const smC = post(ctxC, { action: 'syncmaster' })
+  const sesudah = mesinC.effective(rD, cKond)
+  cek('sesudah syncmaster: sel “Kritis” berwarna merah', sesudah.background === '#f4c7c3', `warna efektif ${sesudah.background}`)
+  cek('syncmaster melaporkan warna KONDISI terpasang', (smC.result || []).every((t) => !/warna KONDISI memakai warna sel saja/.test(t)))
+
+  /* baris “Baik” harus hijau */
+  const barisBaik = mesinC.grid.findIndex((r, i) => i > 0 && String(r?.[cKode - 1] || '').trim() === 'DEC0030') + 1
+  const efektifBaik = mesinC.effective(barisBaik, cKond)
+  cek('baris “Baik” tetap hijau', efektifBaik.background === '#d9ead3', `${String(mesinC.cell(barisBaik, cKond))} → ${efektifBaik.background}`)
+
+  /* aturan tidak menumpuk saat dijalankan berulang */
+  const jumlahAturanKita = () =>
+    mesinC.getConditionalFormatRules().filter((r) => {
+      try {
+        const v = r.getBooleanCondition().getCriteriaValues()[0].getValue()
+        return ['Kritis', 'Perlu Perhatian', 'Baik'].includes(String(v)) && r.getRanges().every((rg) => rg.getColumn() === cKond)
+      } catch {
+        return false
+      }
+    }).length
+  post(ctxC, { action: 'syncmaster' })
+  cek('aturan warna tidak menumpuk (idempoten)', jumlahAturanKita() === 3, `${jumlahAturanKita()} aturan`)
+  cek('aturan milik pengguna tidak dihapus', mesinC.getConditionalFormatRules().length > 3, `${mesinC.getConditionalFormatRules().length} aturan total`)
+
+  /* repair juga harus memasang warna (jalur “Perbaiki otomatis”) */
+  const envR2 = buatEnv()
+  const mesinR = envR2.sheets.Mesin
+  const headR = mesinR.grid[0]
+  const kdR = headR.findIndex((h) => String(h || '').trim() === 'KONDISI') + 1
+  const kcR = headR.findIndex((h) => String(h || '').trim() === 'Kode Unit') + 1
+  mesinR.setConditionalFormatRules([
+    envR2.sandbox.SpreadsheetApp.newConditionalFormatRule().whenTextEqualTo('Kritis').setBackground('#00ff00').setRanges([mesinR.getRange(2, kdR, 151, 1)]).build(),
+  ])
+  const ctxR2 = loadCode(envR2)
+  post(ctxR2, { action: 'repair', payload: { sheet: 'master' } })
+  const rD2 = mesinR.grid.findIndex((r) => String(r?.[kcR - 1] || '').trim() === 'DEM0074') + 1
+  cek('repair juga membetulkan warna KONDISI', mesinR.effective(rD2, kdR).background === '#f4c7c3', `${String(mesinR.cell(rD2, kdR))} → ${mesinR.effective(rD2, kdR).background}`)
+}
 
 /* ---------------- ringkasan ---------------- */
 console.log('\n' + (gagal ? `❌ ${gagal} pemeriksaan GAGAL` : '✅ semua pemeriksaan LULUS'))

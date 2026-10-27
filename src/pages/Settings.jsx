@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
 import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, getAutoRefresh, setAutoRefresh, REFRESH_MS, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
-import { ping, pendingCount, backfillMaster, auditData, repairData, serviceRepair } from '../lib/api'
+import { ping, pendingCount, backfillMaster, auditData, repairData, serviceRepair, syncMaster } from '../lib/api'
 import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark, IconEngine, IconWrench } from '../components/icons'
 import { TAHAP_SYNC } from '../lib/sync'
 import { cx, relativeTime } from '../lib/analytics'
@@ -25,6 +25,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
   const [busyAwal, setBusyAwal] = useState(false)
   const [audit, setAudit] = useState(null)
   const [busyAudit, setBusyAudit] = useState(false)
+  const [busyMaster, setBusyMaster] = useState(false)
   const [busyRepair, setBusyRepair] = useState(false)
   const [busyService, setBusyService] = useState(false)
 
@@ -306,6 +307,25 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
               <IconRefresh size={14} /> {busyAudit ? 'Mengaudit…' : 'Audit data sheet'}
             </button>
             <button
+              className="btn-ghost"
+              disabled={busyMaster || !isConfigured()}
+              title="Menulis ulang ringkasan (A/B/C/Skor/Kondisi) ke sheet Mesin & Irrigator dan memasang warna kolom KONDISI"
+              onClick={async () => {
+                setBusyMaster(true)
+                try {
+                  const hasil = await syncMaster()
+                  setToast({ type: 'success', message: `Ringkasan & warna sheet master diperbarui · ${(hasil || []).join(' · ') || 'selesai'}` })
+                  await onSync?.()
+                } catch (e) {
+                  setToast({ type: 'error', message: `Gagal menulis ringkasan ke sheet master: ${e.message}` })
+                } finally {
+                  setBusyMaster(false)
+                }
+              }}
+            >
+              <IconSheet size={14} /> {busyMaster ? 'Menulis…' : 'Ringkasan & warna master'}
+            </button>
+            <button
               className="btn-primary"
               disabled={busyRepair || !isConfigured()}
               onClick={async () => {
@@ -319,7 +339,11 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
                   })
                   const ulang = await auditData()
                   setAudit(ulang)
-                  onSync?.()
+                  /* sheet sudah berubah → tarik ulang master, riwayat, dan service
+                     SEKARANG (dulu tidak ditunggu, jadi layar tetap memakai cache
+                     lama: “sudah diperbaiki tapi status unit tidak berubah”). */
+                  setToast({ type: 'info', message: 'Sheet diperbaiki — memuat ulang data master…' })
+                  await onSync?.()
                 } catch (e) {
                   setToast({ type: 'error', message: `Perbaikan gagal: ${e.message}` })
                 } finally {

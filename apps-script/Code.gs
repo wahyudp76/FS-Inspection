@@ -24,8 +24,12 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.0'; // naikkan setiap kali kode berubah besar
-/* 1.9.0 — ringkasan (A/B/C/Total/Skor/Kondisi) SELALU dihitung ulang di server
+var SCRIPT_VERSION = '1.9.1'; // naikkan setiap kali kode berubah besar
+/* 1.9.1 — warna kolom KONDISI di sheet master dipasang lewat CONDITIONAL
+   FORMATTING (bukan hanya setBackground): aturan format bersyarat milik sheet
+   selalu menang atas warna sel, jadi sel “Kritis” bisa tetap hijau. Aturan kita
+   ditaruh paling atas (prioritas tertinggi) agar warnanya pasti benar.
+   1.9.0 — ringkasan (A/B/C/Total/Skor/Kondisi) SELALU dihitung ulang di server
    dari nilai komponen, tidak pernah dipercaya dari klien / kolom sheet:
      · writeInspection_  (kirim inspeksi dari web)
      · syncLatestToMaster (Data Inspeksi → sheet Mesin/Irrigator)
@@ -1389,6 +1393,12 @@ function syncLatestToMaster() {
       }
       sh.getRange(2, sumStart + skorPos - 1, out.length, 1).setNumberFormat('0.0');
       if (terisi) sh.getRange(2, sumStart, out.length, sumCount).setFontSize(10);
+      /* warna sel saja TIDAK cukup: aturan format bersyarat sheet menang atasnya */
+      var warnaTerpasang = pasangWarnaKondisi_(sh, existingIdx[3]);
+      if (!warnaTerpasang) {
+        hasil.push(tipe + ': warna KONDISI memakai warna sel saja ' +
+          '(aturan format bersyarat tidak bisa dipasang — cek izin & versi Apps Script)');
+      }
     }
 
     hasil.push(tipe + ': ' + terisi + '/' + kodeVals.length + ' unit diperbarui' +
@@ -1498,6 +1508,86 @@ function composeRow_(map, compIdx, cols, meta, komponen) {
 function kondisiDari_(skor, status) {
   if (String(status || '').trim().toLowerCase() === 'rusak') return 'Kritis';
   return skor >= 90 ? 'Baik' : skor >= 70 ? 'Perlu Perhatian' : 'Kritis';
+}
+
+/* ==================================================================
+ *  WARNA KOLOM KONDISI (conditional formatting)
+ *  Di Google Sheets, aturan format bersyarat SELALU menang atas warna sel
+ *  (setBackground). Karena itu sel berisi teks “Kritis” bisa tetap berwarna
+ *  hijau bila sheet punya aturan lama (mis. “teks berisi Baik” / color scale).
+ *  Solusi: pasang aturan sendiri untuk kolom KONDISI dan letakkan PALING ATAS
+ *  (aturan pertama yang cocok dipakai), tanpa menghapus aturan pengguna lain.
+ * ================================================================== */
+var WARNA_KONDISI = [
+  { teks: 'Kritis', bg: '#f4c7c3', fg: '#7a1f1f' },
+  { teks: 'Perlu Perhatian', bg: '#fce8b2', fg: '#6b4c00' },
+  { teks: 'Baik', bg: '#d9ead3', fg: '#1e4620' }
+];
+
+/** true bila `rule` adalah aturan KONDISI buatan kita untuk kolom `col`. */
+function aturanKondisiKita_(rule, col) {
+  try {
+    var bc = rule.getBooleanCondition ? rule.getBooleanCondition() : null;
+    if (!bc) return false;
+    var vals = (bc.getCriteriaValues && bc.getCriteriaValues()) || [];
+    var teks = '';
+    if (vals.length) {
+      var v0 = vals[0];
+      teks = String(v0 && v0.getValue ? v0.getValue() : v0);
+    }
+    var cocok = false;
+    for (var i = 0; i < WARNA_KONDISI.length; i++) {
+      if (WARNA_KONDISI[i].teks === teks) cocok = true;
+    }
+    if (!cocok) return false;
+    var rr = rule.getRanges ? rule.getRanges() : [];
+    if (!rr.length) return false;
+    for (var j = 0; j < rr.length; j++) {
+      if (rr[j].getColumn() !== col) return false;
+    }
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+/**
+ * Pasang aturan warna untuk kolom KONDISI. Aman dipanggil berulang (aturan lama
+ * kita dibuang lebih dulu) dan tidak menghapus aturan milik pengguna.
+ * @return {boolean} true bila aturan berhasil dipasang
+ */
+function pasangWarnaKondisi_(sh, col) {
+  if (!sh || !col || col < 1) return false;
+  var bikin = SpreadsheetApp.newConditionalFormatRule;
+  if (typeof bikin !== 'function') return false; /* lingkungan uji lama */
+  var lastRow = Math.max(sh.getLastRow(), 2);
+  var rng = sh.getRange(2, col, lastRow - 1, 1);
+  var lama = [];
+  try {
+    lama = sh.getConditionalFormatRules ? sh.getConditionalFormatRules() || [] : [];
+  } catch (e) {
+    lama = [];
+  }
+  var baru = [];
+  for (var i = 0; i < WARNA_KONDISI.length; i++) {
+    var w = WARNA_KONDISI[i];
+    baru.push(SpreadsheetApp.newConditionalFormatRule()
+      .whenTextEqualTo(w.teks)
+      .setBackground(w.bg)
+      .setFontColor(w.fg)
+      .setRanges([rng])
+      .build());
+  }
+  var sisa = [];
+  for (var j = 0; j < lama.length; j++) {
+    if (!aturanKondisiKita_(lama[j], col)) sisa.push(lama[j]);
+  }
+  try {
+    sh.setConditionalFormatRules(baru.concat(sisa));
+    return true;
+  } catch (e2) {
+    return false;
+  }
 }
 
 /** Rekap A/B/C → skor & kondisi */
@@ -1895,6 +1985,9 @@ function repairMaster_(tipe) {
     if (cKond > 0) sh.getRange(r + 2, cKond).setValue(rekap.kondisi);
     ubah++;
   }
+  /* warna KONDISI: aturan format bersyarat dipasang ulang agar tidak tertimpa
+     aturan lama yang membuat sel “Kritis” tampil hijau */
+  if (cKond > 0) pasangWarnaKondisi_(sh, cKond);
   return ubah;
 }
 

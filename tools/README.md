@@ -99,3 +99,14 @@ node tools/liveuicheck.mjs
 luber horizontal, target sentuh, klik-sweep tombol mati, dan mencetak angka KPI
 untuk dibandingkan dengan hitungan langsung dari CSV. Tangkapan layar disimpan
 di `audit-shots/` (tidak di-commit).
+
+### Uji cache master (v1.9.1)
+
+```bash
+node tools/cachetest.mjs        # butuh mockapi :8111 + vite :5199
+```
+
+Memastikan cache master di `localStorage` dari bundel lama (tanpa `v`) atau versi
+skema lain **dibuang** sehingga status unit tidak lagi tertahan di nilai basi,
+chip sidebar memberi peringatan “tekan Sinkron” saat data >30 menit, dan
+`DEM0074` konsisten `Rusak` dengan sheet master.
