@@ -179,7 +179,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
       </div>
 
       {summary.pending > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3.5 py-2.5 text-[11.5px] text-amber-200">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3.5 py-2.5 text-[11.5px] text-amber-700">
           <IconAlert size={14} />
           <span>
             {summary.pending} inspeksi masih di antrean lokal — tekan <span className="font-semibold">Sinkron</span> di header
@@ -189,7 +189,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
       )}
 
       {summary.perlu > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-3.5 py-2.5 text-[11.5px] text-amber-200/90">
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-3.5 py-2.5 text-[11.5px] text-amber-700/90">
           <IconAlert size={14} />
           <span>
             {summary.perlu} sesi di sheet punya <span className="font-semibold">kolom ringkasan A/B/C/Skor/Kondisi yang tidak cocok</span>
@@ -209,7 +209,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
         ].map((k) => (
           <div key={k.label} className="card card-pad">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{k.label}</p>
-            <p className="mt-1 font-mono text-[22px] font-semibold text-white">{k.value}<span className="ml-1 text-[10px] font-normal text-slate-500">{k.unit}</span></p>
+            <p className="mt-1 font-mono text-[22px] font-semibold text-slate-900">{k.value}<span className="ml-1 text-[10px] font-normal text-slate-500">{k.unit}</span></p>
           </div>
         ))}
       </div>
@@ -255,11 +255,11 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
               const rk = rekapRecord(r)
               const warna = scoreColor(rk.skor, r.statusUnit)
               return (
-                <div key={`m-${key}`} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+                <div key={`m-${key}`} className="rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-3">
                   <div className="flex items-start gap-2">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-mono text-[13px] font-bold text-white">{r.kode}</span>
+                        <span className="font-mono text-[13px] font-bold text-slate-900">{r.kode}</span>
                         <span className="chip !py-0.5 !text-[9.5px]">{r.tipe}</span>
                         <KondisiPill kondisi={rk.kondisi} />
                       </div>
@@ -270,7 +270,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                     <div className="flex shrink-0 gap-1">
                       <button
                         onClick={() => mulaiUbah(r)}
-                        className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2 text-slate-400 transition hover:border-brand/40 hover:text-brand"
+                        className="tap rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-2 text-slate-600 transition hover:border-brand/40 hover:text-brand"
                         aria-label={`Ubah inspeksi ${r.kode}`}
                         title="Ubah"
                       >
@@ -278,7 +278,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                       </button>
                       <button
                         onClick={() => mulaiHapus(r)}
-                        className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2 text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300"
+                        className="tap rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-2 text-slate-600 transition hover:border-rose-500/40 hover:text-rose-600"
                         aria-label={`Hapus inspeksi ${r.kode}`}
                         title="Hapus"
                       >
@@ -286,7 +286,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                       </button>
                       <button
                         onClick={() => setExpanded(isOpen ? null : key)}
-                        className="tap rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400"
+                        className="tap rounded-lg border border-slate-900/10 bg-slate-900/[0.03] p-1 text-slate-600"
                         aria-label={isOpen ? 'Tutup rincian' : 'Buka rincian'}
                       >
                         <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
@@ -294,33 +294,33 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                     </div>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <span className="shrink-0 font-mono text-[10.5px] text-slate-400">{r.tanggal}</span>
-                    <span className="shrink-0 text-[10px] text-slate-600">{fmtDateTime(r.timestamp).split('·')[1]}</span>
+                    <span className="shrink-0 font-mono text-[10.5px] text-slate-600">{r.tanggal}</span>
+                    <span className="shrink-0 text-[10px] text-slate-400">{fmtDateTime(r.timestamp).split('·')[1]}</span>
                     <Bar value={rk.skor} color={warna} height={5} />
-                    <span className="w-8 shrink-0 text-right font-mono text-[11px] text-slate-300">{Math.round(rk.skor)}</span>
+                    <span className="w-8 shrink-0 text-right font-mono text-[11px] text-slate-700">{Math.round(rk.skor)}</span>
                   </div>
                   <div className="mt-1.5 flex items-center gap-2 text-[10.5px]">
                     <span className="font-mono">
-                      <span className="text-emerald-400">{rk.a}</span>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-amber-400">{rk.b}</span>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-rose-400">{rk.c}</span>
+                      <span className="text-emerald-600">{rk.a}</span>
+                      <span className="text-slate-400">/</span>
+                      <span className="text-amber-600">{rk.b}</span>
+                      <span className="text-slate-400">/</span>
+                      <span className="text-rose-600">{rk.c}</span>
                     </span>
-                    {r.pending && <span className="rounded bg-amber-500/15 px-1 text-[9px] font-semibold text-amber-300">antrean lokal</span>}
+                    {r.pending && <span className="rounded bg-amber-500/15 px-1 text-[9px] font-semibold text-amber-700">antrean lokal</span>}
                   </div>
                   {isOpen && (
-                    <div className="mt-2 border-t border-white/[0.06] pt-2">
+                    <div className="mt-2 border-t border-slate-900/[0.09] pt-2">
                       <div className="grid gap-2">
                         {groups.map((g) => {
                           const items = g.items.filter((i) => r.komponen?.[i])
                           if (!items.length) return null
                           return (
                             <div key={g.id}>
-                              <p className="mb-1 text-[10px] font-semibold text-slate-400">{g.label}</p>
+                              <p className="mb-1 text-[10px] font-semibold text-slate-600">{g.label}</p>
                               <div className="flex flex-wrap gap-1">
                                 {items.map((it) => (
-                                  <span key={it} className="inline-flex items-center gap-1 rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+                                  <span key={it} className="inline-flex items-center gap-1 rounded-md bg-slate-900/[0.04] px-1.5 py-0.5 text-[10px] text-slate-700">
                                     {it} <GradePill value={r.komponen[it]} size="xs" />
                                   </span>
                                 ))}
@@ -330,7 +330,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                         })}
                       </div>
                       {r.catatan && (
-                        <p className="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-2 text-[11px] text-slate-300">
+                        <p className="mt-2 rounded-lg border border-slate-900/[0.09] bg-slate-900/[0.02] px-2.5 py-2 text-[11px] text-slate-700">
                           <span className="text-slate-500">Catatan: </span>{r.catatan}
                         </p>
                       )}
@@ -344,7 +344,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
           <div className="mt-3 hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[860px] text-left">
               <thead>
-                <tr className="border-y border-white/[0.06] text-[10px] uppercase tracking-wider text-slate-500">
+                <tr className="border-y border-slate-900/[0.09] text-[10px] uppercase tracking-wider text-slate-500">
                   <th className="px-4 py-2 font-semibold">Tanggal</th>
                   <th className="px-2 py-2 font-semibold">Unit</th>
                   <th className="px-2 py-2 font-semibold">Tipe</th>
@@ -362,27 +362,27 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                   const groups = groupFor(r.tipe)
                   return (
                     <React.Fragment key={key}>
-                      <tr className="border-b border-white/[0.04] transition hover:bg-white/[0.03]">
+                      <tr className="border-b border-slate-900/[0.08] transition hover:bg-slate-900/[0.03]">
                         <td className="whitespace-nowrap px-4 py-2.5">
-                          <p className="font-mono text-[11.5px] text-slate-200">{r.tanggal}</p>
+                          <p className="font-mono text-[11.5px] text-slate-800">{r.tanggal}</p>
                           <p className="text-[9.5px] text-slate-500">{fmtDateTime(r.timestamp).split('·')[1]}</p>
                         </td>
                         <td className="px-2 py-2.5">
-                          <span className="font-mono text-[12px] font-semibold text-white">{r.kode}</span>
+                          <span className="font-mono text-[12px] font-semibold text-slate-900">{r.kode}</span>
                           <p className="text-[9.5px] text-slate-500">{r.wilayah}</p>
-                          {r.pending && <span className="mt-0.5 inline-block rounded bg-amber-500/15 px-1 text-[9px] font-semibold text-amber-300">antrean lokal</span>}
+                          {r.pending && <span className="mt-0.5 inline-block rounded bg-amber-500/15 px-1 text-[9px] font-semibold text-amber-700">antrean lokal</span>}
                         </td>
-                        <td className="px-2 py-2.5 text-[11px] text-slate-400">{r.tipe}</td>
-                        <td className="px-2 py-2.5 text-[11.5px] text-slate-300">{r.inspector || '—'}</td>
+                        <td className="px-2 py-2.5 text-[11px] text-slate-600">{r.tipe}</td>
+                        <td className="px-2 py-2.5 text-[11.5px] text-slate-700">{r.inspector || '—'}</td>
                         <td className="px-2 py-2.5 text-center font-mono text-[11px]">
-                          <span className="text-emerald-400">{rekapRecord(r).a}</span><span className="text-slate-600">/</span>
-                          <span className="text-amber-400">{rekapRecord(r).b}</span><span className="text-slate-600">/</span>
-                          <span className="text-rose-400">{rekapRecord(r).c}</span>
+                          <span className="text-emerald-600">{rekapRecord(r).a}</span><span className="text-slate-400">/</span>
+                          <span className="text-amber-600">{rekapRecord(r).b}</span><span className="text-slate-400">/</span>
+                          <span className="text-rose-600">{rekapRecord(r).c}</span>
                         </td>
                         <td className="px-2 py-2.5">
                           <div className="flex items-center gap-2">
                             <Bar value={rekapRecord(r).skor} color={scoreColor(rekapRecord(r).skor, r.statusUnit)} height={5} />
-                            <span className="w-8 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(rekapRecord(r).skor)}</span>
+                            <span className="w-8 shrink-0 font-mono text-[11px] text-slate-700">{Math.round(rekapRecord(r).skor)}</span>
                           </div>
                         </td>
                         <td className="px-2 py-2.5"><KondisiPill kondisi={rekapRecord(r).kondisi} /></td>
@@ -390,7 +390,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                           <div className="flex justify-end gap-1">
                             <button
                               onClick={() => mulaiUbah(r)}
-                              className="rounded-lg border border-white/10 bg-white/[0.03] px-1.5 py-1 text-slate-400 transition hover:border-brand/40 hover:text-brand"
+                              className="rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-1 text-slate-600 transition hover:border-brand/40 hover:text-brand"
                               aria-label={`Ubah inspeksi ${r.kode}`}
                               title="Ubah sesi ini"
                             >
@@ -398,31 +398,31 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                             </button>
                             <button
                               onClick={() => mulaiHapus(r)}
-                              className="rounded-lg border border-white/10 bg-white/[0.03] px-1.5 py-1 text-slate-400 transition hover:border-rose-500/40 hover:text-rose-300"
+                              className="rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-1 text-slate-600 transition hover:border-rose-500/40 hover:text-rose-600"
                               aria-label={`Hapus inspeksi ${r.kode}`}
                               title="Hapus sesi ini"
                             >
                               <IconTrash size={13} />
                             </button>
-                            <button onClick={() => setExpanded(isOpen ? null : key)} className="tap rounded-lg border border-white/10 bg-white/[0.03] p-1 text-slate-400 transition hover:text-brand">
+                            <button onClick={() => setExpanded(isOpen ? null : key)} className="tap rounded-lg border border-slate-900/10 bg-slate-900/[0.03] p-1 text-slate-600 transition hover:text-brand">
                               <IconChevronDown size={14} className={cx('transition', isOpen && 'rotate-180')} />
                             </button>
                           </div>
                         </td>
                       </tr>
                       {isOpen && (
-                        <tr className="border-b border-white/[0.04] bg-ink-900/40">
+                        <tr className="border-b border-slate-900/[0.08] bg-slate-50/70">
                           <td colSpan={8} className="px-4 py-3">
                             <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                               {groups.map((g) => {
                                 const items = g.items.filter((i) => r.komponen?.[i])
                                 if (!items.length) return null
                                 return (
-                                  <div key={g.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                                    <p className="mb-1 text-[10.5px] font-semibold text-slate-300">{g.label}</p>
+                                  <div key={g.id} className="rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2">
+                                    <p className="mb-1 text-[10.5px] font-semibold text-slate-700">{g.label}</p>
                                     <div className="flex flex-wrap gap-1">
                                       {items.map((it) => (
-                                        <span key={it} className="inline-flex items-center gap-1 rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10px] text-slate-300">
+                                        <span key={it} className="inline-flex items-center gap-1 rounded-md bg-slate-900/[0.04] px-1.5 py-0.5 text-[10px] text-slate-700">
                                           {it} <GradePill value={r.komponen[it]} size="xs" />
                                         </span>
                                       ))}
@@ -432,7 +432,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                               })}
                             </div>
                             {r.catatan && (
-                              <p className="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[11.5px] text-slate-300">
+                              <p className="mt-2 rounded-lg border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2 text-[11.5px] text-slate-700">
                                 <span className="text-slate-500">Catatan: </span>{r.catatan}
                               </p>
                             )}
@@ -461,15 +461,15 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
         )}
       {/* ---------- pager ---------- */}
       {filtered.length > 0 && (
-        <div className="flex flex-wrap items-center gap-3 border-t border-white/[0.06] px-4 py-3">
+        <div className="flex flex-wrap items-center gap-3 border-t border-slate-900/[0.09] px-4 py-3">
           <p className="text-[11px] text-slate-500">
             Menampilkan{' '}
-            <span className="font-mono font-semibold text-slate-300">
+            <span className="font-mono font-semibold text-slate-700">
               {mulai + 1}–{sampai}
             </span>{' '}
-            dari <span className="font-mono font-semibold text-slate-300">{filtered.length}</span> sesi
+            dari <span className="font-mono font-semibold text-slate-700">{filtered.length}</span> sesi
             {filtered.length !== records.length && (
-              <span className="text-slate-600"> (difilter dari {records.length})</span>
+              <span className="text-slate-400"> (difilter dari {records.length})</span>
             )}
           </p>
 
@@ -502,7 +502,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
               >
                 Sebelumnya
               </button>
-              <span className="px-1 font-mono text-[11px] text-slate-400">
+              <span className="px-1 font-mono text-[11px] text-slate-600">
                 {halamanAman + 1} / {totalHalaman}
               </span>
               <button

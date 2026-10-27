@@ -104,10 +104,10 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
       aria-modal="true"
       aria-label={`Ringkasan ${m.label}`}
     >
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => onClose?.()} />
-      <div className="relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-ink-850 shadow-2xl sm:max-w-[640px] sm:rounded-2xl">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => onClose?.()} />
+      <div className="relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-900/10 bg-white shadow-2xl sm:max-w-[640px] sm:rounded-2xl">
         {/* header */}
-        <div className="flex items-start gap-3 border-b border-white/[0.07] px-4 py-3.5">
+        <div className="flex items-start gap-3 border-b border-slate-900/[0.10] px-4 py-3.5">
           <span
             className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl"
             style={{ background: `${m.color}22`, color: m.color }}
@@ -115,14 +115,14 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
             <Ikon size={16} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[14px] font-semibold text-white">
-              {m.label} <span className="font-mono text-slate-300">· {fmt(units.length)} unit</span>
+            <h2 className="text-[14px] font-semibold text-slate-900">
+              {m.label} <span className="font-mono text-slate-700">· {fmt(units.length)} unit</span>
             </h2>
             <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{m.desc}</p>
           </div>
           <button
             onClick={() => onClose?.()}
-            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-white"
+            className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-slate-600 hover:bg-slate-900/[0.05] hover:text-slate-900"
             aria-label="Tutup"
           >
             <IconX size={16} />
@@ -131,7 +131,7 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
 
         <div className="min-h-0 flex-1 overflow-y-auto px-4 py-3.5">
           {!units.length ? (
-            <p className="rounded-xl border border-white/[0.07] bg-white/[0.02] px-3 py-6 text-center text-[12px] text-slate-400">
+            <p className="rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] px-3 py-6 text-center text-[12px] text-slate-600">
               Tidak ada unit pada kategori ini. Bagus.
             </p>
           ) : (
@@ -145,7 +145,7 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
                     'rounded-lg border px-2 py-1 text-[11px] transition',
                     !fPosisi
                       ? 'border-brand/50 bg-brand/15 font-semibold text-brand'
-                      : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'
+                      : 'border-slate-900/10 bg-slate-900/[0.03] text-slate-700 hover:bg-slate-900/[0.05]'
                   )}
                 >
                   Semua <span className="font-mono">{fmt(units.length)}</span>
@@ -161,7 +161,7 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
                       'rounded-lg border px-2 py-1 text-[11px] transition',
                       fPosisi === g.posisi
                         ? 'border-brand/50 bg-brand/15 font-semibold text-brand'
-                        : 'border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.06]'
+                        : 'border-slate-900/10 bg-slate-900/[0.03] text-slate-700 hover:bg-slate-900/[0.05]'
                     )}
                     title={g.jenis.map(([j, n]) => `${j}: ${n}`).join(' · ')}
                   >
@@ -172,21 +172,21 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
               </div>
 
               {/* bar komposisi divisi */}
-              <div className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-white/[0.05]">
+              <div className="mt-2 flex h-2 w-full overflow-hidden rounded-full bg-slate-900/[0.04]">
                 {perPosisi.map((g, i) => (
                   <div
                     key={g.posisi}
                     title={`${g.posisi}: ${g.jumlah} unit (${g.pct}%)`}
                     style={{
                       width: `${g.pct}%`,
-                      background: ['#38bdf8', '#a78bfa', '#f59e0b', '#22c55e', '#f43f5e'][i % 5],
+                      background: ['#0d9488', '#7c3aed', '#f59e0b', '#22c55e', '#f43f5e'][i % 5],
                     }}
                   />
                 ))}
               </div>
 
               {insight && (
-                <p className="mt-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-400">
+                <p className="mt-2 rounded-lg border border-slate-900/[0.09] bg-slate-900/[0.02] px-2.5 py-1.5 text-[11px] leading-relaxed text-slate-600">
                   {insight}
                 </p>
               )}
@@ -199,7 +199,7 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
                 <p className="text-[9.5px] text-slate-500">klik unit → detail engine</p>
               </div>
               <div
-                className="overflow-hidden rounded-xl border border-white/[0.07]"
+                className="overflow-hidden rounded-xl border border-slate-900/[0.10]"
                 data-daftar-total={daftar.length}
                 data-daftar-posisi={fPosisi || ''}
               >
@@ -208,14 +208,14 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
                     key={u.kode}
                     onClick={() => onPick?.(u)}
                     className={cx(
-                      'flex w-full items-center gap-2 px-2.5 py-2 text-left transition hover:bg-white/[0.05]',
-                      i > 0 && 'border-t border-white/[0.05]'
+                      'flex w-full items-center gap-2 px-2.5 py-2 text-left transition hover:bg-slate-900/[0.04]',
+                      i > 0 && 'border-t border-slate-900/[0.08]'
                     )}
                   >
                     <span className="min-w-0 flex-1">
                       <span className="flex items-center gap-1.5">
-                        <span className="font-mono text-[12px] font-semibold text-slate-100">{u.kode}</span>
-                        <span className="rounded border border-white/10 bg-white/[0.04] px-1 py-px text-[9px] text-slate-400">
+                        <span className="font-mono text-[12px] font-semibold text-slate-900">{u.kode}</span>
+                        <span className="rounded border border-slate-900/10 bg-slate-900/[0.04] px-1 py-px text-[9px] text-slate-600">
                           {u.posisi || '—'}
                         </span>
                         <span className="text-[9px] text-slate-500">{u.jenis}</span>
@@ -270,7 +270,7 @@ export default function ServiceStatusModal({ statusId, units = [], totalUnit = 0
         </div>
 
         {/* footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-white/[0.07] bg-white/[0.015] px-4 py-3">
+        <div className="flex items-center justify-end gap-2 border-t border-slate-900/[0.10] bg-slate-900/[0.015] px-4 py-3">
           <button onClick={() => onClose?.()} className="btn-ghost !px-3 !py-1.5 !text-[11.5px]">
             Tutup
           </button>

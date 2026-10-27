@@ -70,9 +70,9 @@ export const IconLogo = ({ size = 28, id }) => {
   <svg width={size} height={size} viewBox="0 0 64 64" fill="none" aria-hidden="true">
     <defs>
       <linearGradient id={`${uid}-bg`} x1="8" y1="4" x2="56" y2="60" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#38bdf8" />
-        <stop offset="0.55" stopColor="#22d3ee" />
-        <stop offset="1" stopColor="#2563eb" />
+        <stop stopColor="#0d9488" />
+        <stop offset="0.55" stopColor="#0891b2" />
+        <stop offset="1" stopColor="#0e7490" />
       </linearGradient>
       <linearGradient id={`${uid}-sh`} x1="12" y1="6" x2="44" y2="46" gradientUnits="userSpaceOnUse">
         <stop stopColor="#ffffff" stopOpacity="0.26" />
@@ -84,14 +84,14 @@ export const IconLogo = ({ size = 28, id }) => {
     {/* perisai = jaminan sudah diperiksa, centang = hasil inspeksi */}
     <path
       d="M32 12.5 17 18.2v12.6c0 9.6 6.1 17 15 20.2 8.9-3.2 15-10.6 15-20.2V18.2Z"
-      stroke="#04121d"
+      stroke="#ffffff"
       strokeWidth="5"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <path
       d="M25.4 32.4 30 37.6l9.2-11.4"
-      stroke="#04121d"
+      stroke="#ffffff"
       strokeWidth="5"
       strokeLinecap="round"
       strokeLinejoin="round"

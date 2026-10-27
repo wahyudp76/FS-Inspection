@@ -158,21 +158,21 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
 
   return createPortal(
     <div className="fixed inset-0 z-[70] flex items-end justify-center sm:items-center" role="dialog" aria-modal="true" aria-label="Catat service engine">
-      <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => !sibuk && onClose?.()} />
-      <div className="relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-white/10 bg-ink-850 shadow-2xl sm:max-w-[560px] sm:rounded-2xl">
+      <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !sibuk && onClose?.()} />
+      <div className="relative flex max-h-[92vh] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-900/10 bg-white shadow-2xl sm:max-w-[560px] sm:rounded-2xl">
         {/* header */}
-        <div className="flex items-start gap-3 border-b border-white/[0.07] px-4 py-3.5">
+        <div className="flex items-start gap-3 border-b border-slate-900/[0.10] px-4 py-3.5">
           <span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-brand/15 text-brand">
             <IconWrench size={17} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[14px] font-semibold text-white">Catat Service Engine</h2>
+            <h2 className="text-[14px] font-semibold text-slate-900">Catat Service Engine</h2>
             <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">
-              Tersimpan ke sheet <span className="text-slate-300">Monitor Kasie FS</span> (tb_service2), lalu jadwal di{' '}
-              <span className="text-slate-300">Data Service Engine</span> (tb_service1) dihitung ulang otomatis.
+              Tersimpan ke sheet <span className="text-slate-700">Monitor Kasie FS</span> (tb_service2), lalu jadwal di{' '}
+              <span className="text-slate-700">Data Service Engine</span> (tb_service1) dihitung ulang otomatis.
             </p>
           </div>
-          <button onClick={() => !sibuk && onClose?.()} className="grid h-9 w-9 place-items-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-white" aria-label="Tutup">
+          <button onClick={() => !sibuk && onClose?.()} className="grid h-9 w-9 place-items-center rounded-lg text-slate-600 hover:bg-slate-900/[0.05] hover:text-slate-900" aria-label="Tutup">
             <IconX size={16} />
           </button>
         </div>
@@ -181,22 +181,22 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
         <div className="min-h-0 flex-1 space-y-3.5 overflow-y-auto px-4 py-4">
           {sukses ? (
             <div className="rounded-xl border border-emerald-500/35 bg-emerald-500/10 p-3.5">
-              <p className="flex items-center gap-2 text-[13px] font-semibold text-emerald-200">
+              <p className="flex items-center gap-2 text-[13px] font-semibold text-emerald-700">
                 <IconCheck size={15} /> Service {sukses.kode} tercatat
               </p>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-emerald-100/80">
+              <p className="mt-1 text-[11.5px] leading-relaxed text-emerald-700/80">
                 HM {fmt(sukses.hm)} · {sukses.tanggal}
                 {sukses.baris ? ` · baris ${sukses.baris} sheet` : ''}
               </p>
               {sukses.eval && (
-                <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-300">
-                  Jadwal berikutnya: <span className="font-semibold text-white">{sukses.eval.nextService || '—'}</span>
+                <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-700">
+                  Jadwal berikutnya: <span className="font-semibold text-slate-900">{sukses.eval.nextService || '—'}</span>
                   {sukses.eval.nextHm ? ` · HM ${fmt(sukses.eval.nextHm)}` : ''}
                   {sukses.eval.warning != null ? ` · ${sukses.eval.warning > 0 ? `lewat ${sukses.eval.warning} hari` : `sisa ${-sukses.eval.warning} hari`}` : ''}
                 </p>
               )}
               {sukses.verified === false && (
-                <p className="mt-1.5 flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-200">
+                <p className="mt-1.5 flex items-start gap-1.5 text-[11px] leading-relaxed text-amber-700">
                   <IconAlert size={13} className="mt-0.5 shrink-0" />
                   Baris tersimpan, tetapi rumus tb_service1 belum membacanya. Periksa rentang tabel tb_service2 di sheet.
                 </p>
@@ -214,13 +214,13 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                   onClick={() => setDaftarBuka((o) => !o)}
                   className={cx(
                     'flex w-full items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-[13px] transition',
-                    kode ? 'border-brand/45 bg-brand/10 text-white' : 'border-white/10 bg-ink-900/80 text-slate-400 hover:border-white/20'
+                    kode ? 'border-brand/45 bg-brand/10 text-slate-900' : 'border-slate-900/10 bg-white text-slate-600 hover:border-slate-900/15'
                   )}
                   aria-haspopup="listbox"
                   aria-expanded={daftarBuka}
                 >
                   <span className="min-w-0 flex-1 truncate">{kode || 'Pilih kode mesin…'}</span>
-                  {unit && <span className="shrink-0 rounded-md bg-white/[0.06] px-1.5 py-0.5 font-mono text-[10px] text-slate-300">{unit.posisi}</span>}
+                  {unit && <span className="shrink-0 rounded-md bg-slate-900/[0.05] px-1.5 py-0.5 font-mono text-[10px] text-slate-700">{unit.posisi}</span>}
                   {statusUnit && (
                     <span className={cx('shrink-0 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold', statusUnit.cls)}>{statusUnit.short}</span>
                   )}
@@ -228,15 +228,15 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                 </button>
 
                 {daftarBuka && (
-                  <div className="absolute left-0 right-0 z-20 mt-1.5 overflow-hidden rounded-xl border border-white/10 bg-ink-850 shadow-2xl">
-                    <div className="relative border-b border-white/[0.06] p-2">
+                  <div className="absolute left-0 right-0 z-20 mt-1.5 overflow-hidden rounded-xl border border-slate-900/10 bg-white shadow-2xl">
+                    <div className="relative border-b border-slate-900/[0.09] p-2">
                       <IconSearch size={13} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
                       <input
                         autoFocus
                         value={cari}
                         onChange={(e) => setCari(e.target.value)}
                         placeholder="Cari kode / jenis (mis. SPC, DEC)…"
-                        className="w-full rounded-lg border border-white/10 bg-ink-900 px-2 py-1.5 pl-8 text-[12px] text-slate-100 placeholder:text-slate-600 focus:border-brand/50 focus:outline-none"
+                        className="w-full rounded-lg border border-slate-900/10 bg-white px-2 py-1.5 pl-8 text-[12px] text-slate-900 placeholder:text-slate-400 focus:border-brand/50 focus:outline-none"
                       />
                     </div>
                     <div className="max-h-[46vh] overflow-y-auto py-1" role="listbox">
@@ -249,10 +249,10 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                             role="option"
                             aria-selected={u.kode === kode}
                             onClick={() => pilihUnit(u)}
-                            className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition hover:bg-white/[0.05]"
+                            className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition hover:bg-slate-900/[0.04]"
                           >
                             <span className="min-w-0 flex-1">
-                              <span className="block font-mono text-[12px] font-semibold text-slate-100">{u.kode}</span>
+                              <span className="block font-mono text-[12px] font-semibold text-slate-900">{u.kode}</span>
                               <span className="block truncate text-[10px] text-slate-500">
                                 {u.jenis} · {u.posisi} · HM {fmt(u.hm)} · {u.nextIso ? `jadwal ${u.nextIso}` : 'belum ada jadwal'}
                               </span>
@@ -268,7 +268,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
               </div>
 
               {unit && (
-                <div className="grid grid-cols-2 gap-2 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5 sm:grid-cols-4">
+                <div className="grid grid-cols-2 gap-2 rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-2.5 sm:grid-cols-4">
                   {[
                     ['Service terakhir', unit.terakhirIso || 'Belum pernah'],
                     ['HM terakhir', fmt(unit.hm)],
@@ -277,7 +277,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                   ].map(([l, v]) => (
                     <div key={l} className="min-w-0">
                       <p className="text-[9.5px] uppercase tracking-wider text-slate-500">{l}</p>
-                      <p className="truncate font-mono text-[12px] font-semibold text-slate-100">{v}</p>
+                      <p className="truncate font-mono text-[12px] font-semibold text-slate-900">{v}</p>
                     </div>
                   ))}
                 </div>
@@ -300,11 +300,11 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                 <div>
                   <label className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Minggu service</label>
                   <div
-                    className="flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-2 text-[13px] text-slate-200"
+                    className="flex items-center gap-1.5 rounded-xl border border-slate-900/10 bg-slate-900/[0.03] px-3 py-2 text-[13px] text-slate-800"
                     aria-label={`Minggu service otomatis: minggu ${minggu}`}
                     aria-readonly="true"
                   >
-                    <span className="font-mono font-semibold text-white">Minggu {minggu}</span>
+                    <span className="font-mono font-semibold text-slate-900">Minggu {minggu}</span>
                     <span className="ml-auto rounded bg-brand/15 px-1.5 py-0.5 text-[9.5px] font-semibold uppercase tracking-wider text-brand">otomatis</span>
                   </div>
                   <p className="mt-1 text-[10px] text-slate-500">ROUNDUP(tanggal ÷ 7), sama dengan rumus sheet</p>
@@ -324,27 +324,27 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                 />
                 {naik != null && naik > 0 && (
                   <p className="mt-1 text-[10.5px] text-slate-500">
-                    Naik <span className="font-semibold text-slate-300">{fmt(naik)} HM</span> dari service terakhir
+                    Naik <span className="font-semibold text-slate-700">{fmt(naik)} HM</span> dari service terakhir
                     {perkiraan?.nextIso ? ` · perkiraan jadwal berikutnya ${perkiraan.nextIso} (${perkiraan.hariLagi} hari)` : ''}
                   </p>
                 )}
                 {tidakNaik && (
-                  <p className="mt-1 text-[10.5px] text-rose-300">HM harus lebih besar dari HM service terakhir ({fmt(hmLama)}).</p>
+                  <p className="mt-1 text-[10.5px] text-rose-600">HM harus lebih besar dari HM service terakhir ({fmt(hmLama)}).</p>
                 )}
               </div>
 
               {perkiraan && (
                 <div className="rounded-xl border border-brand/25 bg-brand/[0.07] p-2.5">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-brand/90">Setelah dicatat</p>
-                  <p className="mt-1 text-[12px] leading-relaxed text-slate-200">
-                    HM service berikutnya <span className="font-mono font-semibold text-white">{fmt(perkiraan.nextHm)}</span>
-                    {perkiraan.nextIso ? <> · sekitar <span className="font-semibold text-white">{perkiraan.nextIso}</span> ({perkiraan.hariLagi} hari lagi, asumsi {fmt(perkiraan.rerata)} HM/hari)</> : ' · tanggal belum bisa dihitung karena rerata HM/hari kosong di sheet'}
+                  <p className="mt-1 text-[12px] leading-relaxed text-slate-800">
+                    HM service berikutnya <span className="font-mono font-semibold text-slate-900">{fmt(perkiraan.nextHm)}</span>
+                    {perkiraan.nextIso ? <> · sekitar <span className="font-semibold text-slate-900">{perkiraan.nextIso}</span> ({perkiraan.hariLagi} hari lagi, asumsi {fmt(perkiraan.rerata)} HM/hari)</> : ' · tanggal belum bisa dihitung karena rerata HM/hari kosong di sheet'}
                   </p>
                 </div>
               )}
 
               {galat && (
-                <p className="flex items-start gap-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 px-2.5 py-2 text-[11.5px] leading-relaxed text-rose-200">
+                <p className="flex items-start gap-1.5 rounded-lg border border-rose-500/40 bg-rose-500/10 px-2.5 py-2 text-[11.5px] leading-relaxed text-rose-700">
                   <IconAlert size={13} className="mt-0.5 shrink-0" /> {galat}
                 </p>
               )}
@@ -354,7 +354,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
 
         {/* footer */}
         {!sukses && (
-          <div className="flex items-center gap-2 border-t border-white/[0.07] px-4 py-3">
+          <div className="flex items-center gap-2 border-t border-slate-900/[0.10] px-4 py-3">
             <button onClick={() => !sibuk && onClose?.()} className="btn-ghost flex-1 justify-center !py-2.5" disabled={sibuk}>
               Batal
             </button>

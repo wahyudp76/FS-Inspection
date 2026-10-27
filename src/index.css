@@ -2,9 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==================================================================
+   TEMA TERANG — aksen mengikuti logo FS Inspection
+   Logo: tetes/gigi + kunci, gradasi teal → emerald → cyan.
+   Warna aksen dipakai konsisten: teal (utama), cyan (kedua),
+   emerald (aman), amber (perhatian), rose (kritis/gagal).
+   ================================================================== */
 :root {
-  color-scheme: dark;
-  --grid: rgba(148, 163, 184, 0.07);
+  color-scheme: light;
+  --grid: rgba(13, 148, 136, 0.055);
+  --teal-600: #0d9488;
+  --teal-700: #0f766e;
+  --cyan-600: #0891b2;
+  --paper: #f4f8f8;
 }
 
 * { -webkit-tap-highlight-color: transparent; }
@@ -12,66 +22,118 @@
 html, body, #root { height: 100%; }
 
 body {
-  @apply bg-ink-950 text-slate-200 font-sans antialiased;
+  @apply bg-ink-950 text-slate-700 font-sans antialiased;
+  background-color: var(--paper);
   background-image:
-    radial-gradient(900px 480px at 12% -10%, rgba(56, 189, 248, 0.16), transparent 60%),
-    radial-gradient(760px 420px at 92% 0%, rgba(16, 185, 129, 0.12), transparent 62%),
-    radial-gradient(700px 500px at 60% 110%, rgba(99, 102, 241, 0.10), transparent 65%);
+    radial-gradient(760px 420px at 8% -8%, rgba(13, 148, 136, 0.13), transparent 62%),
+    radial-gradient(680px 380px at 96% 2%, rgba(8, 145, 178, 0.11), transparent 60%),
+    radial-gradient(720px 460px at 62% 108%, rgba(16, 185, 129, 0.10), transparent 66%),
+    linear-gradient(to bottom, #f7fbfb, #eef4f4 60%, #eaf1f2);
   background-attachment: fixed;
+}
+
+/* pola titik halus sebagai aksesori latar (tidak mengganggu keterbacaan) */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image: radial-gradient(rgba(13, 148, 136, 0.16) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(1000px 620px at 50% -10%, #000 0%, transparent 78%);
+  mask-image: radial-gradient(1000px 620px at 50% -10%, #000 0%, transparent 78%);
+  opacity: 0.55;
 }
 
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: #1e2b3d; border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
-::-webkit-scrollbar-thumb:hover { background: #2c3d54; background-clip: content-box; }
+::-webkit-scrollbar-thumb { background: #c7d8db; border-radius: 99px; border: 2px solid transparent; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background: #a8c2c6; background-clip: content-box; }
 
 @layer components {
+  /* ---------------- Kartu: putih, garis teal tipis, aksen atas ---------------- */
   .card {
-    @apply relative rounded-2xl border border-white/[0.06] bg-ink-850/70 shadow-card backdrop-blur-sm;
+    @apply relative rounded-2xl border border-slate-900/[0.09] bg-white/90 shadow-card backdrop-blur-sm;
+  }
+  /* aksesori: garis gradasi teal→cyan di tepi atas kartu */
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 2px;
+    border-radius: 1rem 1rem 0 0;
+    background: linear-gradient(90deg, rgba(13, 148, 136, 0.55), rgba(8, 145, 178, 0.35) 45%, rgba(16, 185, 129, 0) 85%);
+    opacity: 0.85;
+    pointer-events: none;
   }
   .card-pad { @apply p-4 sm:p-5; }
-  .card-title { @apply text-[13px] font-semibold tracking-wide text-slate-200; }
+  .card-title { @apply text-[13px] font-semibold tracking-wide text-slate-800; }
   .card-sub { @apply text-[11px] text-slate-500; }
 
+  .card:hover { @apply shadow-lift; }
+
+  /* ---------------- Chip & badge ---------------- */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[11px] font-medium text-slate-300;
+    @apply inline-flex items-center gap-1.5 rounded-full border border-teal-700/20 bg-teal-50/80 px-2.5 py-1 text-[11px] font-medium text-teal-800;
   }
 
+  /* ---------------- Tombol ---------------- */
   .btn {
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-3.5 py-2 text-[13px] font-semibold transition
-           focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/60 disabled:opacity-50 disabled:pointer-events-none;
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-brand/40 disabled:opacity-50 disabled:pointer-events-none;
   }
   .btn-primary {
-    @apply btn bg-gradient-to-b from-sky-400 to-sky-500 text-ink-950 hover:from-sky-300 hover:to-sky-400
-           shadow-[0_10px_30px_-12px_rgba(56,189,248,0.9)];
+    @apply btn bg-gradient-to-b from-teal-500 to-teal-600 text-white hover:from-teal-400 hover:to-teal-500
+           shadow-[0_10px_24px_-14px_rgba(13,148,136,0.9)];
   }
-  .btn-ghost { @apply btn border border-white/10 bg-white/[0.03] text-slate-200 hover:bg-white/[0.07]; }
-  .btn-danger { @apply btn border border-rose-500/30 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20; }
+  .btn-ghost {
+    @apply btn border border-slate-900/[0.12] bg-white text-slate-700 shadow-[0_1px_2px_rgba(15,42,46,0.05)]
+           hover:border-teal-600/30 hover:bg-teal-50/70 hover:text-teal-800;
+  }
+  .btn-danger { @apply btn border border-rose-600/25 bg-rose-50 text-rose-700 hover:bg-rose-100; }
 
+  /* ---------------- Form ---------------- */
   .input {
-    @apply w-full rounded-xl border border-white/10 bg-ink-900/80 px-3 py-2 text-[13px] text-slate-100
-           placeholder:text-slate-600 focus:border-brand/60 focus:outline-none focus:ring-2 focus:ring-brand/20;
+    @apply w-full rounded-xl border border-slate-900/[0.12] bg-white px-3 py-2 text-[13px] text-slate-800
+           placeholder:text-slate-400 focus:border-teal-600/60 focus:outline-none focus:ring-2 focus:ring-teal-600/15;
   }
   .label { @apply mb-1.5 block text-[11px] font-semibold uppercase tracking-wider text-slate-500; }
 
-  .divider { @apply h-px w-full bg-gradient-to-r from-transparent via-white/10 to-transparent; }
+  .divider { @apply h-px w-full bg-gradient-to-r from-transparent via-teal-700/15 to-transparent; }
 
   .scroll-area { @apply overflow-auto overscroll-contain; }
   /* ---- target sentuh di layar kecil / perangkat sentuh ---- */
   .tap { @apply inline-flex min-h-9 min-w-9 items-center justify-center; }
-  /* .tap-sm: tombol mini / tautan aksi — di HP dinaikkan jadi 32 px agar
-     tetap nyaman disentuh tanpa memakan ruang (dipakai badge & tombol kecil) */
   .tap-sm { @apply inline-flex items-center; }
-
 }
 
+/* ---------------- Aksesori: judul bergradasi, garis aksen, kilau ---------------- */
 .grad-text {
-  background: linear-gradient(92deg, #7dd3fc 0%, #a7f3d0 45%, #fef08a 100%);
+  background: linear-gradient(96deg, #0f766e 0%, #0d9488 38%, #0891b2 72%, #16a34a 100%);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
 }
 
+/* bilah aksen pendek di bawah judul halaman */
+.accent-rule {
+  height: 3px;
+  width: 56px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #0d9488, #0891b2 60%, rgba(22, 163, 74, 0.35));
+}
+
+/* kartu bergaris tepi teal untuk info penting */
+.card-accent {
+  border-color: rgba(13, 148, 136, 0.28);
+  box-shadow: 0 0 0 1px rgba(13, 148, 136, 0.08), 0 18px 34px -26px rgba(13, 148, 136, 0.55);
+}
+
+/* efek kilau untuk tombol utama (halus, hanya saat hover) */
+.btn-primary:hover { filter: saturate(1.05); }
+
+/* latar bergaris untuk panel/hero */
 .grid-bg {
   background-image:
     linear-gradient(to right, var(--grid) 1px, transparent 1px),
@@ -79,20 +141,36 @@ body {
   background-size: 28px 28px;
 }
 
-/* recharts tweaks */
-.recharts-cartesian-axis-tick text { fill: #64748b; font-size: 11px; }
-.recharts-legend-item-text { color: #94a3b8 !important; font-size: 11px; }
-.recharts-default-tooltip {
-  background: #0b111d !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
-  border-radius: 12px !important;
-  box-shadow: 0 20px 40px -20px rgba(0,0,0,.9) !important;
+/* blob dekoratif (dipakai di header & kartu ringkasan) */
+.blob {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(38px);
+  opacity: 0.5;
+  pointer-events: none;
 }
-.recharts-tooltip-label { color: #e2e8f0 !important; font-weight: 600; }
+
+/* tabel: baris belang lembut + sorot teal */
+.row-striped:nth-child(even) { background: rgba(13, 148, 136, 0.035); }
+.row-striped:hover { background: rgba(13, 148, 136, 0.07); }
+
+/* recharts tweaks (mode terang) */
+.recharts-cartesian-axis-tick text { fill: #64748b; font-size: 11px; }
+.recharts-legend-item-text { color: #475569 !important; font-size: 11px; }
+.recharts-default-tooltip {
+  background: #ffffff !important;
+  border: 1px solid rgba(13, 148, 136, 0.22) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 18px 34px -22px rgba(15, 42, 46, 0.55) !important;
+}
+.recharts-tooltip-label { color: #0f172a !important; font-weight: 600; }
+.recharts-cartesian-grid line { stroke: rgba(15, 42, 46, 0.07); }
 
 @media print {
   body { background: #fff; color: #000; }
+  body::before { display: none; }
   .no-print { display: none !important; }
+  .card { box-shadow: none; }
 }
 
 /* notifikasi: bilah waktu mundur */
@@ -115,30 +193,17 @@ body {
    kita pakai 36–44 px agar nyaman di HP.
    ================================================================== */
 @media (max-width: 639px), (pointer: coarse) {
-  .btn {
-    min-height: 40px;
-  }
+  .btn { min-height: 40px; }
   .input,
-  select.input {
-    min-height: 42px;
-  }
-  .tap {
-    min-height: 36px;
-  }
-  /* tombol pager dan tombol kecil lain tetap lega tanpa memakan lebar */
+  select.input { min-height: 42px; }
+  .tap { min-height: 36px; }
   .btn-ghost.\!py-1,
-  .btn-ghost.\!px-2 {
-    min-height: 38px;
-  }
-  .tap-sm {
-    min-height: 32px;
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
-  }
-  /* kotak centang pengaturan: area tekan = seluruh baris, tapi kotaknya
-     sendiri tetap dinaikkan ke 24 px (WCAG 2.5.8) */
-  input[type='checkbox'] {
-    min-height: 24px;
-    min-width: 24px;
-  }
+  .btn-ghost.\!px-2 { min-height: 38px; }
+  .tap-sm { min-height: 32px; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+  input[type='checkbox'] { min-height: 24px; min-width: 24px; }
+}
+
+/* hormati preferensi pengguna yang meminta animasi dikurangi */
+@media (prefers-reduced-motion: reduce) {
+  .card, .btn, .blob { transition: none !important; animation: none !important; }
 }

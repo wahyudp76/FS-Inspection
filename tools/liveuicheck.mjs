@@ -88,6 +88,9 @@ for (const lebar of LEBAR) {
     /* tombol yang memang sudah aktif (filter terpilih) tidak mengubah apa pun — lewati */
     const aktif = await b.evaluate((el) => el.getAttribute('aria-pressed') === 'true' || el.getAttribute('data-active') === 'true')
     if (aktif) continue
+    /* “Kembali ke atas” hanya menggulir jendela: saat halaman belum digulir tidak ada
+       perubahan DOM sama sekali → bukan tombol mati (positif palsu). */
+    if (/kembali ke atas/i.test(nama)) continue
     const sebelum = await page.evaluate(() => document.body.innerHTML.length + '|' + document.body.innerText.length)
     try {
       await b.click({ timeout: 1500, noWaitAfter: true })

@@ -36,21 +36,21 @@ export function TrenServiceChart({ data = [], height = 270 }) {
             onClick={() => setMode(m.id)}
             className={cx(
               'tap-sm rounded-lg border px-2 text-[10.5px] font-semibold transition',
-              mode === m.id ? 'border-brand/50 bg-brand/15 text-white' : 'border-white/10 bg-white/[0.02] text-slate-400 hover:text-slate-200'
+              mode === m.id ? 'border-brand/50 bg-brand/15 text-slate-900' : 'border-slate-900/10 bg-slate-900/[0.02] text-slate-600 hover:text-slate-800'
             )}
           >
             {m.label}
           </button>
         ))}
         <span className="ml-auto text-[10px] text-slate-500">
-          {ringkas.dinilai} service dinilai · <span className={ringkas.pct >= 70 ? 'text-emerald-300' : ringkas.pct >= 40 ? 'text-amber-300' : 'text-rose-300'}>{ringkas.pct}% tepat</span>
+          {ringkas.dinilai} service dinilai · <span className={ringkas.pct >= 70 ? 'text-emerald-700' : ringkas.pct >= 40 ? 'text-amber-700' : 'text-rose-600'}>{ringkas.pct}% tepat</span>
         </span>
       </div>
 
       <ResponsiveContainer width="100%" height={height}>
         <ComposedChart data={data} margin={{ top: 10, right: 6, left: -22, bottom: 0 }} barCategoryGap="24%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
           <YAxis yAxisId="l" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
           <YAxis
             yAxisId="r"
@@ -68,18 +68,18 @@ export function TrenServiceChart({ data = [], height = 270 }) {
             <>
               <Bar yAxisId="l" dataKey="tepat" name="Tepat (225–275 HM)" stackId="k" fill="#22c55e" />
               <Bar yAxisId="l" dataKey="telat" name="Terlambat (> 275 HM)" stackId="k" fill="#f43f5e" />
-              <Bar yAxisId="l" dataKey="awal" name="Lebih awal (< 225 HM)" stackId="k" fill="#38bdf8" radius={[3, 3, 0, 0]} />
+              <Bar yAxisId="l" dataKey="awal" name="Lebih awal (< 225 HM)" stackId="k" fill="#0d9488" radius={[3, 3, 0, 0]} />
               <Line yAxisId="r" type="monotone" dataKey="tepatPct" name="% tepat waktu" stroke="#facc15" strokeWidth={2} dot={{ r: 2.5, fill: '#facc15' }} connectNulls />
             </>
           ) : (
             <>
-              <Bar yAxisId="l" dataKey="sesi" name="Service dilakukan" fill="#38bdf8" radius={[3, 3, 0, 0]}>
+              <Bar yAxisId="l" dataKey="sesi" name="Service dilakukan" fill="#0d9488" radius={[3, 3, 0, 0]}>
                 {data.map((_, i) => (
-                  <Cell key={i} fill={i === data.length - 1 ? '#38bdf8' : 'rgba(56,189,248,0.5)'} />
+                  <Cell key={i} fill={i === data.length - 1 ? '#0d9488' : 'rgba(56,189,248,0.5)'} />
                 ))}
               </Bar>
-              <Line yAxisId="l" type="monotone" dataKey="unit" name="Unit berbeda" stroke="#a78bfa" strokeWidth={2} dot={{ r: 2.5, fill: '#a78bfa' }} />
-              <Line yAxisId="l" type="monotone" dataKey="deltaRata" name="Rata-rata selisih HM" stroke="#34d399" strokeWidth={1.6} strokeDasharray="4 3" dot={false} />
+              <Line yAxisId="l" type="monotone" dataKey="unit" name="Unit berbeda" stroke="#7c3aed" strokeWidth={2} dot={{ r: 2.5, fill: '#7c3aed' }} />
+              <Line yAxisId="l" type="monotone" dataKey="deltaRata" name="Rata-rata selisih HM" stroke="#059669" strokeWidth={1.6} strokeDasharray="4 3" dot={false} />
             </>
           )}
         </ComposedChart>
@@ -114,10 +114,10 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
     <div>
       <div className="mb-1 flex items-baseline justify-between gap-2 px-1">
         <p className="text-[10.5px] text-slate-500">
-          <span className="font-mono text-[15px] font-semibold text-rose-300">{belum}</span> dari{' '}
-          <span className="font-mono text-slate-300">{total}</span> engine belum pernah diservice
+          <span className="font-mono text-[15px] font-semibold text-rose-600">{belum}</span> dari{' '}
+          <span className="font-mono text-slate-700">{total}</span> engine belum pernah diservice
         </p>
-        <span className="rounded-md border border-rose-500/35 bg-rose-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rose-300">
+        <span className="rounded-md border border-rose-500/35 bg-rose-500/10 px-1.5 py-0.5 font-mono text-[10px] font-semibold text-rose-600">
           {total ? Math.round((belum / total) * 100) : 0}%
         </span>
       </div>
@@ -126,14 +126,14 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
         <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 34, left: 4, bottom: 0 }} barCategoryGap="26%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} allowDecimals={false} />
-          <YAxis type="category" dataKey="posisi" width={44} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11, fontWeight: 600 }} />
+          <YAxis type="category" dataKey="posisi" width={44} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 11, fontWeight: 600 }} />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
           <Bar dataKey="Aman" stackId="a" fill="#22c55e" />
           <Bar dataKey="Jatuh tempo" stackId="a" fill="#f59e0b" />
           <Bar dataKey="Lewat jadwal" stackId="a" fill="#f43f5e" />
-          <Bar dataKey="Data HM kurang" stackId="a" fill="#a78bfa" />
+          <Bar dataKey="Data HM kurang" stackId="a" fill="#7c3aed" />
           <Bar dataKey="Belum service" stackId="a" fill="#475569" radius={[0, 3, 3, 0]}>
-            <LabelList dataKey="total" position="right" style={{ fill: '#94a3b8', fontSize: 9.5 }} />
+            <LabelList dataKey="total" position="right" style={{ fill: '#5b6b7c', fontSize: 9.5 }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -143,17 +143,17 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
           <button
             key={d.posisi}
             onClick={() => onPick?.(d.posisi)}
-            className="rounded-lg border border-white/[0.07] bg-white/[0.02] px-2 py-1.5 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+            className="rounded-lg border border-slate-900/[0.10] bg-slate-900/[0.02] px-2 py-1.5 text-left transition hover:border-slate-900/15 hover:bg-slate-900/[0.04]"
             title={`Saring tabel ke divisi ${d.posisi}`}
           >
-            <p className="flex items-center justify-between text-[10px] font-semibold text-slate-300">
+            <p className="flex items-center justify-between text-[10px] font-semibold text-slate-700">
               {d.posisi}
               <span className="font-mono text-[10px] text-slate-500">{d.total}</span>
             </p>
-            <p className={cx('mt-0.5 font-mono text-[11px] font-semibold', d.belum ? 'text-rose-300' : 'text-emerald-300')}>
+            <p className={cx('mt-0.5 font-mono text-[11px] font-semibold', d.belum ? 'text-rose-600' : 'text-emerald-700')}>
               {d.belum ? `${d.belum} belum` : 'lengkap'}
             </p>
-            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-white/[0.07]">
+            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-900/[0.06]">
               <div className="h-full rounded-full bg-emerald-400" style={{ width: `${d.sudahPct}%` }} />
             </div>
             <p className="mt-0.5 text-[9px] text-slate-500">{d.sudah}/{d.total} pernah diservice · {d.sudahPct}%</p>
@@ -177,13 +177,13 @@ export function UrgensiChart({ data = [], onClickEmber, height = 200 }) {
         <BarChart data={data} layout="vertical" margin={{ top: 2, right: 30, left: 2, bottom: 0 }} barCategoryGap="22%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} allowDecimals={false} />
-          <YAxis type="category" dataKey="label" width={104} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9.5 }} />
+          <YAxis type="category" dataKey="label" width={104} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 9.5 }} />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" engine" />} />
           <Bar dataKey="jumlah" name="Engine" radius={[0, 3, 3, 0]} onClick={(d) => onClickEmber?.(d?.payload?.id || d?.id)} className="cursor-pointer">
             {data.map((d) => (
               <Cell key={d.id} fill={d.color} />
             ))}
-            <LabelList dataKey="jumlah" position="right" style={{ fill: '#cbd5e1', fontSize: 10 }} />
+            <LabelList dataKey="jumlah" position="right" style={{ fill: '#3f4d5a', fontSize: 10 }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -201,8 +201,8 @@ export function TopTerlambatChart({ data = [], height = 250, onPick }) {
   if (!data.length) {
     return (
       <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-10 text-center">
-        <span className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-300"><IconCheck size={16} /></span>
-        <p className="text-[12px] font-semibold text-slate-300">Tidak ada engine yang lewat jadwal</p>
+        <span className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-2 text-emerald-700"><IconCheck size={16} /></span>
+        <p className="text-[12px] font-semibold text-slate-700">Tidak ada engine yang lewat jadwal</p>
         <p className="text-[10.5px] text-slate-500">Semua engine masih dalam masa service.</p>
       </div>
     )
@@ -214,13 +214,13 @@ export function TopTerlambatChart({ data = [], height = 250, onPick }) {
       <BarChart data={barData} layout="vertical" margin={{ top: 2, right: 32, left: 2, bottom: 0 }} barCategoryGap="24%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
         <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} unit=" hr" />
-        <YAxis type="category" dataKey="label" width={66} axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 9.5, fontFamily: 'monospace' }} />
+        <YAxis type="category" dataKey="label" width={66} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 9.5, fontFamily: 'monospace' }} />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox formatter={(v) => `${v} hari terlambat`} />} />
         <Bar dataKey="telat" name="Terlambat" radius={[0, 3, 3, 0]} onClick={(d) => onPick?.(d?.payload?.kode || d?.kode)} className="cursor-pointer">
           {barData.map((d, i) => (
             <Cell key={d.kode} fill={d.telat > 30 ? '#9f1239' : d.telat > 14 ? '#f43f5e' : '#fb7185'} opacity={0.55 + (i / barData.length) * 0.45} />
           ))}
-          <LabelList dataKey="telat" position="right" style={{ fill: '#cbd5e1', fontSize: 9.5 }} />
+          <LabelList dataKey="telat" position="right" style={{ fill: '#3f4d5a', fontSize: 9.5 }} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -230,10 +230,10 @@ export function TopTerlambatChart({ data = [], height = 250, onPick }) {
         <button
           key={d.kode}
           onClick={() => onPick?.(d.kode)}
-          className="tap-sm rounded-md border border-white/10 bg-white/[0.03] px-1.5 font-mono text-[9.5px] text-slate-300 transition hover:border-brand/40 hover:text-white"
+          className="tap-sm rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 font-mono text-[9.5px] text-slate-700 transition hover:border-brand/40 hover:text-slate-900"
           title={`Buka detail ${d.kode} — telat ${d.telat} hari`}
         >
-          {d.kode} <span className="text-rose-300">{d.telat}h</span>
+          {d.kode} <span className="text-rose-600">{d.telat}h</span>
         </button>
       ))}
     </div>
@@ -279,7 +279,7 @@ export function PetaMingguService({ log = [], height }) {
           <tbody>
             {perJenis.map((j) => (
               <tr key={j.jenis}>
-                <td className="py-1 pr-2 font-mono text-[10.5px] font-semibold text-slate-200">{j.jenis}</td>
+                <td className="py-1 pr-2 font-mono text-[10.5px] font-semibold text-slate-800">{j.jenis}</td>
                 {j.w.map((n, i) => {
                   const t = maks ? n / maks : 0
                   return (
@@ -297,7 +297,7 @@ export function PetaMingguService({ log = [], height }) {
                     </td>
                   )
                 })}
-                <td className="py-1 pl-2 text-right font-mono text-[10px] text-slate-400">{j.total}</td>
+                <td className="py-1 pl-2 text-right font-mono text-[10px] text-slate-600">{j.total}</td>
               </tr>
             ))}
           </tbody>

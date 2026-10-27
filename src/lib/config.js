@@ -92,11 +92,11 @@ export const SERVICE_SHEET = {
 
 /* status evaluasi service engine */
 export const SERVICE_STATUS = [
-  { id: 'terlambat', label: 'Lewat jadwal', short: 'Lewat', color: '#f43f5e', cls: 'text-rose-300 bg-rose-500/12 border-rose-500/35', desc: 'Sudah melewati warning date' },
-  { id: 'segera', label: 'Jatuh tempo', short: 'Tempo', color: '#f59e0b', cls: 'text-amber-300 bg-amber-500/12 border-amber-500/35', desc: 'Jatuh tempo ≤ 7 hari' },
-  { id: 'aman', label: 'Aman', short: 'Aman', color: '#22c55e', cls: 'text-emerald-300 bg-emerald-500/12 border-emerald-500/35', desc: 'Masih ada waktu service' },
-  { id: 'tanpaJadwal', label: 'Data HM kurang', short: 'HM?', color: '#a78bfa', cls: 'text-violet-300 bg-violet-500/12 border-violet-500/35', desc: 'Sudah service, tapi rerata HM/hari kosong' },
-  { id: 'belum', label: 'Belum pernah service', short: 'Belum', color: '#64748b', cls: 'text-slate-300 bg-slate-500/12 border-slate-500/35', desc: 'Belum ada catatan di tb_service2' },
+  { id: 'terlambat', label: 'Lewat jadwal', short: 'Lewat', color: '#f43f5e', cls: 'text-rose-600 bg-rose-500/12 border-rose-500/35', desc: 'Sudah melewati warning date' },
+  { id: 'segera', label: 'Jatuh tempo', short: 'Tempo', color: '#f59e0b', cls: 'text-amber-700 bg-amber-500/12 border-amber-500/35', desc: 'Jatuh tempo ≤ 7 hari' },
+  { id: 'aman', label: 'Aman', short: 'Aman', color: '#22c55e', cls: 'text-emerald-700 bg-emerald-500/12 border-emerald-500/35', desc: 'Masih ada waktu service' },
+  { id: 'tanpaJadwal', label: 'Data HM kurang', short: 'HM?', color: '#7c3aed', cls: 'text-violet-700 bg-violet-500/12 border-violet-500/35', desc: 'Sudah service, tapi rerata HM/hari kosong' },
+  { id: 'belum', label: 'Belum pernah service', short: 'Belum', color: '#64748b', cls: 'text-slate-700 bg-slate-500/12 border-slate-500/35', desc: 'Belum ada catatan di tb_service2' },
 ]
 export const serviceStatusMeta = (id) => SERVICE_STATUS.find((s) => s.id === id) || SERVICE_STATUS[4]
 
@@ -114,7 +114,7 @@ export const GRADES = [
     short: 'A',
     desc: 'Normal / layak operasi',
     color: '#22c55e',
-    cls: 'text-emerald-300 bg-emerald-500/12 border-emerald-500/35',
+    cls: 'text-emerald-700 bg-emerald-500/12 border-emerald-500/35',
     score: 100,
   },
   {
@@ -123,7 +123,7 @@ export const GRADES = [
     short: 'B',
     desc: 'Ada gejala, perlu pemantauan/perbaikan ringan',
     color: '#f59e0b',
-    cls: 'text-amber-300 bg-amber-500/12 border-amber-500/35',
+    cls: 'text-amber-700 bg-amber-500/12 border-amber-500/35',
     score: 60,
   },
   {
@@ -132,7 +132,7 @@ export const GRADES = [
     short: 'C',
     desc: 'Tidak berfungsi / harus diperbaiki',
     color: '#f43f5e',
-    cls: 'text-rose-300 bg-rose-500/12 border-rose-500/35',
+    cls: 'text-rose-600 bg-rose-500/12 border-rose-500/35',
     score: 0,
   },
 ]
@@ -141,16 +141,16 @@ export const gradeMeta = (v) => GRADES.find((g) => g.value === v)
 
 export const kondisiMeta = (kondisi) =>
   ({
-    Baik: { color: '#22c55e', cls: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30' },
-    'Perlu Perhatian': { color: '#f59e0b', cls: 'text-amber-300 bg-amber-500/10 border-amber-500/30' },
-    Kritis: { color: '#f43f5e', cls: 'text-rose-300 bg-rose-500/10 border-rose-500/30' },
-  }[kondisi] || { color: '#64748b', cls: 'text-slate-300 bg-white/5 border-white/10' })
+    Baik: { color: '#22c55e', cls: 'text-emerald-700 bg-emerald-500/10 border-emerald-500/30' },
+    'Perlu Perhatian': { color: '#f59e0b', cls: 'text-amber-700 bg-amber-500/10 border-amber-500/30' },
+    Kritis: { color: '#f43f5e', cls: 'text-rose-600 bg-rose-500/10 border-rose-500/30' },
+  }[kondisi] || { color: '#64748b', cls: 'text-slate-700 bg-slate-900/5 border-slate-900/10' })
 
 export const statusUnitMeta = (s) =>
   ({
-    Terpasang: { color: '#38bdf8', cls: 'text-sky-300 bg-sky-500/10 border-sky-500/30' },
-    Standby: { color: '#a78bfa', cls: 'text-violet-300 bg-violet-500/10 border-violet-500/30' },
-    Rusak: { color: '#f43f5e', cls: 'text-rose-300 bg-rose-500/10 border-rose-500/30' },
-  }[s] || { color: '#64748b', cls: 'text-slate-300 bg-white/5 border-white/10' })
+    Terpasang: { color: '#0d9488', cls: 'text-teal-700 bg-teal-600/10 border-teal-600/30' },
+    Standby: { color: '#7c3aed', cls: 'text-violet-700 bg-violet-500/10 border-violet-500/30' },
+    Rusak: { color: '#f43f5e', cls: 'text-rose-600 bg-rose-500/10 border-rose-500/30' },
+  }[s] || { color: '#64748b', cls: 'text-slate-700 bg-slate-900/5 border-slate-900/10' })
 
 export { LS_CACHE }

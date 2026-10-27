@@ -89,7 +89,7 @@ export const butuhPerbaikanSheet = (records = []) => records.filter((r) => rekap
 export const GRADE_COLOR = Object.fromEntries(GRADES.map((g) => [g.value, g.color]))
 
 /** Warna bar skor — mengikuti kondisi (bukan skor mentah) agar unit Rusak tidak tampil hijau. */
-export const scoreColor = (score, statusUnit) => KONDISI_COLOR[kondisiOf(score, statusUnit)] || '#38bdf8'
+export const scoreColor = (score, statusUnit) => KONDISI_COLOR[kondisiOf(score, statusUnit)] || '#0d9488'
 export const KONDISI_COLOR = { Baik: '#22c55e', 'Perlu Perhatian': '#f59e0b', Kritis: '#f43f5e' }
 
 /* ------------------------------------------------------------------ */

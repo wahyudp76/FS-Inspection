@@ -205,31 +205,31 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
     return (
       <div className="mx-auto max-w-2xl animate-fade-up space-y-4" ref={topRef}>
         <Card className="overflow-hidden">
-          <div className="relative border-b border-white/[0.06] bg-gradient-to-br from-emerald-500/12 via-transparent to-sky-500/10 px-6 py-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-500/15 text-emerald-300">
+          <div className="relative border-b border-slate-900/[0.09] bg-gradient-to-br from-emerald-500/12 via-transparent to-cyan-600/10 px-6 py-8 text-center">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-emerald-400/30 bg-emerald-500/15 text-emerald-700">
               <IconCheck size={26} />
             </div>
-            <h2 className="mt-3 text-[17px] font-bold text-white">Inspeksi Terkirim</h2>
-            <p className="mt-1 text-[12px] text-slate-400">
-              {result.payload.tipe} <span className="font-mono font-semibold text-slate-200">{result.payload.kode}</span> · {result.payload.inspector}
+            <h2 className="mt-3 text-[17px] font-bold text-slate-900">Inspeksi Terkirim</h2>
+            <p className="mt-1 text-[12px] text-slate-600">
+              {result.payload.tipe} <span className="font-mono font-semibold text-slate-800">{result.payload.kode}</span> · {result.payload.inspector}
             </p>
             <div className="mt-4 flex items-center justify-center gap-6">
               <ScoreRing score={s.score} size={72} stroke={7} />
               <div className="text-left">
                 <KondisiPill kondisi={kondisiFinal} />
                 {String(result.payload.statusUnit).toLowerCase() === 'rusak' && s.score >= 70 && (
-                  <p className="mt-1 text-[9.5px] leading-tight text-rose-300/80">status unit Rusak → otomatis Kritis</p>
+                  <p className="mt-1 text-[9.5px] leading-tight text-rose-600/80">status unit Rusak → otomatis Kritis</p>
                 )}
-                <p className="mt-1.5 font-mono text-[11px] text-slate-400">
-                  <span className="text-emerald-400">{s.a} A</span> · <span className="text-amber-400">{s.b} B</span> ·{' '}
-                  <span className="text-rose-400">{s.c} C</span>
+                <p className="mt-1.5 font-mono text-[11px] text-slate-600">
+                  <span className="text-emerald-600">{s.a} A</span> · <span className="text-amber-600">{s.b} B</span> ·{' '}
+                  <span className="text-rose-600">{s.c} C</span>
                 </p>
                 <p className="text-[10.5px] text-slate-500">{s.total} komponen diperiksa</p>
               </div>
             </div>
           </div>
           <div className="card-pad space-y-2.5">
-            <div className={cx('rounded-xl border px-3 py-2.5 text-[11.5px] leading-relaxed', result.offline ? 'border-amber-500/30 bg-amber-500/10 text-amber-200' : 'border-emerald-500/25 bg-emerald-500/8 text-emerald-200')}>
+            <div className={cx('rounded-xl border px-3 py-2.5 text-[11.5px] leading-relaxed', result.offline ? 'border-amber-500/30 bg-amber-500/10 text-amber-700' : 'border-emerald-500/25 bg-emerald-500/8 text-emerald-700')}>
               {result.offline
                 ? 'Data disimpan di perangkat ini (antrean lokal). Hubungkan Apps Script di menu Pengaturan lalu tekan "Sinkron" untuk mengirim ke Google Sheets.'
                 : 'Baris baru berhasil ditambahkan ke tabel inspeksi di sheet "Data Inspeksi".'}
@@ -240,8 +240,8 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                 className={cx(
                   'rounded-xl border px-3 py-2.5 text-[11.5px] leading-relaxed',
                   result.masterSynced
-                    ? 'border-sky-500/25 bg-sky-500/[0.08] text-sky-200'
-                    : 'border-white/10 bg-white/[0.03] text-slate-400'
+                    ? 'border-teal-600/25 bg-teal-600/[0.08] text-teal-700'
+                    : 'border-slate-900/10 bg-slate-900/[0.03] text-slate-600'
                 )}
               >
                 {result.masterSynced ? (
@@ -249,7 +249,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                     <span className="font-semibold">Sheet master diperbarui.</span>{' '}
                     Kolom <span className="font-mono text-[10.5px]">TGL INSPEKSI TERAKHIR · SKOR · KONDISI · A/B/C · PETUGAS · TEMUAN</span>{' '}
                     pada unit <span className="font-mono font-semibold">{result.payload.kode}</span> kini berisi hasil inspeksi ini.
-                    {result.masterResult?.length ? <span className="block mt-0.5 text-[10.5px] text-sky-300/80">{result.masterResult.join(' · ')}</span> : null}
+                    {result.masterResult?.length ? <span className="block mt-0.5 text-[10.5px] text-teal-700/80">{result.masterResult.join(' · ')}</span> : null}
                   </>
                 ) : (
                   <>
@@ -259,12 +259,12 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                       tersimpan di sheet “Data Inspeksi”.
                     </p>
                     {result.masterError && (
-                      <p className="mt-1 rounded-lg bg-rose-500/10 px-2 py-1 font-mono text-[10.5px] text-rose-300">
+                      <p className="mt-1 rounded-lg bg-rose-500/10 px-2 py-1 font-mono text-[10.5px] text-rose-600">
                         {result.masterError}
                       </p>
                     )}
                     {/tidak dikenal|versi lama/i.test(result.masterError || '') && (
-                      <p className="mt-1 text-amber-300">
+                      <p className="mt-1 text-amber-700">
                         Perbaikan: buka Apps Script ▸ <span className="font-semibold">Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version ▸ Deploy</span>,
                         lalu tekan tombol di bawah. Alternatif cepat: jalankan fungsi{' '}
                         <span className="font-mono">syncLatestToMaster</span> langsung dari editor Apps Script.
@@ -290,7 +290,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
             </div>
             {!result.offline && !result.masterSynced && (
               <button
-                className="btn-ghost w-full !border-sky-500/30 !text-[12px] !text-sky-300"
+                className="btn-ghost w-full !border-teal-600/30 !text-[12px] !text-teal-700"
                 onClick={async (e) => {
                   const btn = e.currentTarget
                   btn.disabled = true
@@ -319,11 +319,11 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
               const items = g.items.filter((it) => result.payload.komponen[it] !== 'A')
               if (!items.length) return null
               return (
-                <div key={g.id} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
-                  <p className="text-[11px] font-semibold text-slate-300">{g.label}</p>
+                <div key={g.id} className="rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2">
+                  <p className="text-[11px] font-semibold text-slate-700">{g.label}</p>
                   <div className="mt-1 flex flex-wrap gap-1.5">
                     {items.map((it) => (
-                      <span key={it} className="inline-flex items-center gap-1.5 rounded-md bg-white/[0.04] px-1.5 py-0.5 text-[10.5px] text-slate-300">
+                      <span key={it} className="inline-flex items-center gap-1.5 rounded-md bg-slate-900/[0.04] px-1.5 py-0.5 text-[10.5px] text-slate-700">
                         {it} <GradePill value={result.payload.komponen[it]} size="xs" />
                       </span>
                     ))}
@@ -332,7 +332,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
               )
             })}
             {result.payload.catatan && (
-              <p className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-[11.5px] text-slate-300">
+              <p className="rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2 text-[11.5px] text-slate-700">
                 <span className="text-slate-500">Catatan: </span>{result.payload.catatan}
               </p>
             )}
@@ -347,9 +347,9 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
     return (
       <div className="mx-auto max-w-4xl space-y-4" ref={topRef}>
         <Card className="overflow-hidden">
-          <div className="border-b border-white/[0.06] bg-gradient-to-r from-brand/10 via-transparent to-emerald-500/10 px-5 py-5">
-            <h2 className="text-[15px] font-bold text-white">Pilih unit yang akan diinspeksi</h2>
-            <p className="mt-0.5 text-[11.5px] text-slate-400">
+          <div className="border-b border-slate-900/[0.09] bg-gradient-to-r from-brand/10 via-transparent to-emerald-500/10 px-5 py-5">
+            <h2 className="text-[15px] font-bold text-slate-900">Pilih unit yang akan diinspeksi</h2>
+            <p className="mt-0.5 text-[11.5px] text-slate-600">
               Checklist komponen otomatis menyesuaikan tipe aset. Hasil tersimpan ke sheet “{TARGET_SHEET.name}”.
             </p>
           </div>
@@ -397,17 +397,17 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                   className="input appearance-none !py-2.5 !pl-3 !pr-8 !text-[12px]"
                   title="Urutan daftar unit"
                 >
-                  <option value="kode" className="bg-ink-800">Jenis, lalu nomor</option>
-                  <option value="nomor" className="bg-ink-800">Nomor terkecil</option>
-                  <option value="skor-asc" className="bg-ink-800">Skor terendah</option>
-                  <option value="skor-desc" className="bg-ink-800">Skor tertinggi</option>
+                  <option value="kode" className="bg-white">Jenis, lalu nomor</option>
+                  <option value="nomor" className="bg-white">Nomor terkecil</option>
+                  <option value="skor-asc" className="bg-white">Skor terendah</option>
+                  <option value="skor-desc" className="bg-white">Skor tertinggi</option>
                 </select>
                 <IconChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
               </div>
 
               {(adaFilter) && (
                 <button
-                  className="btn-ghost !py-2 !text-[11.5px] !border-rose-500/30 !text-rose-300"
+                  className="btn-ghost !py-2 !text-[11.5px] !border-rose-500/30 !text-rose-600"
                   onClick={() => { setQuery(''); setDivisiSel([]); setJenisSel([]) }}
                   title="Bersihkan filter"
                 >
@@ -419,8 +419,8 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
             <div className="flex flex-wrap items-center gap-2 text-[10.5px] text-slate-500">
               <span>
                 Menampilkan{' '}
-                <span className="font-mono font-semibold text-slate-300">{filtered.length ? mulai + 1 : 0}–{sampai}</span> dari{' '}
-                <span className="font-mono font-semibold text-slate-300">{filtered.length}</span> unit
+                <span className="font-mono font-semibold text-slate-700">{filtered.length ? mulai + 1 : 0}–{sampai}</span> dari{' '}
+                <span className="font-mono font-semibold text-slate-700">{filtered.length}</span> unit
                 {adaFilter ? ` (total ${pool.length})` : ''}
               </span>
               {divisiSel.length > 0 && <span className="chip !py-0.5 !text-[10px]">Divisi: {divisiSel.join(', ')}</span>}
@@ -433,15 +433,15 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                   <button
                     key={u.kode}
                     onClick={() => { setKode(u.kode); setMode('form') }}
-                    className="group flex items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-left transition hover:border-brand/40 hover:bg-white/[0.06]"
+                    className="group flex items-center gap-3 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2 text-left transition hover:border-brand/40 hover:bg-slate-900/[0.05]"
                   >
                     <ScoreRing score={rec?.skor ?? u.score} size={34} stroke={4} />
                     <div className="min-w-0 flex-1">
                       {/* baris 1: kode + spesifikasi (+ meta di layar lebar) */}
                       <div className="flex items-center gap-2">
-                        <span className="w-[72px] shrink-0 font-mono text-[12px] font-bold text-white">{u.kode}</span>
-                        <span className="min-w-0 flex-1 truncate text-[10.5px] text-slate-400">{u.spec || u.unit}</span>
-                        <span className="hidden shrink-0 rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-400 sm:inline-block">
+                        <span className="w-[72px] shrink-0 font-mono text-[12px] font-bold text-slate-900">{u.kode}</span>
+                        <span className="min-w-0 flex-1 truncate text-[10.5px] text-slate-600">{u.spec || u.unit}</span>
+                        <span className="hidden shrink-0 rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-600 sm:inline-block">
                           {u.wilayah}
                         </span>
                         <span className="hidden shrink-0 sm:inline-flex"><StatusPill status={u.status} /></span>
@@ -451,7 +451,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                       </div>
                       {/* baris 2 (khusus HP) */}
                       <div className="mt-1 flex items-center gap-1.5 sm:hidden">
-                        <span className="rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9px] text-slate-400">
+                        <span className="rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-0.5 text-[9px] text-slate-600">
                           {u.wilayah}
                         </span>
                         <StatusPill status={u.status} />
@@ -460,7 +460,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                         </span>
                       </div>
                     </div>
-                    <IconChevron size={14} className="shrink-0 text-slate-600 transition group-hover:text-brand" />
+                    <IconChevron size={14} className="shrink-0 text-slate-400 transition group-hover:text-brand" />
                   </button>
                 )
               })}
@@ -473,10 +473,10 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
 
             {/* ---------- pager ---------- */}
             {filtered.length > 0 && (
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2">
                 <span className="whitespace-nowrap text-[10.5px] text-slate-500">
-                  Halaman <span className="font-mono font-semibold text-slate-300">{halamanAman + 1}</span> dari{' '}
-                  <span className="font-mono font-semibold text-slate-300">{totalHalaman}</span> · maks {PER_PAGE} unit/halaman
+                  Halaman <span className="font-mono font-semibold text-slate-700">{halamanAman + 1}</span> dari{' '}
+                  <span className="font-mono font-semibold text-slate-700">{totalHalaman}</span> · maks {PER_PAGE} unit/halaman
                 </span>
                 <div className="flex w-full flex-wrap items-center justify-between gap-1 sm:ml-auto sm:w-auto sm:justify-end">
                   <button
@@ -494,7 +494,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                   >
                     Sebelumnya
                   </button>
-                  <span className="whitespace-nowrap px-1 font-mono text-[11px] text-slate-400">
+                  <span className="whitespace-nowrap px-1 font-mono text-[11px] text-slate-600">
                     {halamanAman + 1} / {totalHalaman}
                   </span>
                   <button
@@ -527,17 +527,17 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
     <div className={cx('space-y-4', embedded ? 'px-3 pb-2 pt-3 sm:px-4' : 'pb-24')} ref={topRef}>
       {/* unit header */}
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-4 border-b border-white/[0.06] bg-gradient-to-r from-brand/[0.08] via-transparent to-transparent px-4 py-4 sm:px-5">
-          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] text-brand">
+        <div className="flex flex-wrap items-center gap-4 border-b border-slate-900/[0.09] bg-gradient-to-r from-brand/[0.08] via-transparent to-transparent px-4 py-4 sm:px-5">
+          <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-slate-900/10 bg-slate-900/[0.04] text-brand">
             {tipe === 'Mesin' ? <IconTruck size={20} /> : <IconDroplet size={20} />}
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="font-mono text-[16px] font-bold text-white">{unit.kode}</h2>
+              <h2 className="font-mono text-[16px] font-bold text-slate-900">{unit.kode}</h2>
               <StatusPill status={unit.status} />
               <span className="chip !py-0.5 !text-[10px]">{tipe}</span>
             </div>
-            <p className="truncate text-[11px] text-slate-400">
+            <p className="truncate text-[11px] text-slate-600">
               {unit.wilayah} · {unit.spec || unit.unit} {unit.pomp ? `· ${unit.pompa}` : ''} {unit.power ? `· ${unit.power} HP` : ''}
               {unit.nozzle ? `· Nozzle ${unit.nozzle}` : ''}
             </p>
@@ -545,7 +545,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
           <div className="ml-auto flex items-center gap-3">
             <div className="text-right">
               <p className="text-[10px] uppercase tracking-wider text-slate-500">Skor saat ini</p>
-              <p className="font-mono text-[13px] font-semibold text-slate-200">{stats.score.toFixed(1)}</p>
+              <p className="font-mono text-[13px] font-semibold text-slate-800">{stats.score.toFixed(1)}</p>
             </div>
             <ScoreRing score={complete ? stats.score : unit.score} size={48} stroke={5} />
             <button className="btn-ghost !px-2 !py-1.5" onClick={goPick} title="Ganti unit">
@@ -555,11 +555,11 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
         </div>
 
         {prev && (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-white/[0.06] bg-white/[0.015] px-4 py-2 text-[10.5px] text-slate-500 sm:px-5">
-            <span>Inspeksi terakhir: <span className="text-slate-300">{fmtDateTime(prev.timestamp)}</span> oleh {prev.inspector || '—'}</span>
-            <span>Skor <span className="font-mono text-slate-300">{prev.skor}</span></span>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-slate-900/[0.09] bg-slate-900/[0.015] px-4 py-2 text-[10.5px] text-slate-500 sm:px-5">
+            <span>Inspeksi terakhir: <span className="text-slate-700">{fmtDateTime(prev.timestamp)}</span> oleh {prev.inspector || '—'}</span>
+            <span>Skor <span className="font-mono text-slate-700">{prev.skor}</span></span>
             <KondisiPill kondisi={prev.kondisi} />
-            {prev.c > 0 && <span className="text-rose-400">{prev.c} temuan C sebelumnya</span>}
+            {prev.c > 0 && <span className="text-rose-600">{prev.c} temuan C sebelumnya</span>}
           </div>
         )}
 
@@ -583,8 +583,8 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
           <div>
             <label className="label">Progres Checklist</label>
             <div className="flex items-center gap-2 pt-2">
-              <Bar value={progress} color={complete ? '#22c55e' : '#38bdf8'} height={7} />
-              <span className="w-14 shrink-0 text-right font-mono text-[11px] text-slate-300">{filled}/{total}</span>
+              <Bar value={progress} color={complete ? '#22c55e' : '#0d9488'} height={7} />
+              <span className="w-14 shrink-0 text-right font-mono text-[11px] text-slate-700">{filled}/{total}</span>
             </div>
           </div>
         </div>
@@ -593,9 +593,9 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
       {/* toolbar */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="chip"><IconClipboard size={12} /> {groups.length} kelompok · {total} komponen</span>
-        <span className="chip !border-emerald-500/30 !text-emerald-300">A {stats.a}</span>
-        <span className="chip !border-amber-500/30 !text-amber-300">B {stats.b}</span>
-        <span className="chip !border-rose-500/30 !text-rose-300">C {stats.c}</span>
+        <span className="chip !border-emerald-500/30 !text-emerald-700">A {stats.a}</span>
+        <span className="chip !border-amber-500/30 !text-amber-700">B {stats.b}</span>
+        <span className="chip !border-rose-500/30 !text-rose-600">C {stats.c}</span>
         <div className="ml-auto flex gap-2">
           <button className="btn-ghost !py-1.5 !text-[11.5px]" onClick={() => setOnlyEmpty((v) => !v)}>
             {onlyEmpty ? 'Tampilkan semua' : 'Sembunyikan yang sudah dinilai'}
@@ -622,20 +622,20 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                 onClick={() => setOpenGroups((o) => ({ ...o, [g.id]: !isOpen }))}
                 className="flex w-full items-center gap-3 px-4 py-3 text-left"
               >
-                <span className={cx('rounded-lg p-1.5', done === g.items.length ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.05] text-slate-400')}>
+                <span className={cx('rounded-lg p-1.5', done === g.items.length ? 'bg-emerald-500/15 text-emerald-700' : 'bg-slate-900/[0.04] text-slate-600')}>
                   <Icon size={15} />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[12.5px] font-semibold text-slate-100">{g.label}</p>
+                  <p className="text-[12.5px] font-semibold text-slate-900">{g.label}</p>
                   <p className="text-[10px] text-slate-500">{done}/{g.items.length} komponen dinilai</p>
                 </div>
-                <div className="w-16"><Bar value={pct(done, g.items.length)} color={done === g.items.length ? '#22c55e' : '#38bdf8'} height={4} /></div>
+                <div className="w-16"><Bar value={pct(done, g.items.length)} color={done === g.items.length ? '#22c55e' : '#0d9488'} height={4} /></div>
                 <IconChevronDown size={15} className={cx('text-slate-500 transition', isOpen && 'rotate-180')} />
               </button>
 
               {isOpen && (
-                <div className="border-t border-white/[0.06]">
-                  <div className="flex items-center justify-between bg-white/[0.02] px-3 py-1.5">
+                <div className="border-t border-slate-900/[0.09]">
+                  <div className="flex items-center justify-between bg-slate-900/[0.02] px-3 py-1.5">
                     <span className="text-[10px] uppercase tracking-wider text-slate-500">Tandai cepat</span>
                     <div className="flex gap-1">
                       {GRADES.map((gr) => (
@@ -649,13 +649,13 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                       ))}
                     </div>
                   </div>
-                  <div className="divide-y divide-white/[0.04]">
+                  <div className="divide-y divide-slate-900/[0.06]">
                     {items.map((it) => {
                       const val = grades[it]
                       const prevVal = prev?.komponen?.[it]
                       return (
-                        <div key={it} className={cx('flex items-center gap-2 px-3 py-2 transition', val ? 'bg-white/[0.015]' : '')}>
-                          <span className="min-w-0 flex-1 text-[12px] leading-snug text-slate-300">
+                        <div key={it} className={cx('flex items-center gap-2 px-3 py-2 transition', val ? 'bg-slate-900/[0.015]' : '')}>
+                          <span className="min-w-0 flex-1 text-[12px] leading-snug text-slate-700">
                             {it}
                             {prevVal && prevVal !== val && (
                               <span className="ml-1.5 align-middle text-[9px] text-slate-500">(sebelumnya {prevVal})</span>
@@ -673,7 +673,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                                     'h-7 w-8 rounded-md border text-[11px] font-bold transition',
                                     active
                                       ? gr.cls + ' scale-105 shadow-[0_0_16px_-6px_currentColor]'
-                                      : 'border-white/10 bg-white/[0.02] text-slate-500 hover:border-white/25 hover:text-slate-200'
+                                      : 'border-slate-900/10 bg-slate-900/[0.02] text-slate-500 hover:border-slate-900/20 hover:text-slate-800'
                                   )}
                                 >
                                   {gr.value}
@@ -708,12 +708,12 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
       </Card>
 
       {/* sticky bar */}
-      <div className={cx('border-t border-white/10 bg-ink-950/95 backdrop-blur-xl', embedded ? 'sticky bottom-0 z-20 rounded-b-2xl' : 'fixed inset-x-0 bottom-0 z-40 lg:left-[236px]')}>
+      <div className={cx('border-t border-slate-900/10 bg-white/85 backdrop-blur-xl', embedded ? 'sticky bottom-0 z-20 rounded-b-2xl' : 'fixed inset-x-0 bottom-0 z-40 lg:left-[236px]')}>
         <div className="mx-auto flex max-w-[1500px] flex-wrap items-center gap-3 py-3 pl-4 pr-4 sm:pl-6 sm:pr-20">
           <div className="flex items-center gap-3">
             <ScoreRing score={complete ? stats.score : stats.score || 0} size={40} stroke={4} />
             <div>
-              <p className="text-[11px] font-semibold text-slate-200">
+              <p className="text-[11px] font-semibold text-slate-800">
                 {complete ? 'Checklist lengkap' : `Sisa ${remaining} komponen belum dinilai`}
               </p>
               <p className="font-mono text-[10px] text-slate-500">
@@ -723,7 +723,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
           </div>
           <div className="ml-auto flex items-center gap-2">
             {!isConfigured() && (
-              <button onClick={() => goNav('pengaturan')} className="hidden items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[10.5px] font-semibold text-amber-300 sm:flex">
+              <button onClick={() => goNav('pengaturan')} className="hidden items-center gap-1.5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2.5 py-1.5 text-[10.5px] font-semibold text-amber-700 sm:flex">
                 <IconAlert size={12} /> Endpoint belum diatur
               </button>
             )}
@@ -741,7 +741,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
             )}
             <button className="btn-primary !py-2" disabled={!complete || submitting} onClick={handleSubmit}>
               {submitting ? (
-                <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-ink-950/40 border-t-ink-950" /> Mengirim…</>
+                <><span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/60 border-t-ink-950" /> Mengirim…</>
               ) : (
                 <><IconCheck size={15} /> Kirim Inspeksi</>
               )}

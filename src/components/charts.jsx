@@ -11,14 +11,14 @@ const AXIS = { stroke: 'rgba(148,163,184,0.35)', tick: { fill: '#64748b', fontSi
 export function TipBox({ active, payload, label, suffix = '', formatter }) {
   if (!active || !payload?.length) return null
   return (
-    <div className="rounded-xl border border-white/10 bg-ink-900/95 px-3 py-2 shadow-2xl backdrop-blur">
-      {label != null && <p className="mb-1 text-[11px] font-semibold text-slate-200">{label}</p>}
+    <div className="rounded-xl border border-slate-900/10 bg-white px-3 py-2 shadow-2xl backdrop-blur">
+      {label != null && <p className="mb-1 text-[11px] font-semibold text-slate-800">{label}</p>}
       <div className="space-y-0.5">
         {payload.filter((p) => p.value != null && p.value !== 0).map((p, i) => (
           <div key={i} className="flex items-center gap-2 text-[11px]">
             <span className="h-1.5 w-1.5 rounded-full" style={{ background: p.color || p.fill }} />
-            <span className="text-slate-400">{p.name}</span>
-            <span className="ml-auto font-mono font-semibold text-slate-100">
+            <span className="text-slate-600">{p.name}</span>
+            <span className="ml-auto font-mono font-semibold text-slate-900">
               {formatter ? formatter(p.value, p) : `${p.value}${suffix}`}
             </span>
           </div>
@@ -52,7 +52,7 @@ export function Donut({ data, height = 210, innerRadius = 54, outerRadius = 78, 
           </PieChart>
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <span className="font-mono text-xl font-semibold text-white">{centerValue ?? total}</span>
+          <span className="font-mono text-xl font-semibold text-slate-900">{centerValue ?? total}</span>
           {centerLabel && <span className="text-[10px] uppercase tracking-wider text-slate-500">{centerLabel}</span>}
         </div>
       </div>
@@ -62,13 +62,13 @@ export function Donut({ data, height = 210, innerRadius = 54, outerRadius = 78, 
             <button
               key={d.name}
               onClick={() => onSlice?.(d.name)}
-              className={cx('rounded-lg border border-white/[0.06] bg-white/[0.02] px-2 py-1.5 text-left transition', onSlice && 'hover:bg-white/[0.06]')}
+              className={cx('rounded-lg border border-slate-900/[0.09] bg-slate-900/[0.02] px-2 py-1.5 text-left transition', onSlice && 'hover:bg-slate-900/[0.05]')}
             >
-              <span className="flex items-center gap-1.5 text-[10px] text-slate-400">
+              <span className="flex items-center gap-1.5 text-[10px] text-slate-600">
                 <span className="h-1.5 w-1.5 rounded-full" style={{ background: d.color }} />
                 {d.name}
               </span>
-              <span className="font-mono text-[13px] font-semibold text-slate-100">{d.value}</span>
+              <span className="font-mono text-[13px] font-semibold text-slate-900">{d.value}</span>
             </button>
           ))}
         </div>
@@ -83,12 +83,12 @@ export function WilayahChart({ data, height = 230, onBar }) {
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 8, right: 6, left: -22, bottom: 0 }} barCategoryGap="28%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-        <XAxis dataKey="wilayah" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 11 }} />
+        <XAxis dataKey="wilayah" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 11 }} />
         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
         <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-        <Bar dataKey="terpasang" name="Terpasang" stackId="a" fill="#38bdf8" radius={[0, 0, 0, 0]} onClick={(d) => onBar?.(d?.wilayah)} />
-        <Bar dataKey="standby" name="Standby" stackId="a" fill="#a78bfa" />
+        <Bar dataKey="terpasang" name="Terpasang" stackId="a" fill="#0d9488" radius={[0, 0, 0, 0]} onClick={(d) => onBar?.(d?.wilayah)} />
+        <Bar dataKey="standby" name="Standby" stackId="a" fill="#7c3aed" />
         <Bar dataKey="rusak" name="Rusak" stackId="a" fill="#f43f5e" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
@@ -108,14 +108,14 @@ export function IssuesBar({ data, height = 300, onItem }) {
           width={138}
           axisLine={false}
           tickLine={false}
-          tick={{ fill: '#cbd5e1', fontSize: 10 }}
+          tick={{ fill: '#3f4d5a', fontSize: 10 }}
           tickFormatter={(v) => (v.length > 20 ? `${v.slice(0, 19)}…` : v)}
         />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
         <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 11 }} />
         <Bar dataKey="b" name="Perlu Perhatian (B)" stackId="s" fill="#f59e0b" onClick={(d) => onItem?.(d)} />
         <Bar dataKey="c" name="Rusak (C)" stackId="s" fill="#f43f5e" radius={[0, 4, 4, 0]} onClick={(d) => onItem?.(d)}>
-          <LabelList dataKey="issue" position="right" style={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }} />
+          <LabelList dataKey="issue" position="right" style={{ fill: '#5b6b7c', fontSize: 10, fontWeight: 600 }} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -128,10 +128,10 @@ export function GroupRadar({ data, height = 260 }) {
     <ResponsiveContainer width="100%" height={height}>
       <RadarChart data={data} outerRadius="78%" margin={{ top: 12, right: 24, bottom: 8, left: 24 }}>
         <PolarGrid stroke="rgba(148,163,184,0.16)" />
-        <PolarAngleAxis dataKey="grup" tick={{ fill: '#94a3b8', fontSize: 9.5 }} />
+        <PolarAngleAxis dataKey="grup" tick={{ fill: '#5b6b7c', fontSize: 9.5 }} />
         <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
         <Tooltip content={<TipBox formatter={(v) => `${v}%`} />} />
-        <Radar name="Skor kondisi" dataKey="nilai" stroke="#38bdf8" fill="#38bdf8" fillOpacity={0.28} strokeWidth={2} />
+        <Radar name="Skor kondisi" dataKey="nilai" stroke="#0d9488" fill="#0d9488" fillOpacity={0.28} strokeWidth={2} />
       </RadarChart>
     </ResponsiveContainer>
   )
@@ -144,8 +144,8 @@ export function TrendChart({ data, height = 250, showSkor = true }) {
       <ComposedChart data={data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
         <defs>
           <linearGradient id="gIns" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#38bdf8" stopOpacity={0.5} />
-            <stop offset="100%" stopColor="#38bdf8" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="#0d9488" stopOpacity={0.5} />
+            <stop offset="100%" stopColor="#0d9488" stopOpacity={0.02} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
@@ -156,8 +156,8 @@ export function TrendChart({ data, height = 250, showSkor = true }) {
         )}
         <Tooltip content={<TipBox />} />
         <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
-        <Area yAxisId="l" type="monotone" dataKey="inspeksi" name="Jumlah inspeksi" stroke="#38bdf8" strokeWidth={2} fill="url(#gIns)" />
-        {showSkor && <Line yAxisId="r" type="monotone" dataKey="skor" name="Skor rata-rata" stroke="#34d399" strokeWidth={2} dot={{ r: 2.5, fill: '#34d399' }} />}
+        <Area yAxisId="l" type="monotone" dataKey="inspeksi" name="Jumlah inspeksi" stroke="#0d9488" strokeWidth={2} fill="url(#gIns)" />
+        {showSkor && <Line yAxisId="r" type="monotone" dataKey="skor" name="Skor rata-rata" stroke="#059669" strokeWidth={2} dot={{ r: 2.5, fill: '#059669' }} />}
       </ComposedChart>
     </ResponsiveContainer>
   )
@@ -169,10 +169,10 @@ export function ScoreHistogram({ data, height = 180, onBucket }) {
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 18, right: 6, left: -14, bottom: 0 }} barCategoryGap="20%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
+        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
         <Bar dataKey="count" name="Unit" radius={[5, 5, 0, 0]} onClick={(d) => onBucket?.(d?.label)} maxBarSize={38}>
-          <LabelList dataKey="count" position="top" style={{ fill: '#cbd5e1', fontSize: 10.5, fontWeight: 700 }} />
+          <LabelList dataKey="count" position="top" style={{ fill: '#3f4d5a', fontSize: 10.5, fontWeight: 700 }} />
           {data.map((d) => <Cell key={d.label} fill={d.color} />)}
         </Bar>
       </BarChart>
@@ -195,20 +195,20 @@ export function ScoreHistogramSplit({ data, height = 200, onBar }) {
     <ResponsiveContainer width="100%" height={height}>
       <BarChart data={data} margin={{ top: 18, right: 6, left: -16, bottom: 0 }} barCategoryGap="24%" barGap={2}>
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#94a3b8', fontSize: 10 }} />
+        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<TipBox suffix=" unit" />} />
         <Legend
           iconType="circle"
           iconSize={7}
           wrapperStyle={{ fontSize: 10.5, paddingTop: 2 }}
-          formatter={(v) => <span style={{ color: '#94a3b8' }}>{v}</span>}
+          formatter={(v) => <span style={{ color: '#5b6b7c' }}>{v}</span>}
         />
-        <Bar dataKey="mesin" name="Mesin (engine)" fill="#38bdf8" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Mesin')} cursor="pointer">
-          <LabelList dataKey="mesin" position="top" style={{ fill: '#bae6fd', fontSize: 9.5, fontWeight: 700 }} />
+        <Bar dataKey="mesin" name="Mesin (engine)" fill="#0d9488" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Mesin')} cursor="pointer">
+          <LabelList dataKey="mesin" position="top" style={{ fill: '#0f766e', fontSize: 9.5, fontWeight: 700 }} />
         </Bar>
-        <Bar dataKey="irrigator" name="Irrigator" fill="#22d3ee" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Irrigator')} cursor="pointer">
-          <LabelList dataKey="irrigator" position="top" style={{ fill: '#a5f3fc', fontSize: 9.5, fontWeight: 700 }} />
+        <Bar dataKey="irrigator" name="Irrigator" fill="#0891b2" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Irrigator')} cursor="pointer">
+          <LabelList dataKey="irrigator" position="top" style={{ fill: '#0e7490', fontSize: 9.5, fontWeight: 700 }} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -216,7 +216,7 @@ export function ScoreHistogramSplit({ data, height = 200, onBar }) {
 }
 
 /* ------------------ Mini sparkline untuk KPI ------------------ */
-export function Spark({ data, color = '#38bdf8', height = 34 }) {
+export function Spark({ data, color = '#0d9488', height = 34 }) {
   if (!data?.length) return <div style={{ height }} />
   return (
     <ResponsiveContainer width="100%" height={height}>

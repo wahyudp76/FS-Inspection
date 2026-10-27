@@ -14,7 +14,7 @@ import {
   IconCalendar, IconUser, IconGauge, IconList,
 } from '../components/icons'
 
-const STATUS_COLORS = { Terpasang: '#38bdf8', Standby: '#a78bfa', Rusak: '#f43f5e' }
+const STATUS_COLORS = { Terpasang: '#0d9488', Standby: '#7c3aed', Rusak: '#f43f5e' }
 
 export default function Dashboard({ data, records, navigate }) {
   const [tipe, setTipe] = useState('Semua')
@@ -150,14 +150,14 @@ export default function Dashboard({ data, records, navigate }) {
           <span
             className={
               data.masterLive
-                ? 'rounded-md border border-sky-500/35 bg-sky-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-sky-300'
-                : 'rounded-md border border-white/15 bg-white/[0.05] px-1.5 py-0.5 text-[9.5px] font-semibold text-slate-400'
+                ? 'rounded-md border border-teal-600/35 bg-teal-600/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-teal-700'
+                : 'rounded-md border border-slate-900/15 bg-slate-900/[0.04] px-1.5 py-0.5 text-[9.5px] font-semibold text-slate-600'
             }
           >
             {data.masterLive ? 'live' : 'snapshot'}
           </span>
           {!!data.diterapkan && (
-            <span className="rounded-md border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-emerald-300">
+            <span className="rounded-md border border-emerald-500/35 bg-emerald-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-emerald-700">
               +{data.diterapkan} dari inspeksi
             </span>
           )}
@@ -170,7 +170,7 @@ export default function Dashboard({ data, records, navigate }) {
           label="Total Aset"
           value={sum.total}
           unit="unit"
-          accent="#38bdf8"
+          accent="#0d9488"
           icon={<IconTruck size={15} />}
           hint={`${mesin.length} mesin · ${irrigator.length} irrigator`}
           onClick={() => navigate('unit')}
@@ -187,7 +187,7 @@ export default function Dashboard({ data, records, navigate }) {
           label="Skor Kesehatan"
           value={sum.avgScore}
           unit="/100"
-          accent="#a78bfa"
+          accent="#7c3aed"
           icon={<IconGauge size={15} />}
           hint={`${kondisiOf(sum.avgScore)} · ${sum.comps.toLocaleString('id-ID')} titik komponen`}
         />
@@ -195,7 +195,7 @@ export default function Dashboard({ data, records, navigate }) {
           label="Komponen A"
           value={pct(sum.a, sum.a + sum.b + sum.c)}
           unit="%"
-          accent="#38bdf8"
+          accent="#0d9488"
           icon={<IconSpark size={15} />}
           hint={`${sum.a.toLocaleString('id-ID')} baik · ${sum.b.toLocaleString('id-ID')} perhatian`}
         />
@@ -224,10 +224,10 @@ export default function Dashboard({ data, records, navigate }) {
         <span className="flex items-center gap-2 text-[12px] font-semibold text-brand">
           <IconSpark size={14} /> Insight
         </span>
-        <p className="min-w-[220px] flex-1 text-[12px] leading-relaxed text-slate-400">
+        <p className="min-w-[220px] flex-1 text-[12px] leading-relaxed text-slate-600">
           Komponen paling banyak bermasalah pada armada {issueTab.toLowerCase()}:{' '}
           {topIssues.length ? (
-            <span className="font-semibold text-slate-200">{topIssues.join(' · ')}</span>
+            <span className="font-semibold text-slate-800">{topIssues.join(' · ')}</span>
           ) : (
             <span className="text-slate-500">belum ada data</span>
           )}
@@ -272,9 +272,9 @@ export default function Dashboard({ data, records, navigate }) {
             <div className="mt-3 space-y-2">
               {statusData.map((s) => (
                 <div key={s.name} className="flex items-center gap-2">
-                  <span className="w-16 text-[11px] text-slate-400">{s.name}</span>
+                  <span className="w-16 text-[11px] text-slate-600">{s.name}</span>
                   <Bar value={pct(s.value, sum.total)} color={s.color} height={5} />
-                  <span className="w-10 text-right font-mono text-[11px] text-slate-400">{pct(s.value, sum.total)}%</span>
+                  <span className="w-10 text-right font-mono text-[11px] text-slate-600">{pct(s.value, sum.total)}%</span>
                 </div>
               ))}
             </div>
@@ -310,13 +310,13 @@ export default function Dashboard({ data, records, navigate }) {
           <div className="px-1 pb-1">
             <GroupRadar data={radar} height={252} />
           </div>
-          <div className="border-t border-white/[0.06] px-4 py-3">
+          <div className="border-t border-slate-900/[0.09] px-4 py-3">
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
               {radar.map((r) => (
                 <div key={r.id} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: r.nilai >= 90 ? '#22c55e' : r.nilai >= 70 ? '#f59e0b' : '#f43f5e' }} />
-                  <span className="truncate text-[10.5px] text-slate-400" title={r.grup}>{r.grup}</span>
-                  <span className="ml-auto font-mono text-[10.5px] font-semibold text-slate-300">{r.nilai}</span>
+                  <span className="truncate text-[10.5px] text-slate-600" title={r.grup}>{r.grup}</span>
+                  <span className="ml-auto font-mono text-[10.5px] font-semibold text-slate-700">{r.nilai}</span>
                 </div>
               ))}
             </div>
@@ -349,11 +349,11 @@ export default function Dashboard({ data, records, navigate }) {
           <div className="space-y-1 px-3 pb-2 sm:hidden">
             {bucketsSplit.map((b) => (
               <div key={`m-${b.label}`} className="flex items-center gap-1.5">
-                <span className="w-12 shrink-0 font-mono text-[10.5px] text-slate-400">{b.label}</span>
+                <span className="w-12 shrink-0 font-mono text-[10.5px] text-slate-600">{b.label}</span>
                 <button
                   onClick={() => setBucketSel({ range: b, tipe: 'Mesin' })}
                   disabled={!b.mesin}
-                  className="flex min-h-9 flex-1 items-center justify-between rounded-lg border border-sky-500/25 bg-sky-500/[0.08] px-2 text-[10.5px] font-semibold text-sky-200 disabled:opacity-40"
+                  className="flex min-h-9 flex-1 items-center justify-between rounded-lg border border-teal-600/25 bg-teal-600/[0.08] px-2 text-[10.5px] font-semibold text-teal-700 disabled:opacity-40"
                   aria-label={`Analisa ${b.label} Mesin, ${b.mesin} unit`}
                 >
                   <span>Mesin</span>
@@ -362,7 +362,7 @@ export default function Dashboard({ data, records, navigate }) {
                 <button
                   onClick={() => setBucketSel({ range: b, tipe: 'Irrigator' })}
                   disabled={!b.irrigator}
-                  className="flex min-h-9 flex-1 items-center justify-between rounded-lg border border-cyan-500/25 bg-cyan-500/[0.08] px-2 text-[10.5px] font-semibold text-cyan-200 disabled:opacity-40"
+                  className="flex min-h-9 flex-1 items-center justify-between rounded-lg border border-cyan-500/25 bg-cyan-500/[0.08] px-2 text-[10.5px] font-semibold text-cyan-700 disabled:opacity-40"
                   aria-label={`Analisa ${b.label} Irrigator, ${b.irrigator} unit`}
                 >
                   <span>Irrigator</span>
@@ -372,13 +372,13 @@ export default function Dashboard({ data, records, navigate }) {
             ))}
           </div>
           <p className="hidden px-4 pb-2 text-[9.5px] leading-relaxed text-slate-500 sm:block">
-            Klik batang <span className="font-semibold text-sky-300">Mesin</span> atau{' '}
-            <span className="font-semibold text-cyan-300">Irrigator</span> untuk melihat daftar unit + analisa rentang skor.
+            Klik batang <span className="font-semibold text-teal-700">Mesin</span> atau{' '}
+            <span className="font-semibold text-cyan-700">Irrigator</span> untuk melihat daftar unit + analisa rentang skor.
           </p>
-          <div className="space-y-1.5 border-t border-white/[0.06] px-4 py-3">
+          <div className="space-y-1.5 border-t border-slate-900/[0.09] px-4 py-3">
             {komposisi.slice(0, 4).map((k) => (
               <div key={k.name} className="flex items-center gap-2">
-                <span className="w-10 font-mono text-[10.5px] text-slate-400">{k.name}</span>
+                <span className="w-10 font-mono text-[10.5px] text-slate-600">{k.name}</span>
                 <Bar value={pct(k.value, komposisi.reduce((s, x) => s + x.value, 0))} color="#7dd3fc" height={4} />
                 <span className="w-7 text-right font-mono text-[10.5px] text-slate-500">{k.value}</span>
               </div>
@@ -392,33 +392,33 @@ export default function Dashboard({ data, records, navigate }) {
             {inspectors.length ? (
               inspectors.map((i, idx) => (
                 <div key={i.name} className="flex items-center gap-2.5">
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/[0.05] text-[10px] font-bold text-slate-300">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-900/[0.04] text-[10px] font-bold text-slate-700">
                     {idx + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[12px] font-medium text-slate-200">{i.name}</p>
-                    <div className="mt-1"><Bar value={pct(i.jumlah, inspectors[0].jumlah)} color="#38bdf8" height={4} /></div>
+                    <p className="truncate text-[12px] font-medium text-slate-800">{i.name}</p>
+                    <div className="mt-1"><Bar value={pct(i.jumlah, inspectors[0].jumlah)} color="#0d9488" height={4} /></div>
                   </div>
                   <div className="text-right">
-                    <p className="font-mono text-[11.5px] font-semibold text-slate-200">{i.jumlah}</p>
+                    <p className="font-mono text-[11.5px] font-semibold text-slate-800">{i.jumlah}</p>
                     <p className="text-[9.5px] text-slate-500">skor {i.avg}</p>
                   </div>
                 </div>
               ))
             ) : (
               <div className="py-6 text-center">
-                <IconUser size={22} className="mx-auto text-slate-700" />
+                <IconUser size={22} className="mx-auto text-slate-300" />
                 <p className="mt-2 text-[11.5px] text-slate-500">Belum ada petugas yang mengirim inspeksi</p>
               </div>
             )}
             <div className="divider my-1" />
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span>Unit pernah diinspeksi</span>
-              <span className="font-mono font-semibold text-slate-300">{latest.size}</span>
+              <span className="font-mono font-semibold text-slate-700">{latest.size}</span>
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span>Belum pernah diinspeksi</span>
-              <span className="font-mono font-semibold text-amber-400">{Math.max(0, sum.total - latest.size)}</span>
+              <span className="font-mono font-semibold text-amber-600">{Math.max(0, sum.total - latest.size)}</span>
             </div>
           </div>
         </Card>
@@ -443,16 +443,16 @@ export default function Dashboard({ data, records, navigate }) {
               return (
                 <div
                   key={u.kode}
-                  className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5"
+                  className="rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2.5"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[12.5px] font-bold text-white">{u.kode}</span>
-                    <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9.5px]', type === 'Mesin' ? 'border-sky-500/25 bg-sky-500/10 text-sky-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300')}>
+                    <span className="font-mono text-[12.5px] font-bold text-slate-900">{u.kode}</span>
+                    <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9.5px]', type === 'Mesin' ? 'border-teal-600/25 bg-teal-600/10 text-teal-700' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-700')}>
                       {type === 'Mesin' ? <IconTruck size={10} /> : <IconDroplet size={10} />} {type}
                     </span>
                     <span className="ml-auto"><StatusPill status={u.status} /></span>
                     {kondisiOf(u.score, u.status) === 'Kritis' && (
-                      <span className="shrink-0 rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-rose-300">Kritis</span>
+                      <span className="shrink-0 rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-rose-600">Kritis</span>
                     )}
                   </div>
                   <div className="mt-1 flex items-center gap-2">
@@ -461,21 +461,21 @@ export default function Dashboard({ data, records, navigate }) {
                     </p>
                     <button
                       onClick={() => navigate('inspeksi', { tipe: type, kode: u.kode })}
-                      className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                      className="tap shrink-0 rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-700 transition hover:border-brand/40 hover:text-brand"
                     >
                       Inspeksi
                     </button>
                   </div>
                   <div className="mt-1.5 flex items-center gap-2">
                     <span className="shrink-0 font-mono text-[10px]">
-                      <span className="text-emerald-400">{u.a}</span>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-amber-400">{u.b}</span>
-                      <span className="text-slate-600">/</span>
-                      <span className="text-rose-400">{u.c}</span>
+                      <span className="text-emerald-600">{u.a}</span>
+                      <span className="text-slate-400">/</span>
+                      <span className="text-amber-600">{u.b}</span>
+                      <span className="text-slate-400">/</span>
+                      <span className="text-rose-600">{u.c}</span>
                     </span>
                     <Bar value={u.score} color={scoreColor(u.score, u.status)} height={5} />
-                    <span className="w-8 shrink-0 text-right font-mono text-[10.5px] text-slate-300">{Math.round(u.score)}</span>
+                    <span className="w-8 shrink-0 text-right font-mono text-[10.5px] text-slate-700">{Math.round(u.score)}</span>
                   </div>
                 </div>
               )
@@ -486,7 +486,7 @@ export default function Dashboard({ data, records, navigate }) {
           <div className="mt-3 hidden overflow-x-auto sm:block">
             <table className="w-full min-w-[560px] text-left">
               <thead>
-                <tr className="border-y border-white/[0.06] text-[10px] uppercase tracking-wider text-slate-500">
+                <tr className="border-y border-slate-900/[0.09] text-[10px] uppercase tracking-wider text-slate-500">
                   <th className="px-4 py-2 font-semibold">Kode</th>
                   <th className="px-2 py-2 font-semibold">Tipe</th>
                   <th className="px-2 py-2 font-semibold">Wilayah</th>
@@ -499,34 +499,34 @@ export default function Dashboard({ data, records, navigate }) {
                 {prioritas.map((u) => {
                   const type = tipe === 'Semua' ? (mesin.some((m) => m.kode === u.kode) ? 'Mesin' : 'Irrigator') : tipe
                   return (
-                    <tr key={u.kode} className="border-b border-white/[0.04] transition hover:bg-white/[0.03]">
+                    <tr key={u.kode} className="border-b border-slate-900/[0.08] transition hover:bg-slate-900/[0.03]">
                       <td className="px-4 py-2.5">
-                        <span className="font-mono text-[12px] font-semibold text-white">{u.kode}</span>
+                        <span className="font-mono text-[12px] font-semibold text-slate-900">{u.kode}</span>
                         <span className="ml-2 text-[10px] text-slate-500">{u.spec || u.unit}</span>
                       </td>
                       <td className="px-2 py-2.5">
-                        <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]', type === 'Mesin' ? 'border-sky-500/25 bg-sky-500/10 text-sky-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300')}>
+                        <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]', type === 'Mesin' ? 'border-teal-600/25 bg-teal-600/10 text-teal-700' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-700')}>
                           {type === 'Mesin' ? <IconTruck size={10} /> : <IconDroplet size={10} />} {type}
                         </span>
                       </td>
                       <td className="px-2 py-2.5"><StatusPill status={u.status} /></td>
                       <td className="px-2 py-2.5 text-center font-mono text-[11px]">
-                        <span className="text-emerald-400">{u.a}</span>
-                        <span className="text-slate-600">/</span>
-                        <span className="text-amber-400">{u.b}</span>
-                        <span className="text-slate-600">/</span>
-                        <span className="text-rose-400">{u.c}</span>
+                        <span className="text-emerald-600">{u.a}</span>
+                        <span className="text-slate-400">/</span>
+                        <span className="text-amber-600">{u.b}</span>
+                        <span className="text-slate-400">/</span>
+                        <span className="text-rose-600">{u.c}</span>
                       </td>
                       <td className="px-2 py-2.5">
                         <div className="flex items-center gap-2">
                           <Bar value={u.score} color={scoreColor(u.score, u.status)} height={5} />
-                          <span className="w-9 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(u.score)}</span>
+                          <span className="w-9 shrink-0 font-mono text-[11px] text-slate-700">{Math.round(u.score)}</span>
                         </div>
                       </td>
                       <td className="px-4 py-2.5 text-right">
                         <button
                           onClick={() => navigate('inspeksi', { tipe: type, kode: u.kode })}
-                          className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                          className="tap rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-700 transition hover:border-brand/40 hover:text-brand"
                         >
                           Inspeksi
                         </button>
@@ -555,12 +555,12 @@ export default function Dashboard({ data, records, navigate }) {
                 <button
                   key={r.id || `${r.kode}-${r.timestamp}`}
                   onClick={() => navigate('riwayat')}
-                  className="flex w-full items-center gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5 text-left transition hover:border-white/15 hover:bg-white/[0.05]"
+                  className="flex w-full items-center gap-3 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2.5 text-left transition hover:border-slate-900/15 hover:bg-slate-900/[0.04]"
                 >
                   <ScoreRing score={r.skor || 0} size={40} stroke={4} />
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono text-[12px] font-semibold text-white">{r.kode}</span>
+                      <span className="font-mono text-[12px] font-semibold text-slate-900">{r.kode}</span>
                       <span className="text-[9.5px] uppercase tracking-wide text-slate-500">{r.tipe}</span>
                     </div>
                     <p className="truncate text-[10.5px] text-slate-500">
@@ -569,8 +569,8 @@ export default function Dashboard({ data, records, navigate }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <GradePill value="A" size="xs" />
-                    <span className="font-mono text-[10px] text-emerald-400">{rekapRecord(r).a}</span>
-                    <span className="font-mono text-[10px] text-rose-400">{rekapRecord(r).c}</span>
+                    <span className="font-mono text-[10px] text-emerald-600">{rekapRecord(r).a}</span>
+                    <span className="font-mono text-[10px] text-rose-600">{rekapRecord(r).c}</span>
                   </div>
                 </button>
               ))
@@ -586,7 +586,7 @@ export default function Dashboard({ data, records, navigate }) {
         </Card>
       </div>
 
-      <div className="pb-2 text-center text-[10px] text-slate-600">
+      <div className="pb-2 text-center text-[10px] text-slate-400">
         Skor kondisi = (A×100 + B×60 + C×0) ÷ total komponen · Master: tb_mesin ({mesin.length}) &amp; tb_irrigator ({irrigator.length})
       </div>
 

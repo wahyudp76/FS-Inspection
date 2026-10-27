@@ -7,7 +7,7 @@ import {
   IconAlert, IconCheck,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
-import logoUrl from '../assets/logo-white-192.png'
+import logoUrl from '../assets/logo-color-192.png'
 
 const NAV = [
   { id: 'dashboard', label: 'Dashboard', icon: IconGauge, desc: 'Ringkasan & analitik' },
@@ -24,11 +24,15 @@ function NavItem({ item, active, onClick }) {
     <button
       onClick={onClick}
       className={cx(
-        'group flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition',
-        active ? 'bg-white/[0.07] text-white shadow-[inset_0_1px_0_rgba(255,255,255,.06)]' : 'text-slate-400 hover:bg-white/[0.04] hover:text-slate-200'
+        'group relative flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition',
+        active
+          ? 'bg-gradient-to-r from-teal-50 to-cyan-50/60 font-semibold text-teal-900 ring-1 ring-inset ring-teal-600/15'
+          : 'text-slate-600 hover:bg-slate-900/[0.04] hover:text-slate-900'
       )}
     >
-      <span className={cx('rounded-lg p-1.5 transition', active ? 'bg-brand/15 text-brand' : 'bg-white/[0.04] text-slate-500 group-hover:text-slate-300')}>
+      {/* penanda menu aktif */}
+      {active && <span className="absolute left-0 top-1/2 h-6 w-[3px] -translate-y-1/2 rounded-r-full bg-gradient-to-b from-teal-500 to-cyan-500" aria-hidden="true" />}
+      <span className={cx('rounded-lg p-1.5 transition', active ? 'bg-teal-600 text-white shadow-[0_6px_14px_-8px_rgba(13,148,136,0.9)]' : 'bg-slate-900/[0.04] text-slate-500 group-hover:bg-teal-50 group-hover:text-teal-700')}>
         <Icon size={16} />
       </span>
       <span className="min-w-0">
@@ -56,8 +60,8 @@ function BackToTop() {
       title="Kembali ke atas"
       className={cx(
         'no-print fixed bottom-5 right-4 z-[60] grid h-11 w-11 place-items-center rounded-full border sm:bottom-6 sm:right-6',
-        'border-brand/45 bg-ink-900/95 text-brand shadow-[0_10px_30px_-8px_rgba(0,0,0,0.9)] backdrop-blur',
-        'transition-all duration-200 hover:border-brand hover:bg-brand/15 hover:text-white',
+        'border-brand/45 bg-white text-brand shadow-[0_10px_30px_-8px_rgba(0,0,0,0.9)] backdrop-blur',
+        'transition-all duration-200 hover:border-brand hover:bg-brand/15 hover:text-slate-900',
         show ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
       )}
     >
@@ -83,19 +87,23 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
 
   const SidebarInner = (
     <div className="flex h-full flex-col overflow-hidden">
-      <div className="sidebar-head flex shrink-0 items-center gap-2.5 px-4 py-5">
+      <div className="sidebar-head relative flex shrink-0 items-center gap-2.5 overflow-hidden px-4 py-5">
+        {/* aksesori: pendar teal di balik logo */}
+        <span className="blob -left-6 -top-8 h-24 w-24 bg-teal-400/40" aria-hidden="true" />
         <img
           src={logoUrl}
           alt="FS Inspection"
-          width={30}
-          height={30}
-          className="h-[30px] w-[30px] shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)]"
+          width={34}
+          height={34}
+          className="relative h-[34px] w-[34px] shrink-0 rounded-xl object-contain shadow-[0_6px_16px_-8px_rgba(13,148,136,0.8)]"
         />
-        <div className="min-w-0">
-          <p className="text-[13px] font-bold leading-tight text-white">FS Inspection</p>
+        <div className="relative min-w-0">
+          <p className="text-[13.5px] font-bold leading-tight tracking-tight text-slate-900">
+            FS <span className="grad-text">Inspection</span>
+          </p>
           <p className="truncate text-[10px] uppercase tracking-[0.14em] text-slate-500">Engine &amp; Irrigator</p>
         </div>
-        <button className="ml-auto grid h-10 w-10 place-items-center rounded-lg text-slate-400 hover:bg-white/[0.06] hover:text-white lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
+        <button className="ml-auto grid h-10 w-10 place-items-center rounded-lg text-slate-600 hover:bg-slate-900/[0.05] hover:text-slate-900 lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
           <IconX />
         </button>
       </div>
@@ -104,7 +112,9 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain [scrollbar-width:thin]">
         <div className="flex min-h-full flex-col">
       <div className="px-3">
-        <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-600">Menu</p>
+        <p className="mb-1.5 flex items-center gap-1.5 px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-400">
+          <span className="h-1 w-1 rounded-full bg-teal-500" aria-hidden="true" /> Menu
+        </p>
         <nav className="space-y-1">
           {NAV.map((item) => (
             <NavItem
@@ -121,10 +131,11 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
       </div>
 
       <div className="mt-auto space-y-3 p-3">
-        <div className="rounded-xl border border-white/[0.06] bg-ink-900/60 p-3">
+        <div className="card-accent relative overflow-hidden rounded-xl border bg-white p-3">
+          <span className="blob -right-6 -top-8 h-20 w-20 bg-cyan-300/45" aria-hidden="true" />
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-300">
-              {offline ? <IconCloudOff size={13} className="text-amber-400" /> : <IconCloud size={13} className="text-emerald-400" />}
+            <span className="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700">
+              {offline ? <IconCloudOff size={13} className="text-amber-600" /> : <IconCloud size={13} className="text-emerald-600" />}
               Google Sheets
             </span>
             <span className="flex items-center gap-1 text-[10px] text-slate-500" title="Semua sinkronisasi dijalankan dari tombol Sinkron di header">
@@ -143,13 +154,13 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
             {master?.stale ? (
               <button
                 onClick={onSync}
-                className="tap-sm inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 font-semibold text-amber-300 hover:bg-amber-500/20"
+                className="tap-sm inline-flex items-center gap-1 rounded border border-amber-500/40 bg-amber-500/10 px-1.5 font-semibold text-amber-700 hover:bg-amber-500/20"
                 title="Data master di layar berasal dari cache. Tekan untuk menarik ulang dari sheet."
               >
                 <IconAlert size={11} /> Master {master.teks} — tekan Sinkron
               </button>
             ) : (
-              <span className="inline-flex items-center gap-1 text-emerald-400/80">
+              <span className="inline-flex items-center gap-1 text-emerald-600/80">
                 <IconCheck size={11} /> Master live {master?.teks || ''}
               </span>
             )}
@@ -163,7 +174,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
             Sheet “{TARGET_SHEET.name}” <IconExternal size={11} />
           </a>
         </div>
-        <p className="sidebar-ver px-1 text-center text-[9.5px] leading-relaxed text-slate-600">
+        <p className="sidebar-ver px-1 text-center text-[9.5px] leading-relaxed text-slate-400">
           FS Inspection v{VERSI} · Inspeksi (tb_mesin / tb_irrigator)<br />+ Service engine (tb_service1 / tb_service2)
         </p>
       </div>
@@ -175,15 +186,15 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
   return (
     <div className="min-h-screen overflow-x-clip">
       {/* sidebar desktop */}
-      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[236px] border-r border-white/[0.06] bg-ink-900/70 backdrop-blur-xl lg:block">
+      <aside className="no-print fixed inset-y-0 left-0 z-40 hidden w-[236px] border-r border-teal-700/10 bg-white/90 backdrop-blur-xl lg:block">
         {SidebarInner}
       </aside>
 
       {/* drawer mobile */}
       {open && (
         <div className="no-print fixed inset-0 z-50 lg:hidden">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
-          <div className="absolute inset-y-0 left-0 w-[264px] animate-fade-up border-r border-white/10 bg-ink-900">
+          <div className="absolute inset-0 bg-slate-900/35 backdrop-blur-sm" onClick={() => setOpen(false)} />
+          <div className="absolute inset-y-0 left-0 w-[264px] animate-fade-up border-r border-slate-900/10 bg-white">
             {SidebarInner}
           </div>
         </div>
@@ -193,14 +204,16 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
         {/* topbar */}
         <header
           className={cx(
-            'no-print sticky top-0 z-30 border-b backdrop-blur-xl transition-colors',
-            scrolled
-              ? 'border-white/10 bg-ink-950/95 shadow-[0_10px_30px_-16px_rgba(0,0,0,0.95)]'
-              : 'border-white/[0.06] bg-ink-950/80'
+            'no-print sticky top-0 z-30 border-b border-teal-700/10 bg-white/95 backdrop-blur-xl transition-all',
+            scrolled ? 'shadow-[0_12px_28px_-24px_rgba(13,148,136,0.9)]' : ''
           )}
         >
+          <span
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-[2px] bg-gradient-to-r from-teal-500/70 via-cyan-500/50 to-emerald-400/0"
+            aria-hidden="true"
+          />
           <div className="flex items-center gap-2 px-3 py-2 sm:gap-3 sm:px-6 sm:py-3">
-            <button className="grid h-11 w-11 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-300 sm:h-9 sm:w-9 lg:hidden" onClick={() => setOpen(true)} aria-label="Buka menu">
+            <button className="grid h-11 w-11 place-items-center rounded-lg border border-slate-900/10 bg-slate-900/[0.03] text-slate-700 sm:h-9 sm:w-9 lg:hidden" onClick={() => setOpen(true)} aria-label="Buka menu">
               <IconMenu size={16} />
             </button>
             {/* logo di topbar (HP/tablet) — desktop sudah punya di sidebar */}
@@ -212,11 +225,12 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               className="h-[26px] w-[26px] shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)] lg:hidden"
             />
             <div className="min-w-0 flex-1">
-              <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-white">
+              <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-slate-900">
                 {current.label}
-                {demo && <span className="rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-300">Demo</span>}
+                {demo && <span className="rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700">Demo</span>}
               </h1>
               <p className="truncate text-[10.5px] text-slate-500">{current.desc}</p>
+              <span className="mt-1 block h-[2px] w-9 rounded-full bg-gradient-to-r from-teal-500 to-cyan-500 lg:hidden" aria-hidden="true" />
             </div>
             <button
               onClick={() => (route === 'service' ? onAddService?.() : onAddInspect?.())}
@@ -245,7 +259,18 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
           </div>
         </header>
 
-        <main className="mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-6">{children}</main>
+        <main className="relative mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-6">
+          {/* aksesori: siluet tetes logo sebagai watermark di pojok */}
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="pointer-events-none fixed right-3 top-24 hidden h-[260px] w-[260px] text-teal-700/[0.045] xl:block"
+            fill="currentColor"
+          >
+            <path d="M12 2.2c3.4 4.1 6.9 8.6 6.9 12.6A6.9 6.9 0 1 1 5.1 14.8C5.1 10.8 8.6 6.3 12 2.2Z" />
+          </svg>
+          {children}
+        </main>
         <BackToTop />
       </div>
     </div>

@@ -11,7 +11,7 @@ import { useScrollLock } from '../lib/scrollLock'
 const Field = ({ label, value, mono, wide }) => (
   <div className={cx('min-w-0', wide && 'sm:col-span-2')}>
     <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">{label}</p>
-    <p className={cx('truncate text-[12px] text-slate-200', mono && 'font-mono')} title={typeof value === 'string' ? value : undefined}>
+    <p className={cx('truncate text-[12px] text-slate-800', mono && 'font-mono')} title={typeof value === 'string' ? value : undefined}>
       {value || '—'}
     </p>
   </div>
@@ -69,7 +69,7 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
 
   return createPortal(
     <div
-      className="no-print fixed inset-0 z-[70] flex flex-col items-center overflow-y-auto bg-ink-950/85 p-2 backdrop-blur sm:justify-center sm:p-6"
+      className="no-print fixed inset-0 z-[70] flex flex-col items-center overflow-y-auto bg-slate-900/35 p-2 backdrop-blur sm:justify-center sm:p-6"
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose?.() }}
     >
       <div
@@ -77,17 +77,17 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
         aria-modal="true"
         aria-label="Tambah Inspeksi"
         className={cx(
-          'relative my-auto w-full min-w-0 overflow-hidden rounded-2xl border border-white/10 bg-ink-900 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.95)]',
+          'relative my-auto w-full min-w-0 overflow-hidden rounded-2xl border border-slate-900/10 bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.95)]',
           step === 'form' ? 'max-w-5xl' : 'max-w-3xl'
         )}
       >
         {/* ---------- header pop-up ---------- */}
-        <div className="flex items-center gap-3 border-b border-white/[0.08] bg-gradient-to-r from-brand/[0.12] via-transparent to-transparent px-4 py-3">
+        <div className="flex items-center gap-3 border-b border-slate-900/[0.10] bg-gradient-to-r from-brand/[0.12] via-transparent to-transparent px-4 py-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-brand/30 bg-brand/15 text-brand">
             <IconClipboard size={17} />
           </span>
           <div className="min-w-0 flex-1">
-            <h2 className="text-[13.5px] font-bold leading-tight text-white">
+            <h2 className="text-[13.5px] font-bold leading-tight text-slate-900">
               {step === 'form' ? `Inspeksi ${unit?.kode}` : 'Tambah Inspeksi'}
             </h2>
             <p className="truncate text-[10.5px] text-slate-500">
@@ -104,7 +104,7 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
           <button
             onClick={onClose}
             aria-label="Tutup"
-            className="rounded-lg border border-white/10 bg-white/[0.04] p-1.5 text-slate-400 transition hover:border-white/25 hover:bg-white/10 hover:text-white"
+            className="rounded-lg border border-slate-900/10 bg-slate-900/[0.04] p-1.5 text-slate-600 transition hover:border-slate-900/20 hover:bg-slate-900/10 hover:text-slate-900"
           >
             <IconX size={13} />
           </button>
@@ -140,7 +140,7 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
             </div>
 
             {/* daftar unit */}
-            <div className="mt-3 max-h-52 overflow-y-auto rounded-xl border border-white/[0.07] bg-white/[0.015] p-1.5">
+            <div className="mt-3 max-h-52 overflow-y-auto rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.015] p-1.5">
               {hasil.slice(0, 200).map((u) => {
                 const aktif = u.kode === kode
                 return (
@@ -149,20 +149,20 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
                     onClick={() => setKode(u.kode)}
                     className={cx(
                       'flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition',
-                      aktif ? 'bg-brand/15 ring-1 ring-brand/40' : 'hover:bg-white/[0.05]'
+                      aktif ? 'bg-brand/15 ring-1 ring-brand/40' : 'hover:bg-slate-900/[0.04]'
                     )}
                   >
-                    <span className={cx('w-[70px] shrink-0 font-mono text-[11.5px] font-bold', aktif ? 'text-brand' : 'text-white')}>
+                    <span className={cx('w-[70px] shrink-0 font-mono text-[11.5px] font-bold', aktif ? 'text-brand' : 'text-slate-900')}>
                       {u.kode}
                     </span>
-                    <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400">
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-slate-600">
                       {tipe === 'Mesin' ? u.spec || u.unit : `${u.unit}${u.nozzle ? ` · Nozzle ${u.nozzle}` : ''}`}
                     </span>
-                    <span className="hidden shrink-0 rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-400 sm:inline-block">
+                    <span className="hidden shrink-0 rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-600 sm:inline-block">
                       {u.wilayah}
                     </span>
                     <span className="hidden shrink-0 sm:inline-flex"><StatusPill status={u.status} /></span>
-                    <span className="w-8 shrink-0 text-right font-mono text-[10.5px] text-slate-400">{Math.round(u.score ?? 0)}</span>
+                    <span className="w-8 shrink-0 text-right font-mono text-[10.5px] text-slate-600">{Math.round(u.score ?? 0)}</span>
                     {aktif && <IconCheck size={13} className="shrink-0 text-brand" />}
                   </button>
                 )
@@ -173,25 +173,25 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
             </div>
 
             {/* ---------- data pendukung ---------- */}
-            <div className="mt-3 rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+            <div className="mt-3 rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-3">
               {!unit ? (
                 <p className="py-4 text-center text-[11.5px] text-slate-500">
                   Pilih unit di atas — data pendukung (divisi, spesifikasi, status, riwayat inspeksi) langsung tampil di sini.
                 </p>
               ) : (
                 <>
-                  <div className="flex items-center gap-3 border-b border-white/[0.06] pb-2.5">
-                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/[0.04] text-brand">
+                  <div className="flex items-center gap-3 border-b border-slate-900/[0.09] pb-2.5">
+                    <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-slate-900/10 bg-slate-900/[0.04] text-brand">
                       {tipe === 'Mesin' ? <IconTruck size={17} /> : <IconDroplet size={17} />}
                     </span>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="font-mono text-[13px] font-bold text-white">{unit.kode}</span>
+                        <span className="font-mono text-[13px] font-bold text-slate-900">{unit.kode}</span>
                         <StatusPill status={unit.status} />
                         <span className="chip !py-0.5 !text-[9.5px]">{tipe}</span>
                         <span className="chip !py-0.5 !text-[9.5px]">{unit.unit}</span>
                       </div>
-                      <p className="truncate text-[10.5px] text-slate-400">
+                      <p className="truncate text-[10.5px] text-slate-600">
                         {tipe === 'Mesin'
                           ? `${unit.spec || '—'}${unit.power ? ` · ${unit.power} HP` : ''}${unit.pompa ? ` · Pompa ${unit.pompa}` : ''}`
                           : `${unit.unit || '—'}${unit.nozzle ? ` · Nozzle ${unit.nozzle}` : ''}`}
@@ -222,14 +222,14 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
                     {unit.keterangan && <Field label="Keterangan" value={unit.keterangan} wide />}
                   </div>
 
-                  <div className="mt-2.5 rounded-lg border border-white/[0.06] bg-white/[0.015] px-2.5 py-2">
+                  <div className="mt-2.5 rounded-lg border border-slate-900/[0.09] bg-slate-900/[0.015] px-2.5 py-2">
                     <p className="text-[9.5px] font-semibold uppercase tracking-[0.12em] text-slate-500">Inspeksi terakhir</p>
                     {lastRec ? (
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-300">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-slate-700">
                         <span className="font-mono">{lastRec.tanggal}</span>
                         <span className={cx('rounded-md border px-1.5 py-0.5 text-[9.5px] font-semibold', km.cls)}>{lastRec.kondisi}</span>
                         <span className="font-mono">skor {Number(lastRec.skor).toFixed(1)}</span>
-                        <span className="font-mono text-slate-400">A {lastRec.a} · B {lastRec.b} · C {lastRec.c}</span>
+                        <span className="font-mono text-slate-600">A {lastRec.a} · B {lastRec.b} · C {lastRec.c}</span>
                         <span className="text-slate-500">oleh {lastRec.petugas || '—'}</span>
                       </div>
                     ) : (
@@ -263,7 +263,7 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
               onExit={() => setStep('pick')}
               onNavigate={(id) => { onClose?.(); navigate?.(id) }}
             />
-            <div className="flex items-center gap-2 border-t border-white/[0.08] bg-ink-900/80 px-4 py-2">
+            <div className="flex items-center gap-2 border-t border-slate-900/[0.10] bg-white px-4 py-2">
               <span className="text-[10.5px] text-slate-500">
                 Checklist di atas identik dengan tab Inspeksi — hasilnya tersimpan ke sheet “Data Inspeksi”.
               </span>

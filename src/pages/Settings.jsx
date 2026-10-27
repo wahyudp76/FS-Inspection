@@ -87,7 +87,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
         <CardHeader
           title="Koneksi Google Sheets"
           sub="Dashboard menulis ke sheet “Data Inspeksi” lewat Google Apps Script Web App"
-          right={<span className={cx('chip', isConfigured() ? '!border-emerald-500/30 !text-emerald-300' : '!border-amber-500/30 !text-amber-300')}>
+          right={<span className={cx('chip shrink-0 whitespace-nowrap', isConfigured() ? '!border-emerald-600/30 !bg-emerald-50 !text-emerald-700' : '!border-amber-500/30 !bg-amber-50 !text-amber-700')}>
             {isConfigured() ? 'Terhubung' : 'Belum diatur'}
           </span>}
         />
@@ -105,7 +105,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
             </div>
             <p className="mt-1.5 text-[10.5px] leading-relaxed text-slate-500">
               Endpoint disimpan di browser ini (localStorage). Untuk default di semua perangkat, isi variabel{' '}
-              <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-[10px] text-slate-300">VITE_APPS_SCRIPT_URL</code> pada file <code className="rounded bg-white/[0.06] px-1 py-0.5 font-mono text-[10px] text-slate-300">.env</code> sebelum build.
+              <code className="rounded bg-slate-900/[0.05] px-1 py-0.5 font-mono text-[10px] text-slate-700">VITE_APPS_SCRIPT_URL</code> pada file <code className="rounded bg-slate-900/[0.05] px-1 py-0.5 font-mono text-[10px] text-slate-700">.env</code> sebelum build.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -114,11 +114,11 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
             </button>
             <span className="flex items-center gap-1.5 self-center text-[11px] text-slate-500">
               <IconRefresh size={13} className={syncing ? 'animate-spin text-brand' : ''} />
-              Sinkron semua data lewat tombol <span className="font-semibold text-slate-300">Sinkron</span> di header.
+              Sinkron semua data lewat tombol <span className="font-semibold text-slate-700">Sinkron</span> di header.
             </span>
           </div>
           {status && (
-            <div className={cx('whitespace-pre-line rounded-xl border px-3 py-2 text-[11.5px] leading-relaxed', status.ok ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-200' : 'border-rose-500/30 bg-rose-500/[0.08] text-rose-200')}>
+            <div className={cx('whitespace-pre-line rounded-xl border px-3 py-2 text-[11.5px] leading-relaxed', status.ok ? 'border-emerald-500/30 bg-emerald-500/[0.08] text-emerald-700' : 'border-rose-500/30 bg-rose-500/[0.08] text-rose-700')}>
               <span className="flex items-center gap-1.5">{status.ok ? <IconCheck size={13} /> : <IconAlert size={13} />} {status.message}</span>
             </div>
           )}
@@ -129,8 +129,8 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
         <Card>
           <CardHeader title="Spreadsheet Tujuan" sub="Tempat hasil inspeksi disimpan" icon={<IconSheet size={15} />} />
           <div className="card-pad pt-2">
-            <p className="text-[12px] font-semibold text-slate-200">Update ZPAS637</p>
-            <p className="mt-0.5 text-[11px] text-slate-500">Sheet: <span className="font-mono text-slate-400">Data Inspeksi</span> (tabel Mesin &amp; Irrigator)</p>
+            <p className="text-[12px] font-semibold text-slate-800">Update ZPAS637</p>
+            <p className="mt-0.5 text-[11px] text-slate-500">Sheet: <span className="font-mono text-slate-600">Data Inspeksi</span> (tabel Mesin &amp; Irrigator)</p>
             <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost mt-3 !py-1.5 !text-[11.5px] max-sm:!min-h-11">
               Buka spreadsheet <IconExternal size={12} />
             </a>
@@ -139,8 +139,8 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
         <Card>
           <CardHeader title="Spreadsheet Sumber" sub="Master aset mesin & irrigator" icon={<IconSheet size={15} />} />
           <div className="card-pad pt-2">
-            <p className="text-[12px] font-semibold text-slate-200">Draft Dashboard</p>
-            <p className="mt-0.5 text-[11px] text-slate-500">Sheet: <span className="font-mono text-slate-400">Mesin</span> (tb_mesin) &amp; <span className="font-mono text-slate-400">Irrigator</span> (tb_irrigator)</p>
+            <p className="text-[12px] font-semibold text-slate-800">Draft Dashboard</p>
+            <p className="mt-0.5 text-[11px] text-slate-500">Sheet: <span className="font-mono text-slate-600">Mesin</span> (tb_mesin) &amp; <span className="font-mono text-slate-600">Irrigator</span> (tb_irrigator)</p>
             <a href={SOURCE_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost mt-3 !py-1.5 !text-[11.5px] max-sm:!min-h-11">
               Buka spreadsheet <IconExternal size={12} />
             </a>
@@ -154,7 +154,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
           sub="Tombol Sinkron di header menjalankan semua tahap di bawah sekaligus"
           icon={<IconRefresh size={15} />}
           right={
-            <span className={cx('chip', syncing ? '!border-sky-500/30 !text-sky-300' : syncedAt ? '!border-emerald-500/30 !text-emerald-300' : '!border-amber-500/30 !text-amber-300')}>
+            <span className={cx('chip shrink-0 whitespace-nowrap', syncing ? '!border-teal-600/30 !bg-teal-50 !text-teal-700' : syncedAt ? '!border-emerald-600/30 !bg-emerald-50 !text-emerald-700' : '!border-amber-500/30 !bg-amber-50 !text-amber-700')}>
               {syncing ? 'Berjalan…' : syncedAt ? `Tersinkron ${relativeTime(syncedAt)}` : 'Belum tersinkron'}
             </span>
           }
@@ -164,28 +164,28 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
             const r = syncLaporan?.[t.id]
             const gagal = r && !r.ok
             return (
-              <div key={t.id} className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+              <div key={t.id} className="flex gap-3 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2.5">
                 <span
                   className={cx(
                     'mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-lg',
-                    gagal ? 'bg-rose-500/15 text-rose-300' : r ? 'bg-emerald-500/15 text-emerald-300' : 'bg-white/[0.06] text-slate-500'
+                    gagal ? 'bg-rose-500/15 text-rose-600' : r ? 'bg-emerald-500/15 text-emerald-700' : 'bg-slate-900/[0.05] text-slate-500'
                   )}
                 >
                   {gagal ? <IconAlert size={13} /> : r ? <IconCheck size={13} /> : <IconRefresh size={13} />}
                 </span>
                 <div className="min-w-0">
-                  <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-slate-200">
+                  <p className="flex flex-wrap items-center gap-1.5 text-[12px] font-semibold text-slate-800">
                     {t.judul}
-                    <span className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9.5px] font-normal text-slate-400">
+                    <span className="rounded border border-slate-900/10 bg-slate-900/[0.04] px-1.5 py-0.5 font-mono text-[9.5px] font-normal text-slate-600">
                       {t.arah}
                     </span>
                     {infoTahap(t.id) && (
-                      <span className={cx('font-mono text-[10px]', gagal ? 'text-rose-300' : 'text-emerald-300/90')}>{infoTahap(t.id)}</span>
+                      <span className={cx('font-mono text-[10px]', gagal ? 'text-rose-600' : 'text-emerald-700/90')}>{infoTahap(t.id)}</span>
                     )}
                   </p>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{t.detail}</p>
                   {gagal && r.error && (
-                    <p className="mt-1 rounded-lg bg-rose-500/10 px-2 py-1 font-mono text-[10px] leading-relaxed text-rose-300">{r.error}</p>
+                    <p className="mt-1 rounded-lg bg-rose-500/10 px-2 py-1 font-mono text-[10px] leading-relaxed text-rose-600">{r.error}</p>
                   )}
                 </div>
               </div>
@@ -193,11 +193,11 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
           })}
           <p className="text-[11px] leading-relaxed text-slate-500">
             Tidak ada lagi tombol tarik/kirim terpisah di Dashboard, Riwayat, atau Service — semuanya memakai hasil tombol
-            <span className="font-semibold text-slate-300"> Sinkron </span>
+            <span className="font-semibold text-slate-700"> Sinkron </span>
             di header. Sinkron juga berjalan otomatis tiap {Math.round(REFRESH_MS / 60000)} menit bila opsi di bawah aktif.
           </p>
           {pending > 0 && (
-            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-200">
+            <div className="flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/[0.08] px-3 py-2 text-[11px] leading-relaxed text-amber-700">
               <IconAlert size={13} className="mt-0.5 shrink-0" />
               <span>
                 {nf.format(pending)} inspeksi masih tersimpan di perangkat ini dan akan dikirim ke sheet pada Sinkron berikutnya.
@@ -205,7 +205,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
             </div>
           )}
           {!isConfigured() && (
-            <div className="flex items-start gap-2 rounded-xl border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2 text-[11px] leading-relaxed text-sky-200">
+            <div className="flex items-start gap-2 rounded-xl border border-teal-600/25 bg-teal-600/[0.07] px-3 py-2 text-[11px] leading-relaxed text-teal-700">
               <IconWrench size={13} className="mt-0.5 shrink-0" />
               <span>Isi endpoint Apps Script di kartu atas agar Sinkron bisa bekerja. Tanpa endpoint, aplikasi memakai data lokal.</span>
             </div>
@@ -249,15 +249,15 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
               {busyAwal ? 'Mengisi…' : 'Isi inspeksi awal'}
             </button>
           </div>
-          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2.5">
             <input
               type="checkbox"
               checked={autoMaster}
               onChange={(e) => { setAutoMaster(e.target.checked); setAutoSyncMaster(e.target.checked) }}
               className="mt-0.5 h-5 w-5 shrink-0 accent-sky-400"
             />
-            <span className="text-[11.5px] leading-relaxed text-slate-300">
-              <span className="font-semibold text-slate-100">Sinkron otomatis ke sheet Mesin &amp; Irrigator</span>
+            <span className="text-[11.5px] leading-relaxed text-slate-700">
+              <span className="font-semibold text-slate-900">Sinkron otomatis ke sheet Mesin &amp; Irrigator</span>
               <span className="block text-slate-500">
                 Setiap selesai kirim inspeksi, sheet master diperbarui: nilai <span className="font-mono text-[10.5px]">A/B/C</span> ditulis ke
                 kolom komponen (Accu, Klem Accu, Radiator, …) <em>dan</em> kolom ringkasan di kanan (tanggal, skor, kondisi, temuan).
@@ -267,8 +267,8 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
           </label>
           <p className="text-[11px] leading-relaxed text-slate-500">
             Menyalin kondisi seluruh unit master (±274 baris) sebagai inspeksi awal. Aman dijalankan berulang —
-            baris yang sudah ada tidak diduplikasi. Unit berstatus <span className="font-semibold text-rose-300">Rusak</span>{' '}
-            otomatis dinilai <span className="font-semibold text-rose-300">Kritis</span>.
+            baris yang sudah ada tidak diduplikasi. Unit berstatus <span className="font-semibold text-rose-600">Rusak</span>{' '}
+            otomatis dinilai <span className="font-semibold text-rose-600">Kritis</span>.
           </p>
         </div>
       </Card>
@@ -280,7 +280,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
           icon={<IconShield size={15} />}
           right={
             audit ? (
-              <span className={cx('chip', auditBermasalah ? '!border-amber-500/30 !text-amber-300' : '!border-emerald-500/30 !text-emerald-300')}>
+              <span className={cx('chip', auditBermasalah ? '!border-amber-500/30 !text-amber-700' : '!border-emerald-500/30 !text-emerald-700')}>
                 {auditBermasalah ? `${auditTotal} temuan` : 'Bersih'}
               </span>
             ) : null
@@ -370,9 +370,9 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
                   ['Master Mesin', audit.master?.mesin ?? 0],
                   ['Master Irrigator', audit.master?.irrigator ?? 0],
                 ].map(([label, val]) => (
-                  <div key={label} className="rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2">
+                  <div key={label} className="rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2">
                     <p className="text-[10px] uppercase tracking-wider text-slate-500">{label}</p>
-                    <p className={cx('mt-0.5 font-mono text-[15px] font-bold', val ? (label.endsWith('*') ? 'text-sky-300' : 'text-amber-300') : 'text-emerald-300')}>{val}</p>
+                    <p className={cx('mt-0.5 font-mono text-[15px] font-bold', val ? (label.endsWith('*') ? 'text-teal-700' : 'text-amber-700') : 'text-emerald-700')}>{val}</p>
                   </div>
                 ))}
               </div>
@@ -381,11 +381,11 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
                 kesalahan data — dashboard selalu memakai status master (acuan kebenaran), dan tidak menulis ulang riwayat.
               </p>
               {audit.statusBeda?.length > 0 && (
-                <div className="rounded-xl border border-sky-500/25 bg-sky-500/[0.06] p-2.5">
-                  <p className="mb-1 text-[10px] uppercase tracking-wider text-sky-300/80">
+                <div className="rounded-xl border border-teal-600/25 bg-teal-600/[0.06] p-2.5">
+                  <p className="mb-1 text-[10px] uppercase tracking-wider text-teal-700/80">
                     Status berbeda ({audit.statusBeda.length} unit) — tentukan yang benar di sheet
                   </p>
-                  <ul className="space-y-0.5 text-[11px] text-sky-100/80">
+                  <ul className="space-y-0.5 text-[11px] text-teal-700/80">
                     {audit.statusBeda.map((s) => (
                       <li key={`${s.tipe}-${s.kode}`} className="font-mono text-[10.5px]">
                         {s.kode} <span className="text-slate-500">({s.tipe})</span> · Data Inspeksi “{s.sheet}” ≠ master “{s.master || '-'}”
@@ -396,16 +396,16 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
               )}
 
               {audit.contoh?.length > 0 && (
-                <div className="max-h-72 overflow-y-auto rounded-xl border border-white/[0.06]">
+                <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-900/[0.09]">
                   <table className="w-full text-left text-[11px]">
                     <thead className="sticky top-0 bg-[#0d1420] text-[10px] uppercase tracking-wider text-slate-500">
                       <tr><th className="px-3 py-1.5">Baris</th><th className="px-3 py-1.5">Unit</th><th className="px-3 py-1.5">Temuan</th></tr>
                     </thead>
-                    <tbody className="divide-y divide-white/[0.04] text-slate-400">
+                    <tbody className="divide-y divide-slate-900/[0.06] text-slate-600">
                       {audit.contoh.slice(0, 40).map((c, i) => (
                         <tr key={i}>
                           <td className="px-3 py-1.5 font-mono text-[10.5px] text-slate-500">{c.baris}</td>
-                          <td className="px-3 py-1.5 font-mono text-[10.5px] text-slate-300">{c.kode}</td>
+                          <td className="px-3 py-1.5 font-mono text-[10.5px] text-slate-700">{c.kode}</td>
                           <td className="px-3 py-1.5">{c.pesan}</td>
                         </tr>
                       ))}
@@ -417,7 +417,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
           )}
 
           <p className="text-[11px] leading-relaxed text-slate-500">
-            Audit membandingkan <span className="font-semibold text-slate-300">sel komponen</span> dengan kolom ringkasan
+            Audit membandingkan <span className="font-semibold text-slate-700">sel komponen</span> dengan kolom ringkasan
             (A/B/C/Total/Skor/Kondisi) di sheet “Data Inspeksi”, sheet <span className="font-mono text-[10.5px]">Mesin</span>, dan
             sheet <span className="font-mono text-[10.5px]">Irrigator</span>. Perbaikan mengisi komponen kosong dari master
             lebih dulu, baru menghitung ulang ringkasan — jadi nilai komponen tidak pernah ditimpa.
@@ -433,12 +433,12 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
           right={<span className="chip">{'idempoten'}</span>}
         />
         <div className="card-pad space-y-3 pt-3">
-          <p className="text-[11.5px] leading-relaxed text-slate-400">
-            Kolom <span className="font-mono text-[10.5px] text-slate-300">D–F</span> diisi rumus saat service dicatat dari web.
-            Spreadsheet berlokal Indonesia memakai <span className="font-semibold text-slate-200">koma sebagai desimal</span>,
-            jadi pemisah argumen rumus harus <span className="font-mono text-[10.5px] text-slate-300">;</span> —
-            kalau ditulis dengan <span className="font-mono text-[10.5px] text-slate-300">,</span> sel jadi
-            <span className="font-semibold text-rose-300"> #ERROR!</span>. Tombol di bawah menulis ulang rumus
+          <p className="text-[11.5px] leading-relaxed text-slate-600">
+            Kolom <span className="font-mono text-[10.5px] text-slate-700">D–F</span> diisi rumus saat service dicatat dari web.
+            Spreadsheet berlokal Indonesia memakai <span className="font-semibold text-slate-800">koma sebagai desimal</span>,
+            jadi pemisah argumen rumus harus <span className="font-mono text-[10.5px] text-slate-700">;</span> —
+            kalau ditulis dengan <span className="font-mono text-[10.5px] text-slate-700">,</span> sel jadi
+            <span className="font-semibold text-rose-600"> #ERROR!</span>. Tombol di bawah menulis ulang rumus
             (atau nilai jadi bila rumus tetap ditolak sheet) untuk semua baris yang rusak.
           </p>
           <button
@@ -469,15 +469,15 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
       <Card>
         <CardHeader title="Sinkronisasi Otomatis" sub="Kapan data ditarik dan ditulis" icon={<IconRefresh size={15} />} />
         <div className="card-pad space-y-2.5 pt-3">
-          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+          <label className="flex cursor-pointer items-start gap-2.5 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2.5">
             <input
               type="checkbox"
               checked={autoRefresh}
               onChange={(e) => { setAutoRefreshState(e.target.checked); setAutoRefresh(e.target.checked) }}
               className="mt-0.5 h-5 w-5 shrink-0 accent-sky-400"
             />
-            <span className="text-[11.5px] leading-relaxed text-slate-300">
-              <span className="font-semibold text-slate-100">Muat ulang data terbaru dari sheet</span>
+            <span className="text-[11.5px] leading-relaxed text-slate-700">
+              <span className="font-semibold text-slate-900">Muat ulang data terbaru dari sheet</span>
               <span className="block text-slate-500">
                 Dashboard menarik ulang isi sheet “Data Inspeksi” setiap {Math.round(REFRESH_MS / 60000)} menit dan
                 setiap kali tab kembali aktif — jadi hasil inspeksi petugas lain langsung terlihat tanpa klik Sinkron.
@@ -491,15 +491,15 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
         <CardHeader title="Panduan Deploy Apps Script" sub="Sekali setup, ± 3 menit" icon={<IconSpark size={15} />} />
         <div className="card-pad space-y-2.5 pt-3">
           {STEPS.map((s, i) => (
-            <div key={i} className="flex gap-3 rounded-xl border border-white/[0.06] bg-white/[0.02] px-3 py-2.5">
+            <div key={i} className="flex gap-3 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2.5">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-brand/15 font-mono text-[11px] font-bold text-brand">{i + 1}</span>
               <div>
-                <p className="text-[12px] font-semibold text-slate-200">{s.t}</p>
+                <p className="text-[12px] font-semibold text-slate-800">{s.t}</p>
                 <p className="mt-0.5 text-[11px] leading-relaxed text-slate-500">{s.d}</p>
               </div>
             </div>
           ))}
-          <div className="rounded-xl border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2.5 text-[11px] leading-relaxed text-sky-200">
+          <div className="rounded-xl border border-teal-600/25 bg-teal-600/[0.07] px-3 py-2.5 text-[11px] leading-relaxed text-teal-700">
             <span className="flex items-center gap-1.5 font-semibold"><IconShield size={13} /> Keamanan</span>
             Web App dijalankan atas nama Anda dan hanya menulis ke sheet “Data Inspeksi”. Tidak ada API key yang disimpan di browser.
           </div>
@@ -509,12 +509,12 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
       <Card>
         <CardHeader title="Skema Tabel “Data Inspeksi”" sub="Dibuat otomatis oleh Apps Script saat inspeksi pertama masuk" />
         <div className="card-pad pt-3">
-          <div className="overflow-x-auto rounded-xl border border-white/[0.06]">
+          <div className="overflow-x-auto rounded-xl border border-slate-900/[0.09]">
             <table className="w-full min-w-[520px] text-left text-[11px]">
-              <thead className="bg-white/[0.03] text-[10px] uppercase tracking-wider text-slate-500">
+              <thead className="bg-slate-900/[0.03] text-[10px] uppercase tracking-wider text-slate-500">
                 <tr><th className="px-3 py-2">Kolom</th><th className="px-3 py-2">Isi</th></tr>
               </thead>
-              <tbody className="divide-y divide-white/[0.04] text-slate-400">
+              <tbody className="divide-y divide-slate-900/[0.06] text-slate-600">
                 {[
                   ['ID Inspeksi', 'FSI-xxxxx (unik per sesi)'],
                   ['Tanggal / Timestamp', 'Tanggal inspeksi & waktu kirim'],
@@ -526,7 +526,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
                   ['<Komponen>', 'Satu kolom per komponen (44 untuk mesin, 30 untuk irrigator) berisi A/B/C'],
                   ['Catatan', 'Temuan & rekomendasi'],
                 ].map(([k, v]) => (
-                  <tr key={k}><td className="px-3 py-1.5 font-mono text-[10.5px] text-slate-300">{k}</td><td className="px-3 py-1.5">{v}</td></tr>
+                  <tr key={k}><td className="px-3 py-1.5 font-mono text-[10.5px] text-slate-700">{k}</td><td className="px-3 py-1.5">{v}</td></tr>
                 ))}
               </tbody>
             </table>
@@ -538,11 +538,11 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
         <CardHeader
           title="Mode Demo"
           sub="Tampilkan data inspeksi contoh untuk melihat grafik & tren"
-          right={<span className={cx('chip', demo ? '!border-amber-500/30 !text-amber-300' : '')}>{demo ? 'Aktif' : 'Nonaktif'}</span>}
+          right={<span className={cx('chip', demo ? '!border-amber-500/30 !text-amber-700' : '')}>{demo ? 'Aktif' : 'Nonaktif'}</span>}
         />
         <div className="card-pad flex flex-wrap items-center gap-3 pt-3">
-          <p className="flex-1 text-[11.5px] leading-relaxed text-slate-400">
-            Data demo dibuat lokal (±90 sesi, 10 minggu, 6 petugas) dan <span className="font-semibold text-slate-200">tidak pernah dikirim</span> ke Google Sheets.
+          <p className="flex-1 text-[11.5px] leading-relaxed text-slate-600">
+            Data demo dibuat lokal (±90 sesi, 10 minggu, 6 petugas) dan <span className="font-semibold text-slate-800">tidak pernah dikirim</span> ke Google Sheets.
             Matikan mode demo sebelum memakai data produksi.
           </p>
           <button

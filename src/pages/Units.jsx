@@ -123,10 +123,10 @@ export default function Units({ data, records, navigate }) {
               onChange={(e) => setSort(e.target.value)}
               className="input appearance-none !py-2 !pl-3 !pr-8 !text-[12px]"
             >
-              <option value="skor-asc" className="bg-ink-800">Skor terendah</option>
-              <option value="skor-desc" className="bg-ink-800">Skor tertinggi</option>
-              <option value="c" className="bg-ink-800">Temuan C terbanyak</option>
-              <option value="kode" className="bg-ink-800">Kode A-Z</option>
+              <option value="skor-asc" className="bg-white">Skor terendah</option>
+              <option value="skor-desc" className="bg-white">Skor tertinggi</option>
+              <option value="c" className="bg-white">Temuan C terbanyak</option>
+              <option value="kode" className="bg-white">Kode A-Z</option>
             </select>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
               className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-500">
@@ -137,7 +137,7 @@ export default function Units({ data, records, navigate }) {
           {(wilayahSel.length > 0 || statusSel.length > 0 || jenisSel.length > 0 || tipe !== 'Semua' || q) && (
             <button
               onClick={() => { setWilayahSel([]); setStatusSel([]); setJenisSel([]); setTipe('Semua'); setQ(''); setPage(0) }}
-              className="btn-ghost !border-rose-500/30 !py-2 !text-[11.5px] !text-rose-300"
+              className="btn-ghost !border-rose-500/30 !py-2 !text-[11.5px] !text-rose-600"
               title="Bersihkan semua filter"
             >
               <IconX size={13} /> Reset
@@ -165,48 +165,48 @@ export default function Units({ data, records, navigate }) {
             const rec = latest.get(`${u.tipe}:${u.kode}`)
             const warna = scoreColor(u.score, u.status)
             return (
-              <div key={`m-${u.tipe}-${u.kode}`} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
+              <div key={`m-${u.tipe}-${u.kode}`} className="rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-3">
                 <div className="flex items-start gap-2">
                   <button
                     onClick={() => setDetail(u)}
                     className="tap min-w-0 flex-1 justify-start gap-1.5 text-left"
                     aria-label={`Detail unit ${u.kode}`}
                   >
-                    <span className="font-mono text-[13px] font-bold text-white">{u.kode}</span>
-                    <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9.5px]', u.tipe === 'Mesin' ? 'border-sky-500/25 bg-sky-500/10 text-sky-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300')}>
+                    <span className="font-mono text-[13px] font-bold text-slate-900">{u.kode}</span>
+                    <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[9.5px]', u.tipe === 'Mesin' ? 'border-teal-600/25 bg-teal-600/10 text-teal-700' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-700')}>
                       {u.tipe === 'Mesin' ? <IconTruck size={9} /> : <IconDroplet size={9} />} {u.tipe}
                     </span>
                   </button>
                   <div className="flex shrink-0 flex-col items-end gap-1">
                     <StatusPill status={u.status} />
                     {kondisiOf(u.score, u.status) === 'Kritis' && (
-                      <span className="rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-rose-300">
+                      <span className="rounded-md border border-rose-500/30 bg-rose-500/10 px-1.5 py-0.5 text-[9.5px] font-semibold text-rose-600">
                         Kritis
                       </span>
                     )}
                   </div>
                 </div>
-                <p className="mt-1 truncate text-[11px] text-slate-400">
+                <p className="mt-1 truncate text-[11px] text-slate-600">
                   {u.wilayah || '—'} · {u.spec || u.unit}{u.power ? ` · ${u.power} HP` : ''}{u.nozzle ? ` · Nozzle ${u.nozzle}` : ''}
                 </p>
                 <div className="mt-2 flex items-center gap-2">
                   <Bar value={u.score} color={warna} height={5} />
-                  <span className="w-8 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(u.score)}</span>
+                  <span className="w-8 shrink-0 font-mono text-[11px] text-slate-700">{Math.round(u.score)}</span>
                   <span className="ml-auto shrink-0 font-mono text-[10.5px]">
-                    <span className="text-emerald-400">{u.a}</span>
-                    <span className="text-slate-600">/</span>
-                    <span className="text-amber-400">{u.b}</span>
-                    <span className="text-slate-600">/</span>
-                    <span className="text-rose-400">{u.c}</span>
+                    <span className="text-emerald-600">{u.a}</span>
+                    <span className="text-slate-400">/</span>
+                    <span className="text-amber-600">{u.b}</span>
+                    <span className="text-slate-400">/</span>
+                    <span className="text-rose-600">{u.c}</span>
                   </span>
                 </div>
-                <div className="mt-2 flex items-center gap-2 border-t border-white/[0.05] pt-2">
+                <div className="mt-2 flex items-center gap-2 border-t border-slate-900/[0.08] pt-2">
                   <p className="min-w-0 flex-1 truncate text-[10.5px] text-slate-500">
-                    {rec ? `Inspeksi ${rec.tanggal} · ${rec.inspector || '—'}` : <span className="text-amber-500/80">belum pernah diinspeksi</span>}
+                    {rec ? `Inspeksi ${rec.tanggal} · ${rec.inspector || '—'}` : <span className="text-amber-600/80">belum pernah diinspeksi</span>}
                   </p>
                   <button
                     onClick={() => navigate('inspeksi', { tipe: u.tipe, kode: u.kode })}
-                    className="tap shrink-0 rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300"
+                    className="tap shrink-0 rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-700"
                   >
                     Inspeksi
                   </button>
@@ -220,7 +220,7 @@ export default function Units({ data, records, navigate }) {
         <div className="mt-3 hidden overflow-x-auto sm:block">
           <table className="w-full min-w-[820px] text-left">
             <thead>
-              <tr className="border-y border-white/[0.06] text-[10px] uppercase tracking-wider text-slate-500">
+              <tr className="border-y border-slate-900/[0.09] text-[10px] uppercase tracking-wider text-slate-500">
                 <th className="px-4 py-2 font-semibold">Kode Unit</th>
                 <th className="px-2 py-2 font-semibold">Tipe</th>
                 <th className="px-2 py-2 font-semibold">Wilayah</th>
@@ -236,38 +236,38 @@ export default function Units({ data, records, navigate }) {
               {view.map((u) => {
                 const rec = latest.get(`${u.tipe}:${u.kode}`)
                 return (
-                  <tr key={`${u.tipe}-${u.kode}`} className="group border-b border-white/[0.04] transition hover:bg-white/[0.03]">
+                  <tr key={`${u.tipe}-${u.kode}`} className="group border-b border-slate-900/[0.08] transition hover:bg-slate-900/[0.03]">
                     <td className="px-4 py-2.5">
-                      <button onClick={() => setDetail(u)} className="tap justify-start px-1 font-mono text-[12px] font-semibold text-white hover:text-brand">{u.kode}</button>
+                      <button onClick={() => setDetail(u)} className="tap justify-start px-1 font-mono text-[12px] font-semibold text-slate-900 hover:text-brand">{u.kode}</button>
                     </td>
                     <td className="px-2 py-2.5">
-                      <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]', u.tipe === 'Mesin' ? 'border-sky-500/25 bg-sky-500/10 text-sky-300' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-300')}>
+                      <span className={cx('inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px]', u.tipe === 'Mesin' ? 'border-teal-600/25 bg-teal-600/10 text-teal-700' : 'border-cyan-500/25 bg-cyan-500/10 text-cyan-700')}>
                         {u.tipe === 'Mesin' ? <IconTruck size={10} /> : <IconDroplet size={10} />} {u.tipe}
                       </span>
                     </td>
-                    <td className="px-2 py-2.5 text-[11.5px] text-slate-300">{u.wilayah || '—'}</td>
-                    <td className="max-w-[190px] truncate px-2 py-2.5 text-[11.5px] text-slate-400" title={u.spec || u.unit}>
+                    <td className="px-2 py-2.5 text-[11.5px] text-slate-700">{u.wilayah || '—'}</td>
+                    <td className="max-w-[190px] truncate px-2 py-2.5 text-[11.5px] text-slate-600" title={u.spec || u.unit}>
                       {u.spec || u.unit}{u.power ? ` · ${u.power} HP` : ''}{u.nozzle ? ` · Nozzle ${u.nozzle}` : ''}
                     </td>
                     <td className="px-2 py-2.5"><StatusPill status={u.status} /></td>
                     <td className="px-2 py-2.5 text-center font-mono text-[11px]">
-                      <span className="text-emerald-400">{u.a}</span><span className="text-slate-600">/</span>
-                      <span className="text-amber-400">{u.b}</span><span className="text-slate-600">/</span>
-                      <span className="text-rose-400">{u.c}</span>
+                      <span className="text-emerald-600">{u.a}</span><span className="text-slate-400">/</span>
+                      <span className="text-amber-600">{u.b}</span><span className="text-slate-400">/</span>
+                      <span className="text-rose-600">{u.c}</span>
                     </td>
                     <td className="px-2 py-2.5">
                       <div className="flex items-center gap-2">
                         <Bar value={u.score} color={scoreColor(u.score, u.status)} height={5} />
-                        <span className="w-9 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(u.score)}</span>
+                        <span className="w-9 shrink-0 font-mono text-[11px] text-slate-700">{Math.round(u.score)}</span>
                       </div>
                     </td>
                     <td className="px-2 py-2.5 text-[10.5px] text-slate-500">
-                      {rec ? <span title={fmtDateTime(rec.timestamp)}>{rec.tanggal} · {rec.inspector || '—'}</span> : <span className="text-amber-500/80">belum ada</span>}
+                      {rec ? <span title={fmtDateTime(rec.timestamp)}>{rec.tanggal} · {rec.inspector || '—'}</span> : <span className="text-amber-600/80">belum ada</span>}
                     </td>
                     <td className="px-4 py-2.5 text-right">
                       <button
                         onClick={() => navigate('inspeksi', { tipe: u.tipe, kode: u.kode })}
-                        className="tap rounded-lg border border-white/10 bg-white/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-300 transition hover:border-brand/40 hover:text-brand"
+                        className="tap rounded-lg border border-slate-900/10 bg-slate-900/[0.03] px-2.5 text-[10.5px] font-semibold text-slate-700 transition hover:border-brand/40 hover:text-brand"
                       >
                         Inspeksi
                       </button>
@@ -281,7 +281,7 @@ export default function Units({ data, records, navigate }) {
         </div>
 
         {pages > 1 && (
-          <div className="flex items-center justify-between border-t border-white/[0.06] px-4 py-2.5">
+          <div className="flex items-center justify-between border-t border-slate-900/[0.09] px-4 py-2.5">
             <span className="text-[11px] text-slate-500">
               Halaman {page + 1} dari {pages} · {rows.length} unit
             </span>

@@ -536,7 +536,7 @@ export function ringkasService(units = [], log = [], meta = {}) {
   /* sebaran selisih HM antar service (dibulatkan ke rentang 50 HM) */
   const ember = [
     { id: '<150', label: '< 150', min: 0, max: 150, color: '#0ea5e9' },
-    { id: '150-199', label: '150–199', min: 150, max: 200, color: '#38bdf8' },
+    { id: '150-199', label: '150–199', min: 150, max: 200, color: '#0d9488' },
     { id: '200-224', label: '200–224', min: 200, max: TEPAT_MIN, color: '#7dd3fc' },
     { id: '225-275', label: '225–275', min: TEPAT_MIN, max: TEPAT_MAX + 1, color: '#22c55e' },
     { id: '276-349', label: '276–349', min: TEPAT_MAX + 1, max: 350, color: '#fb7185' },
@@ -624,11 +624,11 @@ export function daftarBulan(log = [], hariIni = new Date()) {
 
 /** Kohort aktivitas satu engine pada bulan acuan. */
 export const KOHORT = [
-  { id: 'servisIni', label: 'Service bulan ini', short: 'Servis', color: '#22c55e', cls: 'text-emerald-300 bg-emerald-500/12 border-emerald-500/35' },
-  { id: 'servisLalu', label: 'Service bulan lalu', short: 'Bulan lalu', color: '#38bdf8', cls: 'text-sky-300 bg-sky-500/12 border-sky-500/35' },
-  { id: 'jadwalIni', label: 'Jadwal bulan ini, belum dikerjakan', short: 'Jadwal kini', color: '#f59e0b', cls: 'text-amber-300 bg-amber-500/12 border-amber-500/35' },
-  { id: 'jadwalDepan', label: 'Jadwal bulan depan', short: 'Bulan depan', color: '#a78bfa', cls: 'text-violet-300 bg-violet-500/12 border-violet-500/35' },
-  { id: 'lain', label: 'Di luar 3 kategori itu', short: 'Lainnya', color: '#64748b', cls: 'text-slate-300 bg-slate-500/12 border-slate-500/35' },
+  { id: 'servisIni', label: 'Service bulan ini', short: 'Servis', color: '#22c55e', cls: 'text-emerald-700 bg-emerald-500/12 border-emerald-500/35' },
+  { id: 'servisLalu', label: 'Service bulan lalu', short: 'Bulan lalu', color: '#0d9488', cls: 'text-teal-700 bg-teal-600/12 border-teal-600/35' },
+  { id: 'jadwalIni', label: 'Jadwal bulan ini, belum dikerjakan', short: 'Jadwal kini', color: '#f59e0b', cls: 'text-amber-700 bg-amber-500/12 border-amber-500/35' },
+  { id: 'jadwalDepan', label: 'Jadwal bulan depan', short: 'Bulan depan', color: '#7c3aed', cls: 'text-violet-700 bg-violet-500/12 border-violet-500/35' },
+  { id: 'lain', label: 'Di luar 3 kategori itu', short: 'Lainnya', color: '#64748b', cls: 'text-slate-700 bg-slate-500/12 border-slate-500/35' },
 ]
 export const kohortMeta = (id) => KOHORT.find((k) => k.id === id) || KOHORT[4]
 
@@ -823,7 +823,7 @@ export function statusPada(units = [], log = [], refIso = todayIso()) {
 
 const EMBER_DELTA = [
   { id: '<150', label: '< 150', min: 0, max: 150, color: '#0ea5e9' },
-  { id: '150-199', label: '150–199', min: 150, max: 200, color: '#38bdf8' },
+  { id: '150-199', label: '150–199', min: 150, max: 200, color: '#0d9488' },
   { id: '200-224', label: '200–224', min: 200, max: TEPAT_MIN, color: '#7dd3fc' },
   { id: '225-275', label: '225–275', min: TEPAT_MIN, max: TEPAT_MAX + 1, color: '#22c55e' },
   { id: '276-349', label: '276–349', min: TEPAT_MAX + 1, max: 350, color: '#fb7185' },

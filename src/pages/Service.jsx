@@ -42,20 +42,20 @@ function Pager({ page, total, perPage, onPage, onPerPage, label }) {
   const totalHalaman = Math.max(1, Math.ceil(total / perPage))
   const aman = Math.min(page, totalHalaman - 1)
   return (
-    <div className="flex flex-col gap-2 border-t border-white/[0.06] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
+    <div className="flex flex-col gap-2 border-t border-slate-900/[0.09] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:px-4">
       <div className="flex items-center gap-2 text-[11px] text-slate-500">
         <span>
-          {label}: <span className="font-semibold text-slate-300">{total ? aman * perPage + 1 : 0}–{Math.min(total, (aman + 1) * perPage)}</span> dari {total}
+          {label}: <span className="font-semibold text-slate-700">{total ? aman * perPage + 1 : 0}–{Math.min(total, (aman + 1) * perPage)}</span> dari {total}
         </span>
-        <span className="hidden sm:inline text-slate-600">·</span>
+        <span className="hidden sm:inline text-slate-400">·</span>
         <label className="hidden items-center gap-1.5 sm:flex">
           Baris
           <select
             value={perPage}
             onChange={(e) => onPerPage(Number(e.target.value))}
-            className="rounded-md border border-white/10 bg-ink-900 px-1.5 py-0.5 text-[11px] text-slate-200"
+            className="rounded-md border border-slate-900/10 bg-white px-1.5 py-0.5 text-[11px] text-slate-800"
           >
-            {[10, 20, 50].map((n) => <option key={n} value={n} className="bg-ink-800">{n}</option>)}
+            {[10, 20, 50].map((n) => <option key={n} value={n} className="bg-white">{n}</option>)}
           </select>
         </label>
       </div>
@@ -63,9 +63,9 @@ function Pager({ page, total, perPage, onPage, onPerPage, label }) {
         <select
           value={perPage}
           onChange={(e) => onPerPage(Number(e.target.value))}
-          className="rounded-md border border-white/10 bg-ink-900 px-1.5 py-1 text-[11px] text-slate-200 sm:hidden"
+          className="rounded-md border border-slate-900/10 bg-white px-1.5 py-1 text-[11px] text-slate-800 sm:hidden"
         >
-          {[10, 20, 50].map((n) => <option key={n} value={n} className="bg-ink-800">{n} / hal</option>)}
+          {[10, 20, 50].map((n) => <option key={n} value={n} className="bg-white">{n} / hal</option>)}
         </select>
         <button
           onClick={() => onPage(Math.max(0, aman - 1))}
@@ -75,7 +75,7 @@ function Pager({ page, total, perPage, onPage, onPerPage, label }) {
         >
           <IconChevron size={13} className="rotate-180" /> Sebelumnya
         </button>
-        <span className="min-w-[52px] text-center font-mono text-[11px] text-slate-400">
+        <span className="min-w-[52px] text-center font-mono text-[11px] text-slate-600">
           {aman + 1} / {totalHalaman}
         </span>
         <button
@@ -104,11 +104,11 @@ const StatusPill = ({ id }) => {
 
 const MingguChips = ({ mingguBulan }) => {
   const items = Object.entries(mingguBulan || {})
-  if (!items.length) return <span className="text-[11px] text-slate-600">—</span>
+  if (!items.length) return <span className="text-[11px] text-slate-400">—</span>
   return (
     <div className="flex flex-wrap gap-1">
       {items.map(([b, w]) => (
-        <span key={b} className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[9.5px] text-slate-300">
+        <span key={b} className="rounded border border-slate-900/10 bg-slate-900/[0.04] px-1.5 py-0.5 font-mono text-[9.5px] text-slate-700">
           {b.slice(0, 3)} M{w}
         </span>
       ))}
@@ -348,13 +348,13 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       <Card className="card-pad">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-white">
+            <h2 className="flex items-center gap-2 text-[15px] font-semibold text-slate-900">
               <IconWrench size={16} className="text-brand" /> Evaluasi Service Engine
             </h2>
             <p className="mt-0.5 max-w-[62ch] text-[11.5px] leading-relaxed text-slate-500">
-              Ringkasan dari <span className="text-slate-300">{SERVICE_SHEET.evalTable}</span> (sheet “{SERVICE_SHEET.evalSheet}”):
+              Ringkasan dari <span className="text-slate-700">{SERVICE_SHEET.evalTable}</span> (sheet “{SERVICE_SHEET.evalSheet}”):
               engine mana yang belum diservice, sudah lewat warning date, atau jatuh tempo. Pencatatan service masuk ke{' '}
-              <span className="text-slate-300">{SERVICE_SHEET.logTable}</span> (sheet “{SERVICE_SHEET.logSheet}”).
+              <span className="text-slate-700">{SERVICE_SHEET.logTable}</span> (sheet “{SERVICE_SHEET.logSheet}”).
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -379,8 +379,8 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               className={cx(
                 'tap-sm inline-flex items-center gap-1 rounded border px-1.5 transition',
                 kualitas.masalah.some((m) => m.level === 'error')
-                  ? 'border-rose-500/35 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
-                  : 'border-amber-500/35 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
+                  ? 'border-rose-500/35 bg-rose-500/10 text-rose-600 hover:bg-rose-500/20'
+                  : 'border-amber-500/35 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20'
               )}
               aria-expanded={bukaKualitas}
             >
@@ -393,7 +393,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           </a>
         </p>
         {(asal.dariLog > 0 || asal.dariMaster > 0) && (
-          <div className="mx-3 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2 text-[11px] text-sky-200/90 sm:mx-4">
+          <div className="mx-3 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-teal-600/25 bg-teal-600/[0.07] px-3 py-2 text-[11px] text-teal-700/90 sm:mx-4">
             <IconSheet size={12} />
             <span>
               Sheet <span className="font-semibold">tb_service1</span> (Data Service Engine) hanya memuat{' '}
@@ -406,7 +406,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
         )}
 
         {bukaKualitas && kualitas.masalah.length > 0 && (
-          <div className="mx-3 mb-3 space-y-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5 sm:mx-4">
+          <div className="mx-3 mb-3 space-y-1.5 rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-2.5 sm:mx-4">
             <p className="text-[10px] uppercase tracking-wider text-slate-500">
               Hasil audit data sheet ({kualitas.totalMasalah} temuan) — perbaiki di spreadsheet, lalu tekan “Sinkron” di header
             </p>
@@ -418,13 +418,13 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                     m.level === 'error' ? 'bg-rose-400' : 'bg-amber-400'
                   )}
                 />
-                <span className="min-w-0 flex-1 text-slate-400">
+                <span className="min-w-0 flex-1 text-slate-600">
                   {m.pesan}
                   {m.contoh?.length > 0 && (
                     <span className="ml-1 font-mono text-[10px] text-slate-500">· {m.contoh.join(', ')}</span>
                   )}
                 </span>
-                <span className="shrink-0 rounded bg-white/[0.06] px-1 font-mono text-[10px] text-slate-300">{fmt(m.jumlah)}</span>
+                <span className="shrink-0 rounded bg-slate-900/[0.05] px-1 font-mono text-[10px] text-slate-700">{fmt(m.jumlah)}</span>
               </div>
             ))}
           </div>
@@ -432,7 +432,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       </Card>
 
       {galat && (
-        <div className="flex items-start gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3.5 py-3 text-[12px] leading-relaxed text-rose-200">
+        <div className="flex items-start gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3.5 py-3 text-[12px] leading-relaxed text-rose-700">
           <IconAlert size={15} className="mt-0.5 shrink-0" />
           <span>
             {galat} — pastikan spreadsheet “Update ZPAS637” bisa dibuka publik (Share ▸ Anyone with the link ▸ Viewer).
@@ -442,7 +442,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
 
       {/* ---------------- KPI ---------------- */}
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-6">
-        <Kpi label="Total Engine" value={fmt(ringkasan.totalUnit)} unit="unit" hint="tb_service1" icon={<IconEngine size={14} />} accent="#38bdf8" />
+        <Kpi label="Total Engine" value={fmt(ringkasan.totalUnit)} unit="unit" hint="tb_service1" icon={<IconEngine size={14} />} accent="#0d9488" />
         <Kpi
           label="Lewat Jadwal"
           value={fmt(ringkasan.terlambat)}
@@ -467,7 +467,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           unit="unit"
           hint="Belum ada catatan service"
           icon={<IconWrench size={14} />}
-          accent="#94a3b8"
+          accent="#5b6b7c"
           onClick={() => setKpiStatus('belum')}
         />
         <Kpi
@@ -483,7 +483,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           value={`${ringkasan.cakupan}%`}
           hint={`${fmt(ringkasan.sudahService)} dari ${fmt(ringkasan.totalUnit)} engine pernah diservice`}
           icon={<IconCalendar size={14} />}
-          accent="#a78bfa"
+          accent="#7c3aed"
         />
         <Kpi
           label="Tepat Waktu"
@@ -509,7 +509,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                   if (n) { setAcuan(n.value); setFKohort(null) }
                 }}
                 disabled={bulanOpsi.findIndex((b) => b.value === acuanAktif) >= bulanOpsi.length - 1}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:text-white disabled:opacity-35"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-slate-900/10 bg-slate-900/[0.03] text-slate-600 transition hover:text-slate-900 disabled:opacity-35"
                 aria-label="Bulan sebelumnya"
                 title="Bulan sebelumnya"
               >
@@ -520,10 +520,10 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                 id="bulan-acuan"
                 value={acuanAktif}
                 onChange={(e) => { setAcuan(e.target.value); setFKohort(null) }}
-                className="rounded-lg border border-brand/40 bg-brand/10 px-2 py-1.5 text-[11.5px] font-semibold text-white focus:outline-none"
+                className="rounded-lg border border-brand/40 bg-brand/10 px-2 py-1.5 text-[11.5px] font-semibold text-slate-900 focus:outline-none"
               >
                 {bulanOpsi.map((b) => (
-                  <option key={b.value} value={b.value} className="bg-ink-800 text-slate-100">
+                  <option key={b.value} value={b.value} className="bg-white text-slate-900">
                     {b.label}
                   </option>
                 ))}
@@ -535,7 +535,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                   if (n) { setAcuan(n.value); setFKohort(null) }
                 }}
                 disabled={bulanOpsi.findIndex((b) => b.value === acuanAktif) <= 0}
-                className="grid h-8 w-8 place-items-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:text-white disabled:opacity-35"
+                className="grid h-8 w-8 place-items-center rounded-lg border border-slate-900/10 bg-slate-900/[0.03] text-slate-600 transition hover:text-slate-900 disabled:opacity-35"
                 aria-label="Bulan berikutnya"
                 title="Bulan berikutnya"
               >
@@ -552,7 +552,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               judul: `Service ${bulanAktif.lalu.label}`,
               angka: bulanAktif.jumlah.servisLalu,
               sub: `belum diservice lagi di ${bulanAktif.acuan.singkat} · ${bulanAktif.sesiLalu} sesi bulan lalu`,
-              accent: '#38bdf8',
+              accent: '#0d9488',
             },
             {
               id: 'servisIni',
@@ -577,7 +577,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               sub: bulanAktif.jumlah.jadwalDepan
                 ? `${bulanAktif.jumlah.jadwalDepan} belum diservice bulan ini`
                 : 'sudah diservice bulan ini, jadwal berikutnya bulan depan',
-              accent: '#a78bfa',
+              accent: '#7c3aed',
             },
           ].map((t) => {
             const m = kohortMeta(t.id)
@@ -588,22 +588,22 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                 onClick={() => { setFKohort(aktif ? null : t.id); setHalEval(0) }}
                 className={cx(
                   'group relative min-w-0 overflow-hidden rounded-xl border px-3 py-2.5 text-left transition',
-                  aktif ? 'border-brand/60 bg-brand/[0.10]' : 'border-white/[0.07] bg-white/[0.02] hover:border-white/20'
+                  aktif ? 'border-brand/60 bg-brand/[0.10]' : 'border-slate-900/[0.10] bg-slate-900/[0.02] hover:border-slate-900/15'
                 )}
                 title={`Tampilkan ${t.judul.toLowerCase()} di tabel evaluasi`}
               >
                 <span className="pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full opacity-[0.18] blur-2xl" style={{ background: t.accent }} />
                 <span className="flex items-center gap-1.5">
                   <span className="h-1.5 w-1.5 rounded-full" style={{ background: m.color }} />
-                  <span className="truncate text-[10.5px] font-semibold uppercase tracking-wider text-slate-400">{t.judul}</span>
+                  <span className="truncate text-[10.5px] font-semibold uppercase tracking-wider text-slate-600">{t.judul}</span>
                 </span>
                 <span className="mt-1 flex items-baseline gap-1.5">
-                  <span className="font-mono text-[22px] font-semibold leading-none text-white">{fmt(t.angka)}</span>
+                  <span className="font-mono text-[22px] font-semibold leading-none text-slate-900">{fmt(t.angka)}</span>
                   <span className="text-[10px] text-slate-500">engine</span>
                 </span>
                 <span className="mt-1 block truncate text-[10px] text-slate-500">{t.sub}</span>
                 <span
-                  className="mt-1.5 flex h-1 w-full overflow-hidden rounded-full bg-white/[0.06]"
+                  className="mt-1.5 flex h-1 w-full overflow-hidden rounded-full bg-slate-900/[0.05]"
                   aria-hidden="true"
                 >
                   <span
@@ -618,8 +618,8 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
 
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 px-3 pb-3 text-[10px] text-slate-500 sm:px-4">
           <span>
-            <span className="font-mono text-slate-300">{fmt(bulanAktif.jumlah.servisLalu + bulanAktif.jumlah.servisIni)}</span> engine tercatat diservice bulan lalu + bulan ini ·
-            <span className="ml-1 font-mono text-slate-300">{fmt(bulanAktif.jumlah.lain)}</span> di luar 3 kategori
+            <span className="font-mono text-slate-700">{fmt(bulanAktif.jumlah.servisLalu + bulanAktif.jumlah.servisIni)}</span> engine tercatat diservice bulan lalu + bulan ini ·
+            <span className="ml-1 font-mono text-slate-700">{fmt(bulanAktif.jumlah.lain)}</span> di luar 3 kategori
           </span>
           {fKohort && (
             <button
@@ -647,7 +647,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             sub={`Kondisi per ${bulanRingkas.refLabel}${bulanRingkas.bulanBerjalan ? ' (bulan berjalan)' : ''}`}
             icon={<IconWrench size={15} />}
             right={
-              <span className="hidden rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-400 sm:inline">
+              <span className="hidden rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-600 sm:inline">
                 {bulanAktif.acuan.label}
               </span>
             }
@@ -682,11 +682,11 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                       setFKode({ label: `${s.label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsStatus[s.id] || new Set() })
                       setHalEval(0)
                     }}
-                    className="flex min-h-8 w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-white/[0.04]"
+                    className="flex min-h-8 w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-slate-900/[0.04]"
                   >
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
-                    <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400">{s.label}</span>
-                    <span className="font-mono text-[11px] font-semibold text-slate-200">{n}</span>
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-slate-600">{s.label}</span>
+                    <span className="font-mono text-[11px] font-semibold text-slate-800">{n}</span>
                     <span className="w-9 text-right font-mono text-[10px] text-slate-500">{pct}%</span>
                   </button>
                 )
@@ -700,7 +700,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             title="Tren Service Engine"
             sub="Per bulan, dari sheet “Monitor Kasie FS” (tb_service2)"
             icon={<IconTrend size={15} />}
-            right={<span className="hidden rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-400 sm:inline">interval target 250 HM</span>}
+            right={<span className="hidden rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-600 sm:inline">interval target 250 HM</span>}
           />
           <div className="px-1 pb-3 pt-2">
             <TrenServiceChart data={ringkasan.perBulan} height={250} />
@@ -791,7 +791,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                   />
                 </svg>
                 <div className="text-center">
-                  <p className="font-mono text-[15px] font-semibold text-white">{bulanRingkas.ketepatan.pct}%</p>
+                  <p className="font-mono text-[15px] font-semibold text-slate-900">{bulanRingkas.ketepatan.pct}%</p>
                   <p className="text-[8.5px] uppercase tracking-wider text-slate-500">tepat</p>
                 </div>
               </div>
@@ -799,16 +799,16 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                 {[
                   ['Tepat 225–275 HM', bulanRingkas.ketepatan.tepat, '#22c55e'],
                   ['Terlambat > 275 HM', bulanRingkas.ketepatan.telat, '#f43f5e'],
-                  ['Lebih awal < 225 HM', bulanRingkas.ketepatan.awal, '#38bdf8'],
+                  ['Lebih awal < 225 HM', bulanRingkas.ketepatan.awal, '#0d9488'],
                 ].map(([label, n, color]) => (
                   <div key={label} className="flex items-center gap-1.5 text-[10.5px]">
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: color }} />
-                    <span className="min-w-0 flex-1 truncate text-slate-400">{label}</span>
-                    <span className="font-mono font-semibold text-slate-200">{n}</span>
+                    <span className="min-w-0 flex-1 truncate text-slate-600">{label}</span>
+                    <span className="font-mono font-semibold text-slate-800">{n}</span>
                   </div>
                 ))}
                 <p className="pt-0.5 text-[9.5px] leading-relaxed text-slate-500">
-                  Rata-rata selisih HM <span className="font-mono text-slate-300">{bulanRingkas.ketepatan.rata ?? '—'}</span> ·
+                  Rata-rata selisih HM <span className="font-mono text-slate-700">{bulanRingkas.ketepatan.rata ?? '—'}</span> ·
                   {' '}{bulanRingkas.ketepatan.dikecualikan} baris HM janggal tidak dihitung
                 </p>
               </div>
@@ -817,7 +817,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             {/* sebaran selisih HM per service */}
             <div className="mt-3">
               <p className="mb-1 text-[9.5px] uppercase tracking-wider text-slate-500">Sebaran selisih HM antar service</p>
-              <div className="flex h-3 w-full overflow-hidden rounded-full bg-white/[0.05]">
+              <div className="flex h-3 w-full overflow-hidden rounded-full bg-slate-900/[0.04]">
                 {(bulanRingkas.ketepatan.sebaran || []).map((e) => (
                   <div
                     key={e.id}
@@ -833,12 +833,12 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                 {(bulanRingkas.ketepatan.sebaran || []).map((e) => (
                   <span key={e.id} className="inline-flex items-center gap-1 text-[9px] text-slate-500">
                     <span className="h-1.5 w-1.5 rounded-full" style={{ background: e.color }} />
-                    {e.label} <span className="font-mono text-slate-300">{e.jumlah}</span>
+                    {e.label} <span className="font-mono text-slate-700">{e.jumlah}</span>
                   </span>
                 ))}
               </div>
               <p className="mt-1.5 text-[9.5px] leading-relaxed text-slate-500">
-                Target sheet: service tiap <span className="text-slate-300">250 HM</span>. Selisih di bawah 225 HM berarti
+                Target sheet: service tiap <span className="text-slate-700">250 HM</span>. Selisih di bawah 225 HM berarti
                 service dilakukan lebih awal (biaya perawatan naik), di atas 275 HM berarti terlambat (risiko kerusakan).
               </p>
             </div>
@@ -879,7 +879,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                 onClick={() => setTabPerhatian(t.value)}
                 className={cx(
                   'shrink-0 rounded-lg border px-2.5 py-2 text-[11px] font-semibold transition max-sm:min-h-9',
-                  tabPerhatian === t.value ? 'border-brand/50 bg-brand/15 text-white' : 'border-white/10 bg-white/[0.02] text-slate-400'
+                  tabPerhatian === t.value ? 'border-brand/50 bg-brand/15 text-slate-900' : 'border-slate-900/10 bg-slate-900/[0.02] text-slate-600'
                 )}
               >
                 {t.label}
@@ -888,22 +888,22 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           </div>
         </div>
 
-        <div className="mt-2 divide-y divide-white/[0.05]">
+        <div className="mt-2 divide-y divide-slate-900/[0.06]">
           {barisPerhatian.map((u) => {
             const m = serviceStatusMeta(u.status)
             return (
               <button
                 key={u.kode}
                 onClick={() => setDetailUnit(u)}
-                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition hover:bg-white/[0.03] sm:px-4"
+                className="flex w-full items-center gap-2.5 px-3 py-2.5 text-left transition hover:bg-slate-900/[0.03] sm:px-4"
               >
                 <span className="h-7 w-1 shrink-0 rounded-full" style={{ background: m.color }} />
                 <span className="min-w-0 flex-1">
                   <span className="flex items-center gap-1.5">
-                    <span className="font-mono text-[12.5px] font-semibold text-white">{u.kode}</span>
-                    <span className="rounded bg-white/[0.06] px-1 py-0.5 text-[9.5px] text-slate-400">{u.jenis}</span>
-                    <span className="rounded bg-white/[0.06] px-1 py-0.5 text-[9.5px] text-slate-400">{u.posisi}</span>
-                    {u.note && <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9.5px] text-amber-300">{u.note}</span>}
+                    <span className="font-mono text-[12.5px] font-semibold text-slate-900">{u.kode}</span>
+                    <span className="rounded bg-slate-900/[0.05] px-1 py-0.5 text-[9.5px] text-slate-600">{u.jenis}</span>
+                    <span className="rounded bg-slate-900/[0.05] px-1 py-0.5 text-[9.5px] text-slate-600">{u.posisi}</span>
+                    {u.note && <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9.5px] text-amber-700">{u.note}</span>}
                   </span>
                   <span className="mt-0.5 block truncate text-[10.5px] text-slate-500">
                     {u.status === 'belum'
@@ -914,7 +914,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                   </span>
                 </span>
                 <span className={cx('shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold', m.cls)}>{m.short}</span>
-                <IconChevron size={14} className="shrink-0 text-slate-600" />
+                <IconChevron size={14} className="shrink-0 text-slate-400" />
               </button>
             )
           })}
@@ -957,7 +957,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               value={cari}
               onChange={(e) => setCari(e.target.value)}
               placeholder="Cari kode unit / catatan…"
-              className="w-full rounded-xl border border-white/10 bg-ink-900/80 py-2 pl-8 pr-3 text-[12px] text-slate-200 placeholder:text-slate-600 focus:border-brand/50 focus:outline-none"
+              className="w-full rounded-xl border border-slate-900/10 bg-white py-2 pl-8 pr-3 text-[12px] text-slate-800 placeholder:text-slate-400 focus:border-brand/50 focus:outline-none"
             />
           </div>
           <MultiSelect label="Posisi" value={fPosisi} onChange={setFPosisi} options={opsiPosisi} placeholder="Semua posisi" />
@@ -971,10 +971,10 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             counts={ringkasan.byStatus}
           />
           <select value={urut} onChange={(e) => setUrut(e.target.value)} className="input !py-2 !text-[12px] sm:w-[190px]">
-            <option value="telat" className="bg-ink-800">Urut: paling telat</option>
-            <option value="dekat" className="bg-ink-800">Urut: jadwal terdekat</option>
-            <option value="hm" className="bg-ink-800">Urut: HM terbesar</option>
-            <option value="kode" className="bg-ink-800">Urut: kode unit</option>
+            <option value="telat" className="bg-white">Urut: paling telat</option>
+            <option value="dekat" className="bg-white">Urut: jadwal terdekat</option>
+            <option value="hm" className="bg-white">Urut: HM terbesar</option>
+            <option value="kode" className="bg-white">Urut: kode unit</option>
           </select>
         </div>
 
@@ -989,10 +989,10 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               {barisEval.map((u) => {
                 const m = serviceStatusMeta(u.status)
                 return (
-                  <button key={u.kode} onClick={() => setDetailUnit(u)} className="w-full rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5 text-left">
+                  <button key={u.kode} onClick={() => setDetailUnit(u)} className="w-full rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-2.5 text-left">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="font-mono text-[13px] font-semibold text-white">{u.kode}</p>
+                        <p className="font-mono text-[13px] font-semibold text-slate-900">{u.kode}</p>
                         <p className="mt-0.5 text-[10.5px] text-slate-500">{u.jenis} · {u.posisi} · {u.note || `interval ${INTERVAL_HM} HM`}</p>
                       </div>
                       <span className={cx('shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold', m.cls)}>{m.short}</span>
@@ -1008,23 +1008,23 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                       })()}
                       {(() => {
                         const info = bulanAktif.perUnit.get(u.kode)
-                        if (info?.servisIni) return <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9.5px] text-slate-400">{info.servisIni}× service {bulanAktif.acuan.singkat}</span>
-                        if (info?.servisLalu) return <span className="rounded bg-white/[0.05] px-1.5 py-0.5 text-[9.5px] text-slate-400">{info.servisLalu}× service {bulanAktif.lalu.singkat}</span>
+                        if (info?.servisIni) return <span className="rounded bg-slate-900/[0.04] px-1.5 py-0.5 text-[9.5px] text-slate-600">{info.servisIni}× service {bulanAktif.acuan.singkat}</span>
+                        if (info?.servisLalu) return <span className="rounded bg-slate-900/[0.04] px-1.5 py-0.5 text-[9.5px] text-slate-600">{info.servisLalu}× service {bulanAktif.lalu.singkat}</span>
                         return null
                       })()}
                     </div>
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       <div>
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">Terakhir</p>
-                        <p className="font-mono text-[11px] text-slate-200">{u.terakhirIso || 'Belum'}</p>
+                        <p className="font-mono text-[11px] text-slate-800">{u.terakhirIso || 'Belum'}</p>
                       </div>
                       <div>
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">Next</p>
-                        <p className="font-mono text-[11px] text-slate-200">{u.nextIso || '—'}</p>
+                        <p className="font-mono text-[11px] text-slate-800">{u.nextIso || '—'}</p>
                       </div>
                       <div>
                         <p className="text-[9px] uppercase tracking-wider text-slate-500">Sisa</p>
-                        <p className={cx('font-mono text-[11px]', (u.sisaHari ?? 99) <= 0 ? 'text-rose-300' : 'text-slate-200')}>{hariTeks(u.sisaHari)}</p>
+                        <p className={cx('font-mono text-[11px]', (u.sisaHari ?? 99) <= 0 ? 'text-rose-600' : 'text-slate-800')}>{hariTeks(u.sisaHari)}</p>
                       </div>
                     </div>
                     <div className="mt-2 flex items-center justify-between gap-2">
@@ -1041,7 +1041,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             <div className="mt-3 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[860px] text-left">
                 <thead>
-                  <tr className="border-y border-white/[0.07] bg-white/[0.02] text-[10px] uppercase tracking-wider text-slate-500">
+                  <tr className="border-y border-slate-900/[0.10] bg-slate-900/[0.02] text-[10px] uppercase tracking-wider text-slate-500">
                     <th className="px-4 py-2 font-semibold">Kode Unit</th>
                     <th className="px-2 py-2 font-semibold">Posisi</th>
                     <th className="px-2 py-2 font-semibold">Service Terakhir</th>
@@ -1055,20 +1055,20 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                     <th className="px-4 py-2 font-semibold">Catatan</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.04]">
+                <tbody className="divide-y divide-slate-900/[0.06]">
                   {barisEval.map((u) => (
-                    <tr key={u.kode} className="cursor-pointer transition hover:bg-white/[0.03]" onClick={() => setDetailUnit(u)}>
+                    <tr key={u.kode} className="cursor-pointer transition hover:bg-slate-900/[0.03]" onClick={() => setDetailUnit(u)}>
                       <td className="px-4 py-2">
-                        <span className="font-mono text-[12px] font-semibold text-white">{u.kode}</span>
-                        <span className="ml-1.5 rounded bg-white/[0.06] px-1 py-0.5 text-[9.5px] text-slate-400">{u.jenis}</span>
+                        <span className="font-mono text-[12px] font-semibold text-slate-900">{u.kode}</span>
+                        <span className="ml-1.5 rounded bg-slate-900/[0.05] px-1 py-0.5 text-[9.5px] text-slate-600">{u.jenis}</span>
                       </td>
-                      <td className="px-2 py-2 text-[11.5px] text-slate-300">{u.posisi || '—'}</td>
-                      <td className="px-2 py-2 font-mono text-[11px] text-slate-300">{u.terakhirIso || 'Belum pernah'}</td>
-                      <td className="px-2 py-2 text-right font-mono text-[11px] text-slate-200">{fmt(u.hm)}</td>
-                      <td className="px-2 py-2 font-mono text-[11px] text-slate-300">{u.nextIso || '—'}</td>
-                      <td className="px-2 py-2 text-right font-mono text-[11px] text-slate-400">{fmt(u.nextHm)}</td>
+                      <td className="px-2 py-2 text-[11.5px] text-slate-700">{u.posisi || '—'}</td>
+                      <td className="px-2 py-2 font-mono text-[11px] text-slate-700">{u.terakhirIso || 'Belum pernah'}</td>
+                      <td className="px-2 py-2 text-right font-mono text-[11px] text-slate-800">{fmt(u.hm)}</td>
+                      <td className="px-2 py-2 font-mono text-[11px] text-slate-700">{u.nextIso || '—'}</td>
+                      <td className="px-2 py-2 text-right font-mono text-[11px] text-slate-600">{fmt(u.nextHm)}</td>
                       <td className="px-2 py-2">
-                        <span className={cx('font-mono text-[11px]', u.sisaHari == null ? 'text-slate-500' : u.sisaHari <= 0 ? 'text-rose-300' : u.sisaHari <= 7 ? 'text-amber-300' : 'text-emerald-300')}>
+                        <span className={cx('font-mono text-[11px]', u.sisaHari == null ? 'text-slate-500' : u.sisaHari <= 0 ? 'text-rose-600' : u.sisaHari <= 7 ? 'text-amber-700' : 'text-emerald-700')}>
                           {hariTeks(u.sisaHari)}
                         </span>
                       </td>
@@ -1085,7 +1085,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                         })()}
                       </td>
                       <td className="px-2 py-2"><MingguChips mingguBulan={u.mingguBulan} /></td>
-                      <td className="px-4 py-2 text-[11px] text-slate-400">{u.note || '—'}</td>
+                      <td className="px-4 py-2 text-[11px] text-slate-600">{u.note || '—'}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -1119,31 +1119,31 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               value={cariLog}
               onChange={(e) => setCariLog(e.target.value)}
               placeholder="Cari kode mesin…"
-              className="w-full rounded-xl border border-white/10 bg-ink-900/80 py-2 pl-8 pr-3 text-[12px] text-slate-200 placeholder:text-slate-600 focus:border-brand/50 focus:outline-none"
+              className="w-full rounded-xl border border-slate-900/10 bg-white py-2 pl-8 pr-3 text-[12px] text-slate-800 placeholder:text-slate-400 focus:border-brand/50 focus:outline-none"
             />
           </div>
           <MultiSelect label="Posisi" value={fPosisiLog} onChange={setFPosisiLog} options={[...new Set(log.map((r) => r.posisi))].sort()} placeholder="Semua posisi" />
           <MultiSelect label="Bulan" value={fBulanLog} onChange={setFBulanLog} options={opsiBulan} placeholder="Semua bulan" />
         </div>
 
-        <div className="mt-2 divide-y divide-white/[0.05]">
+        <div className="mt-2 divide-y divide-slate-900/[0.06]">
           {barisLog.map((r, i) => {
             const u = units.find((x) => x.kode === r.kode)
             return (
               <button
                 key={`${r.tanggal}-${r.no}-${i}`}
                 onClick={() => u && setDetailUnit(u)}
-                className={cx('flex w-full items-center gap-2 px-3 py-2.5 text-left transition sm:px-4', u ? 'hover:bg-white/[0.03]' : 'cursor-default')}
+                className={cx('flex w-full items-center gap-2 px-3 py-2.5 text-left transition sm:px-4', u ? 'hover:bg-slate-900/[0.03]' : 'cursor-default')}
               >
-                <span className="w-[68px] shrink-0 font-mono text-[11px] text-slate-300">{r.tanggal || '—'}</span>
+                <span className="w-[68px] shrink-0 font-mono text-[11px] text-slate-700">{r.tanggal || '—'}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="font-mono text-[12px] font-semibold text-white">{r.kode}</span>
+                  <span className="font-mono text-[12px] font-semibold text-slate-900">{r.kode}</span>
                   <span className="ml-1.5 text-[10px] text-slate-500">{r.posisi || '—'} · {r.bulan} · minggu {r.minggu ?? '—'}</span>
                 </span>
                 <span className="shrink-0 text-right">
-                  <span className="block font-mono text-[11.5px] font-semibold text-slate-100">HM {fmt(r.hm)}</span>
+                  <span className="block font-mono text-[11.5px] font-semibold text-slate-900">HM {fmt(r.hm)}</span>
                   {r.hmDelta != null && (
-                    <span className={cx('block font-mono text-[9.5px]', r.hmAnomali ? 'text-amber-400/90' : 'text-emerald-400/80')}>
+                    <span className={cx('block font-mono text-[9.5px]', r.hmAnomali ? 'text-amber-600/90' : 'text-emerald-600/80')}>
                       {r.hmAnomali ? '⚠ ' : ''}+{fmt(r.hmDelta)} HM
                     </span>
                   )}
