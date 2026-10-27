@@ -137,3 +137,14 @@ Memastikan `syncmaster` menulis ulang A/B/C, skor, dan KONDISI ke sheet master,
 menegakkan **Status “Rusak” ⇒ KONDISI “Kritis”** (termasuk unit tanpa riwayat
 inspeksi), idempoten, dan tidak menyentuh unit berstatus lain. `tools/synctest.mjs`
 juga sudah memeriksa hasil tulis ini lewat hook `GET /__get`.
+
+### Uji tema terang (v1.9.5)
+
+```bash
+node tools/themetest.mjs      # butuh mockapi :8111 + vite :5199
+```
+
+Memeriksa langsung di browser: `color-scheme` dokumen, latar body, **tidak ada
+permukaan gelap** (`rgb` gelap) atau bayangan hitam pekat di 6 rute + 2 modal,
+serta kartu notifikasi untuk status sukses/gagal selalu berlatar terang dengan
+teks terbaca.

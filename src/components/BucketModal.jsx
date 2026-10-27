@@ -66,7 +66,7 @@ export default function BucketModal({ open, range, tipe, mesin = [], irrigator =
         role="dialog"
         aria-modal="true"
         aria-label={`Distribusi skor ${range.label} ${tipe}`}
-        className="relative flex max-h-[92vh] w-full min-w-0 flex-col overflow-hidden rounded-t-2xl border border-slate-900/10 bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.95)] sm:max-w-3xl sm:rounded-2xl"
+        className="relative flex max-h-[92vh] w-full min-w-0 flex-col overflow-hidden rounded-t-2xl border border-slate-900/10 bg-white shadow-[0_28px_70px_-24px_rgba(13,60,60,0.35)] sm:max-w-3xl sm:rounded-2xl"
       >
         {/* ---------- header ---------- */}
         <div className="flex items-start gap-3 border-b border-slate-900/[0.10] bg-gradient-to-r from-brand/[0.12] via-transparent to-transparent px-4 py-3">

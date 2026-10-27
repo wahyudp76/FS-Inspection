@@ -398,7 +398,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
               {audit.contoh?.length > 0 && (
                 <div className="max-h-72 overflow-y-auto rounded-xl border border-slate-900/[0.09]">
                   <table className="w-full text-left text-[11px]">
-                    <thead className="sticky top-0 bg-[#0d1420] text-[10px] uppercase tracking-wider text-slate-500">
+                    <thead className="sticky top-0 bg-teal-50/95 text-[10px] uppercase tracking-wider text-teal-800 backdrop-blur">
                       <tr><th className="px-3 py-1.5">Baris</th><th className="px-3 py-1.5">Unit</th><th className="px-3 py-1.5">Temuan</th></tr>
                     </thead>
                     <tbody className="divide-y divide-slate-900/[0.06] text-slate-600">

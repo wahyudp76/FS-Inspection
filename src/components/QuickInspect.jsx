@@ -77,7 +77,7 @@ export default function QuickInspect({ open, data, records, onClose, onSubmitted
         aria-modal="true"
         aria-label="Tambah Inspeksi"
         className={cx(
-          'relative my-auto w-full min-w-0 overflow-hidden rounded-2xl border border-slate-900/10 bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.95)]',
+          'relative my-auto w-full min-w-0 overflow-hidden rounded-2xl border border-slate-900/10 bg-white shadow-[0_28px_70px_-24px_rgba(13,60,60,0.35)]',
           step === 'form' ? 'max-w-5xl' : 'max-w-3xl'
         )}
       >

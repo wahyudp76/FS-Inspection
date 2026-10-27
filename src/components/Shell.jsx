@@ -60,7 +60,7 @@ function BackToTop() {
       title="Kembali ke atas"
       className={cx(
         'no-print fixed bottom-5 right-4 z-[60] grid h-11 w-11 place-items-center rounded-full border sm:bottom-6 sm:right-6',
-        'border-brand/45 bg-white text-brand shadow-[0_10px_30px_-8px_rgba(0,0,0,0.9)] backdrop-blur',
+        'border-brand/45 bg-white text-brand shadow-[0_8px_22px_-10px_rgba(13,60,60,0.30)] backdrop-blur',
         'transition-all duration-200 hover:border-brand hover:bg-brand/15 hover:text-slate-900',
         show ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
       )}
@@ -222,7 +222,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               alt="FS Inspection"
               width={26}
               height={26}
-              className="h-[26px] w-[26px] shrink-0 object-contain drop-shadow-[0_1px_3px_rgba(0,0,0,0.45)] lg:hidden"
+              className="h-[26px] w-[26px] shrink-0 object-contain drop-shadow-[0_2px_4px_rgba(13,60,60,0.18)] lg:hidden"
             />
             <div className="min-w-0 flex-1">
               <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-slate-900">

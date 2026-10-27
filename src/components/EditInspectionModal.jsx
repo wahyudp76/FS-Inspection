@@ -89,7 +89,7 @@ export default function EditInspectionModal({ record, data, onClose, onSave, sav
         role="dialog"
         aria-modal="true"
         aria-label={`Ubah inspeksi ${record.kode}`}
-        className="relative flex max-h-[94vh] w-full min-w-0 flex-col overflow-hidden rounded-t-2xl border border-slate-900/10 bg-white shadow-[0_40px_100px_-20px_rgba(0,0,0,0.95)] sm:max-w-3xl sm:rounded-2xl"
+        className="relative flex max-h-[94vh] w-full min-w-0 flex-col overflow-hidden rounded-t-2xl border border-slate-900/10 bg-white shadow-[0_28px_70px_-24px_rgba(13,60,60,0.35)] sm:max-w-3xl sm:rounded-2xl"
       >
         <div className="flex items-center gap-3 border-b border-slate-900/[0.10] bg-gradient-to-r from-brand/[0.12] via-transparent to-transparent px-4 py-3">
           <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-brand/30 bg-brand/15 text-brand">
