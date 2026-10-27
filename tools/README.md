@@ -110,3 +110,19 @@ Memastikan cache master di `localStorage` dari bundel lama (tanpa `v`) atau vers
 skema lain **dibuang** sehingga status unit tidak lagi tertahan di nilai basi,
 chip sidebar memberi peringatan “tekan Sinkron” saat data >30 menit, dan
 `DEM0074` konsisten `Rusak` dengan sheet master.
+
+### Uji “Sinkron benar-benar menarik ulang” (v1.9.2)
+
+```bash
+MASTER=1 TESTHOOK=1 PORT=8111 node tools/mockapi.mjs &
+VITE_APPS_SCRIPT_URL=http://127.0.0.1:8111/exec npx vite --port 5199 &
+
+node tools/revtest.mjs   # sidik jari (rev) berbasis ISI sheet, bukan mtime file
+node tools/synctest.mjs  # ubah status di sheet → tekan Sinkron → layar ikut berubah
+```
+
+`revtest.mjs` membuktikan mengubah satu sel Status/Kondisi mengubah `rev` walau
+`DriveApp.getLastUpdated()` gagal. `synctest.mjs` menguji alur nyata di browser:
+status unit diubah lewat `GET /__set` (meniru suntingan manual di Google Sheets,
+hanya aktif bila `TESTHOOK=1`), lalu tombol Sinkron ditekan dan Data Unit harus
+mengikuti sheet. Keduanya GAGAL pada kode v1.9.1 ke bawah.

@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.1'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.2'; // naikkan setiap kali kode berubah besar
 /* 1.9.1 — warna kolom KONDISI di sheet master dipasang lewat CONDITIONAL
    FORMATTING (bukan hanya setBackground): aturan format bersyarat milik sheet
    selalu menang atas warna sel, jadi sel “Kritis” bisa tetap hijau. Aturan kita
@@ -128,12 +128,14 @@ function doPost(e) {
     if (action === 'history') {
       var payloadH = body.payload || {};
       var shH = ensureSheet_(false);
-      var rev = revisiSaatIni_(shH);
+      var records = readHistory_();
+      /* Sidik jari dihitung dari ISI sheet (bukan waktu modifikasi file): mengubah
+         satu sel WAJIB terlihat oleh web walau DriveApp lambat / gagal. */
+      var rev = 'h1:' + sidikIsi_([records, componentIndex_()]);
       /* Klien sudah punya versi ini → balas sangat kecil (ratusan byte, bukan ~300 KB) */
       if (payloadH.rev && String(payloadH.rev) === rev) {
-        return json_({ ok: true, unchanged: true, rev: rev, count: Math.max(0, shH.getLastRow() - 1) });
+        return json_({ ok: true, unchanged: true, rev: rev, count: records.length });
       }
-      var records = readHistory_();
       if (payloadH.plain) {
         return json_({ ok: true, records: records, rev: rev, count: records.length, version: SCRIPT_VERSION, compressed: false });
       }
@@ -2008,18 +2010,47 @@ function repairMaster_(tipe) {
  * @param {string} [rev] revisi yang sudah dimiliki klien → balas `unchanged`
  */
 function masterLive_(rev) {
-  var kunci = 'master:' + revisiMaster_();
+  var kmap = { Mesin: KOMPONEN_MESIN, Irrigator: KOMPONEN_IRRIGATOR };
+  var mesin = bacaMasterRingkas_('Mesin');
+  var irrigator = bacaMasterRingkas_('Irrigator');
+  /* Sidik jari = hash ISI (status, komponen, skor, tanggal). Dulu memakai
+     waktu modifikasi file dari DriveApp: bila layanan itu lambat atau gagal,
+     status yang baru diubah di sheet TIDAK pernah sampai ke web — inilah
+     “sudah Sinkron tapi Data Unit masih Terpasang”. */
+  var kunci = 'm1:' + sidikIsi_([mesin, irrigator, kmap]);
   if (rev && String(rev) === kunci) {
     return { unchanged: true, rev: kunci, generatedAt: new Date().toISOString() };
   }
-  var hasil = {
+  return {
     rev: kunci,
     generatedAt: new Date().toISOString(),
-    kmap: { Mesin: KOMPONEN_MESIN, Irrigator: KOMPONEN_IRRIGATOR },
-    mesin: bacaMasterRingkas_('Mesin'),
-    irrigator: bacaMasterRingkas_('Irrigator')
+    kmap: kmap,
+    mesin: mesin,
+    irrigator: irrigator
   };
-  return hasil;
+}
+
+/**
+ * Hash 32-bit ganda dari isi apa pun (string/array/objek) — cepat, deterministik,
+ * dan stabil antar pemanggilan. Dipakai sebagai “rev” data sheet pengganti
+ * waktu modifikasi file yang tidak dapat dipercaya.
+ */
+function sidikIsi_(obj) {
+  var s;
+  try {
+    s = typeof obj === 'string' ? obj : JSON.stringify(obj);
+  } catch (e) {
+    s = String(obj);
+  }
+  s = s || '';
+  var h1 = 0x811c9dc5;
+  var h2 = 0x1000193;
+  for (var i = 0; i < s.length; i++) {
+    var c = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ c, 16777619) >>> 0;
+    h2 = (Math.imul(h2 + c, 2246822519) >>> 0) ^ (h2 >>> 13);
+  }
+  return s.length.toString(36) + '.' + h1.toString(36) + '.' + (h2 >>> 0).toString(36);
 }
 
 /** Satu baris ringkas per aset pada sheet master. */

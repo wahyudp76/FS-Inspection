@@ -168,7 +168,7 @@ export async function flushQueue() {
 export const pendingCount = () => (readCache().records || []).filter((r) => r.pending).length
 
 /** Ambil riwayat inspeksi dari sheet "Data Inspeksi" */
-export async function fetchHistory({ silent = false } = {}) {
+export async function fetchHistory({ silent = false, force = false } = {}) {
   if (!getEndpoint()) {
     const c = readCache()
     return { records: sortRecords(c.records || []), syncedAt: c.syncedAt, offline: true }
@@ -177,8 +177,10 @@ export async function fetchHistory({ silent = false } = {}) {
     const cached = readCache()
     const local = cached.records || []
     const pending = local.filter((r) => r.pending)
-    /* rev = sidik jari isi sheet terakhir; bila tak berubah, cukup minta konfirmasi murah */
-    const rev = readRev()
+    /* rev = sidik jari isi sheet terakhir; bila tak berubah, cukup minta konfirmasi murah.
+       `force` (tombol Sinkron) SELALU menarik penuh: pengguna menekan Sinkron
+       karena percaya datanya sudah berubah, jadi jangan pernah menjawab “tidak berubah”. */
+    const rev = force ? '' : readRev()
     const json = await post({ action: 'history', payload: { rev } }, 30000)
 
     if (json.unchanged && local.length) {
@@ -291,13 +293,15 @@ function writeMasterCache(cache) {
  * Mengirim `rev` terakhir supaya balasan bisa sangat kecil saat tidak berubah.
  * @returns {Promise<{live: Object, syncedAt: string, offline: boolean, error?: string}>}
  */
-export async function fetchMasterLive({ silent = false } = {}) {
+export async function fetchMasterLive({ silent = false, force = false } = {}) {
   const cache = readMasterCache()
   if (!getEndpoint()) {
     return { live: cache?.live || null, syncedAt: cache?.syncedAt || null, offline: true }
   }
   try {
-    const json = await post({ action: 'master', payload: { rev: cache?.live?.rev || '' } }, 45000)
+    /* Sinkron manual → minta data penuh (rev kosong), jangan menerima “unchanged” */
+    const rev = force ? '' : cache?.live?.rev || ''
+    const json = await post({ action: 'master', payload: { rev } }, 45000)
     const hasil = json.result || {}
     /* `unchanged` boleh dikirim di tingkat atas maupun di dalam result */
     if (json.unchanged || hasil.unchanged) {

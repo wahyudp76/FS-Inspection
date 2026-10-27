@@ -110,7 +110,7 @@ export async function syncAll({ onTahap } = {}) {
 
   const tarikMaster = async () => {
     try {
-      const m = await fetchMasterLive({ silent: true })
+      const m = await fetchMasterLive({ silent: true, force: true })
       const unit = (m.live?.mesin?.length || 0) + (m.live?.irrigator?.length || 0)
       laporan.master = {
         ok: !!m.live && !m.error,
@@ -130,7 +130,7 @@ export async function syncAll({ onTahap } = {}) {
 
   const tarikRiwayat = async () => {
     try {
-      const h = await fetchHistory({ silent: true })
+      const h = await fetchHistory({ silent: true, force: true })
       laporan.riwayat = {
         ok: !h.error,
         jumlah: h.records?.length || 0,
@@ -175,7 +175,7 @@ export function ringkasSync(laporan) {
   const bagian = []
   if (laporan.kirim.terkirim) bagian.push(`${nf.format(laporan.kirim.terkirim)} inspeksi terkirim`)
   if (laporan.kirim.sisa) bagian.push(`${nf.format(laporan.kirim.sisa)} antrean tersisa`)
-  if (laporan.master.ok) bagian.push(`master ${nf.format(laporan.master.unit)} unit`)
+  if (laporan.master.ok) bagian.push(`master ${nf.format(laporan.master.unit)} unit (dibaca ulang)`)
   if (laporan.riwayat.ok) bagian.push(`${nf.format(laporan.riwayat.jumlah)} inspeksi`)
   if (laporan.service.ok) bagian.push(`${nf.format(laporan.service.log)} service`)
   const detik = (laporan.ms / 1000).toFixed(1).replace('.', ',')

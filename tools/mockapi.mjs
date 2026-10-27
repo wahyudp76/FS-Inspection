@@ -50,6 +50,28 @@ const server = http.createServer((req, res) => {
     'Access-Control-Allow-Methods': 'POST,GET,OPTIONS',
   }
   if (req.method === 'OPTIONS') { res.writeHead(204, cors); return res.end() }
+  /* Hook uji (hanya bila TESTHOOK=1): meniru pengguna menyunting sel sheet dari
+     Google Sheets — yaitu perubahan yang TIDAK lewat aplikasi.
+     GET /__set?sheet=Mesin&kode=SPC0224&col=Status&val=Rusak */
+  if (process.env.TESTHOOK === '1' && req.method === 'GET' && req.url.startsWith('/__set')) {
+    const u = new URL(req.url, 'http://x')
+    const sheet = env.ss.getSheetByName(u.searchParams.get('sheet'))
+    const kode = (u.searchParams.get('kode') || '').trim().toUpperCase()
+    const col = u.searchParams.get('col') || 'Status'
+    const val = u.searchParams.get('val') ?? ''
+    let hasil = { ok: false, error: 'sheet/kode tidak ditemukan' }
+    if (sheet && kode) {
+      const head = sheet.grid[0].map((x) => String(x).trim())
+      const c = head.indexOf(col) + 1
+      const r = sheet.grid.findIndex((row, i) => i > 0 && String(row[1] || '').trim().toUpperCase() === kode)
+      if (c > 0 && r > 0) {
+        sheet.grid[r][c - 1] = val
+        hasil = { ok: true, sheet: u.searchParams.get('sheet'), kode, col, val, baris: r + 1 }
+      }
+    }
+    res.writeHead(200, { ...cors, 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify(hasil))
+  }
   let body = ''
   req.on('data', (c) => { body += c })
   req.on('end', () => {
