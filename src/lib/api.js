@@ -243,7 +243,7 @@ export async function backfillMaster(tanggal = '2026-03-05') {
 
 /** Minta Apps Script menulis hasil inspeksi terakhir ke sheet master Mesin & Irrigator */
 export async function syncMaster() {
-  const json = await post({ action: 'syncmaster' }, 45000)
+  const json = await post({ action: 'syncmaster' }, 120000)
   return json.result || []
 }
 

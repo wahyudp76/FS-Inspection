@@ -126,3 +126,14 @@ node tools/synctest.mjs  # ubah status di sheet → tekan Sinkron → layar ikut
 status unit diubah lewat `GET /__set` (meniru suntingan manual di Google Sheets,
 hanya aktif bila `TESTHOOK=1`), lalu tombol Sinkron ditekan dan Data Unit harus
 mengikuti sheet. Keduanya GAGAL pada kode v1.9.1 ke bawah.
+
+### Uji arah web → sheet (v1.9.3)
+
+```bash
+node tools/tulistest.mjs    # tanpa server: syncmaster + aturan Rusak ⇒ Kritis
+```
+
+Memastikan `syncmaster` menulis ulang A/B/C, skor, dan KONDISI ke sheet master,
+menegakkan **Status “Rusak” ⇒ KONDISI “Kritis”** (termasuk unit tanpa riwayat
+inspeksi), idempoten, dan tidak menyentuh unit berstatus lain. `tools/synctest.mjs`
+juga sudah memeriksa hasil tulis ini lewat hook `GET /__get`.

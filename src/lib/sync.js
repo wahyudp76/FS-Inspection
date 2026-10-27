@@ -9,13 +9,15 @@
  * Urutan penting:
  *   1. KIRIM   — antrean inspeksi lokal (web → sheet “Data Inspeksi”; Apps Script
  *                sekaligus menulis ringkasan ke sheet master Mesin/Irrigator)
- *   2–4. TARIK — master aset, riwayat inspeksi, dan service engine (sheet → web),
+ *   2. TULIS   — (Sinkron manual) hitung ulang ringkasan master A/B/C, skor,
+ *                KONDISI (aturan Rusak ⇒ Kritis) + warna kolom KONDISI.
+ *   3–5. TARIK — master aset, riwayat inspeksi, dan service engine (sheet → web),
  *                dijalankan paralel supaya tidak menunggu tiga kali latensi.
  *
  * Kegagalan satu tahap tidak menghentikan tahap lain: semuanya dilaporkan di
  * `laporan` supaya pengguna tahu bagian mana yang belum tersinkron.
  */
-import { flushQueue, fetchHistory, fetchMasterLive } from './api'
+import { flushQueue, fetchHistory, fetchMasterLive, syncMaster } from './api'
 import { fetchServiceData } from './service'
 import { getEndpoint } from './config'
 
@@ -26,6 +28,12 @@ export const TAHAP_SYNC = [
     judul: 'Kirim inspeksi lokal',
     arah: 'web → sheet',
     detail: 'Antrean inspeksi di perangkat dikirim ke sheet “Data Inspeksi”; sheet master Mesin/Irrigator ikut diperbarui.',
+  },
+  {
+    id: 'tulis',
+    judul: 'Ringkasan ke sheet master',
+    arah: 'web → sheet',
+    detail: 'Menghitung ulang A/B/C, skor, dan KONDISI tiap unit di sheet Mesin & Irrigator (status Rusak selalu Kritis), lalu memasang warna kolom KONDISI. Dijalankan saat Sinkron manual.',
   },
   {
     id: 'master',
@@ -52,7 +60,8 @@ const kosong = () => ({
   offline: false,
   ms: 0,
   mulai: new Date().toISOString(),
-  kirim: { ok: true, terkirim: 0, gagal: 0, sisa: 0, error: '' },
+  kirim: { ok: true, terkirim: 0, gagal: 0, sisa: 0, error: '', dilewati: false },
+  tulis: { ok: false, hasil: [], error: '', dilewati: true },
   master: { ok: false, unit: 0, live: false, syncedAt: null, liveData: null, error: '' },
   riwayat: { ok: false, jumlah: 0, records: null, syncedAt: null, error: '' },
   service: { ok: false, data: null, unit: 0, log: 0, error: '' },
@@ -64,9 +73,11 @@ const kosong = () => ({
  *
  * @param {Object} [opts]
  * @param {Function} [opts.onTahap] dipanggil `(id, 'mulai'|'selesai')` tiap tahap
+ * @param {boolean} [opts.tulisMaster] true = tulis ulang ringkasan ke sheet master
+ *   (dipakai Sinkron manual; tarikan otomatis tiap 5 menit tidak menulis apa pun)
  * @returns {Promise<Object>} laporan lengkap (lihat `kosong()`)
  */
-export async function syncAll({ onTahap } = {}) {
+export async function syncAll({ onTahap, tulisMaster = false } = {}) {
   const laporan = kosong()
   const t0 = Date.now()
   const lapor = (tahap, ok, error = '') => {
@@ -103,7 +114,21 @@ export async function syncAll({ onTahap } = {}) {
   }
   onTahap?.('kirim', 'selesai')
 
-  /* 2–4. sheet → web */
+  /* 2. web → sheet: ringkasan master (manual saja, supaya tidak menulis tiap 5 menit) */
+  if (tulisMaster) {
+    onTahap?.('tulis', 'mulai')
+    try {
+      const r = await syncMaster()
+      laporan.tulis = { ok: true, hasil: Array.isArray(r) ? r : [], error: '', dilewati: false }
+    } catch (e) {
+      /* jangan gagalkan seluruh sinkron: tarikan sheet → web tetap berguna */
+      laporan.tulis = { ok: false, hasil: [], error: e.message, dilewati: false }
+      lapor('tulis', false, e.message)
+    }
+    onTahap?.('tulis', 'selesai')
+  }
+
+  /* 3–5. sheet → web */
   onTahap?.('master', 'mulai')
   onTahap?.('riwayat', 'mulai')
   onTahap?.('service', 'mulai')
@@ -175,6 +200,8 @@ export function ringkasSync(laporan) {
   const bagian = []
   if (laporan.kirim.terkirim) bagian.push(`${nf.format(laporan.kirim.terkirim)} inspeksi terkirim`)
   if (laporan.kirim.sisa) bagian.push(`${nf.format(laporan.kirim.sisa)} antrean tersisa`)
+  if (laporan.tulis?.ok) bagian.push('ringkasan master ditulis')
+  else if (laporan.tulis && !laporan.tulis.ok && !laporan.tulis.dilewati) bagian.push('ringkasan master gagal ditulis')
   if (laporan.master.ok) bagian.push(`master ${nf.format(laporan.master.unit)} unit (dibaca ulang)`)
   if (laporan.riwayat.ok) bagian.push(`${nf.format(laporan.riwayat.jumlah)} inspeksi`)
   if (laporan.service.ok) bagian.push(`${nf.format(laporan.service.log)} service`)

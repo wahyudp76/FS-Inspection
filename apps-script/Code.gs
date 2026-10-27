@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.2'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.3'; // naikkan setiap kali kode berubah besar
 /* 1.9.1 — warna kolom KONDISI di sheet master dipasang lewat CONDITIONAL
    FORMATTING (bukan hanya setBackground): aturan format bersyarat milik sheet
    selalu menang atas warna sel, jadi sel “Kritis” bisa tetap hijau. Aturan kita
@@ -1403,8 +1403,28 @@ function syncLatestToMaster() {
       }
     }
 
+    /* ---------- tegakkan aturan bisnis: Status “Rusak” ⇒ KONDISI “Kritis” ----------
+       Jaring pengaman untuk unit yang TIDAK punya baris inspeksi (tidak tersentuh
+       blok di atas) atau yang kolom KONDISI-nya disunting manual. Tanpa ini,
+       sheet bisa berisi “Rusak / Baik” seperti kasus SPC0224. */
+    var ditegakkan = 0;
+    if (statusCol > 0) {
+      var kondisiCol = indexOfHeader_(header, 'KONDISI');
+      if (kondisiCol > 0) {
+        var kVals = sh.getRange(2, kondisiCol, lastRow - 1, 1).getValues();
+        var perluTulis = false;
+        for (var rk2 = 0; rk2 < kVals.length; rk2++) {
+          var st = statusVals[rk2] ? String(statusVals[rk2][0] || '').trim().toLowerCase() : '';
+          var kd = String(kVals[rk2][0] || '').trim();
+          if (st === 'rusak' && kd !== 'Kritis') { kVals[rk2][0] = 'Kritis'; ditegakkan++; perluTulis = true; }
+        }
+        if (perluTulis) sh.getRange(2, kondisiCol, kVals.length, 1).setValues(kVals);
+      }
+    }
+
     hasil.push(tipe + ': ' + terisi + '/' + kodeVals.length + ' unit diperbarui' +
-      (selKomponen ? ', ' + selKomponen + ' sel komponen terisi' : ''));
+      (selKomponen ? ', ' + selKomponen + ' sel komponen terisi' : '') +
+      (ditegakkan ? ', ' + ditegakkan + ' KONDISI dipaksa Kritis (status Rusak)' : ''));
   }
 
   var msg = hasil.join(' · ');

@@ -53,6 +53,22 @@ const server = http.createServer((req, res) => {
   /* Hook uji (hanya bila TESTHOOK=1): meniru pengguna menyunting sel sheet dari
      Google Sheets — yaitu perubahan yang TIDAK lewat aplikasi.
      GET /__set?sheet=Mesin&kode=SPC0224&col=Status&val=Rusak */
+  /* GET /__get?sheet=Mesin&kode=SPC0224&col=KONDISI → baca satu sel (untuk uji) */
+  if (process.env.TESTHOOK === '1' && req.method === 'GET' && req.url.startsWith('/__get')) {
+    const u = new URL(req.url, 'http://x')
+    const sheet = env.ss.getSheetByName(u.searchParams.get('sheet'))
+    const kode = (u.searchParams.get('kode') || '').trim().toUpperCase()
+    const col = u.searchParams.get('col') || 'Status'
+    let hasil = { ok: false, error: 'sheet/kode tidak ditemukan' }
+    if (sheet && kode) {
+      const head = sheet.grid[0].map((x) => String(x).trim())
+      const c = head.indexOf(col)
+      const r = sheet.grid.findIndex((row, i) => i > 0 && String(row[1] || '').trim().toUpperCase() === kode)
+      if (c >= 0 && r > 0) hasil = { ok: true, sheet: u.searchParams.get('sheet'), kode, col, val: sheet.grid[r][c] }
+    }
+    res.writeHead(200, { ...cors, 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify(hasil))
+  }
   if (process.env.TESTHOOK === '1' && req.method === 'GET' && req.url.startsWith('/__set')) {
     const u = new URL(req.url, 'http://x')
     const sheet = env.ss.getSheetByName(u.searchParams.get('sheet'))

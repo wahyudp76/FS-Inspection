@@ -24,10 +24,15 @@ const cek = (nama, ok, extra = '') => {
   console.log(`${ok ? '✅' : '❌'} ${nama}${extra ? ' — ' + extra : ''}`)
 }
 
-const setSheet = async (val) => {
-  const r = await fetch(`${MOCK}/__set?sheet=Mesin&kode=${KODE}&col=Status&val=${encodeURIComponent(val)}`)
+const setSheet = async (val, col = 'Status') => {
+  const r = await fetch(`${MOCK}/__set?sheet=Mesin&kode=${KODE}&col=${col}&val=${encodeURIComponent(val)}`)
   const j = await r.json()
   if (!j.ok) throw new Error('hook gagal: ' + JSON.stringify(j))
+}
+const getSheet = async (col = 'Status') => {
+  const r = await fetch(`${MOCK}/__get?sheet=Mesin&kode=${KODE}&col=${col}`)
+  const j = await r.json()
+  return j.ok ? String(j.val ?? '') : `(error: ${j.error})`
 }
 
 const barisUnit = (page, kode) =>
@@ -92,7 +97,18 @@ await tekanSinkron(page)
 baris = await bukaUnit(page)
 cek('Sinkron ketiga (tidak ada perubahan): tetap Rusak', /Rusak/.test(baris), baris.slice(-70))
 
-/* 5. chip master menyatakan data live */
+/* 5. arah web → sheet: KONDISI di master ikut ditulis ulang (Rusak ⇒ Kritis) */
+{
+  await setSheet('Rusak')
+  await setSheet('Baik', 'KONDISI') /* kondisi sengaja dibuat tidak konsisten */
+  cek('sheet sebelum Sinkron: Status Rusak, KONDISI Baik', (await getSheet('KONDISI')) === 'Baik', await getSheet('KONDISI'))
+  await tekanSinkron(page)
+  cek('setelah Sinkron: sheet master KONDISI = Kritis', (await getSheet('KONDISI')) === 'Kritis', await getSheet('KONDISI'))
+  baris = await bukaUnit(page)
+  cek('setelah Sinkron: web menampilkan Rusak / Kritis', /Rusak/.test(baris), baris.slice(-70))
+}
+
+/* 6. chip master menyatakan data live */
 const chip = await page.evaluate(() => {
   const el = [...document.querySelectorAll('button, span')].find((e) => /Master live|tekan Sinkron/.test(e.innerText || ''))
   return el ? el.innerText.replace(/\s+/g, ' ').trim() : '(tidak ada)'

@@ -90,7 +90,9 @@ export default function App() {
     setSync((s) => ({ ...s, syncing: true }))
     inFlight.current = (async () => {
       try {
-        const lap = await syncAll()
+        /* Sinkron manual = dua arah: kirim antrean → tulis ringkasan master →
+           tarik semua sheet. Tarikan otomatis (silent) tidak menulis apa pun. */
+        const lap = await syncAll({ tulisMaster: !silent })
 
         /* web → sheet: antrean inspeksi yang tertunda */
         if (lap.kirim.terkirim && !silent) {
