@@ -12,7 +12,10 @@ const LS_AUTO_REFRESH = 'fsi:auto-refresh'
 export const REFRESH_MS = 5 * 60 * 1000
 const LS_CACHE = 'fsi:history-cache'
 
-export const BUILD_ENV_ENDPOINT = import.meta.env.VITE_APPS_SCRIPT_URL || ''
+/* `import.meta.env` tidak ada saat modul diuji di Node (tools/*.mjs) — jaga
+   supaya berkas ini bisa diimpor tanpa bundler. */
+const ENV = (typeof import.meta !== 'undefined' && import.meta.env) || {}
+export const BUILD_ENV_ENDPOINT = ENV.VITE_APPS_SCRIPT_URL || ''
 
 export const getEndpoint = () => {
   try {

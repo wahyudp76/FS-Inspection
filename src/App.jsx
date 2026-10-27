@@ -223,7 +223,7 @@ export default function App() {
           />
         )
       case 'service':
-        return <Service notify={notify} openFormSignal={svcSignal} serviceSync={serviceSync} />
+        return <Service notify={notify} openFormSignal={svcSignal} serviceSync={serviceSync} master={data.mesin} />
       case 'pengaturan':
         return (
           <Settings

@@ -356,6 +356,21 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
                 * Beda status: baris inspeksi terakhir mencatat status berbeda dari sheet master. Ini informasi, bukan
                 kesalahan data — dashboard selalu memakai status master (acuan kebenaran), dan tidak menulis ulang riwayat.
               </p>
+              {audit.statusBeda?.length > 0 && (
+                <div className="rounded-xl border border-sky-500/25 bg-sky-500/[0.06] p-2.5">
+                  <p className="mb-1 text-[10px] uppercase tracking-wider text-sky-300/80">
+                    Status berbeda ({audit.statusBeda.length} unit) — tentukan yang benar di sheet
+                  </p>
+                  <ul className="space-y-0.5 text-[11px] text-sky-100/80">
+                    {audit.statusBeda.map((s) => (
+                      <li key={`${s.tipe}-${s.kode}`} className="font-mono text-[10.5px]">
+                        {s.kode} <span className="text-slate-500">({s.tipe})</span> · Data Inspeksi “{s.sheet}” ≠ master “{s.master || '-'}”
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {audit.contoh?.length > 0 && (
                 <div className="max-h-72 overflow-y-auto rounded-xl border border-white/[0.06]">
                   <table className="w-full text-left text-[11px]">

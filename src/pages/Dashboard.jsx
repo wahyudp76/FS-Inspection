@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react'
 import {
   fleetSummary, componentIssues, byWilayah, scoreBucketsSplit, groupProfile, unitTypeBreakdown,
   trendByPeriod, topInspectors, latestByUnit, pct, fmtDateTime, relativeTime, kondisiOf, cx, periodKey, scoreColor,
+  rekapRecord,
 } from '../lib/analytics'
 import { daysAgoWIB } from '../lib/time'
 import { Card, CardHeader, Kpi, Bar, KondisiPill, StatusPill, Empty, Segmented, ScoreRing, GradePill } from '../components/ui'
@@ -66,8 +67,9 @@ export default function Dashboard({ data, records, navigate }) {
     const keys = [...new Set(filteredRecords.map((r) => periodKey(r, period)))].filter(Boolean).sort()
     const prevKey = keys[keys.indexOf(nowKey) - 1]
     const prev = prevKey ? filteredRecords.filter((r) => periodKey(r, period) === prevKey) : []
-    const cNow = current.reduce((s, r) => s + (r.c || 0), 0)
-    const cPrev = prev.reduce((s, r) => s + (r.c || 0), 0)
+    /* temuan C dihitung dari nilai komponen (rekapRecord), bukan kolom sheet */
+    const cNow = current.reduce((s, r) => s + rekapRecord(r).c, 0)
+    const cPrev = prev.reduce((s, r) => s + rekapRecord(r).c, 0)
     return {
       count: current.length,
       unit: new Set(current.map((r) => `${r.tipe}:${r.kode}`)).size,
@@ -567,8 +569,8 @@ export default function Dashboard({ data, records, navigate }) {
                   </div>
                   <div className="flex shrink-0 items-center gap-1">
                     <GradePill value="A" size="xs" />
-                    <span className="font-mono text-[10px] text-emerald-400">{r.a}</span>
-                    <span className="font-mono text-[10px] text-rose-400">{r.c}</span>
+                    <span className="font-mono text-[10px] text-emerald-400">{rekapRecord(r).a}</span>
+                    <span className="font-mono text-[10px] text-rose-400">{rekapRecord(r).c}</span>
                   </div>
                 </button>
               ))

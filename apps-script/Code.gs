@@ -24,7 +24,13 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.8.3'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.0'; // naikkan setiap kali kode berubah besar
+/* 1.9.0 — ringkasan (A/B/C/Total/Skor/Kondisi) SELALU dihitung ulang di server
+   dari nilai komponen, tidak pernah dipercaya dari klien / kolom sheet:
+     · writeInspection_  (kirim inspeksi dari web)
+     · syncLatestToMaster (Data Inspeksi → sheet Mesin/Irrigator)
+     · updateInspection_ (ubah sesi; komponen yang tidak dikirim tidak dihapus)
+   Bandingan "inspeksi terbaru" memakai epoch ms, bukan perbandingan teks. */
 
 /* ---- spreadsheet MASTER aset (Draft Dashboard) ---- */
 var SOURCE_SPREADSHEET_ID = '1WbGTDqC0Anh6O54twsJfiBiWcTri7FHyQjXIFrOoLz4';
@@ -398,6 +404,23 @@ function writeInspection_(p) {
     var tanggal = p.tanggal || formatDate_(now);
     var ts = now.toISOString();
 
+    /* ---- ringkasan TIDAK dipercaya dari klien: dihitung dari nilai komponen ----
+       Dulu `A/B/C/Total/Skor` diambil apa adanya dari payload. Bila klien tidak
+       mengirimnya (atau mengirim angka basi), baris tersimpan 0/0/0 dengan
+       Kondisi "Kritis" meski komponennya terisi A semua — sumber baris “+1” dan
+       skor salah di sheet Data Inspeksi. Sekarang server yang menghitung. */
+    var tipeBaru = String(p.tipe || '');
+    var listKomponen = tipeBaru === 'Irrigator' ? KOMPONEN_IRRIGATOR
+      : (tipeBaru === 'Mesin' ? KOMPONEN_MESIN : []);
+    var rekapBaru = rekap_(p.komponen || {}, listKomponen, p.statusUnit);
+    var adaKomponen = rekapBaru.total > 0;
+    var nA = adaKomponen ? rekapBaru.a : num_(p.a);
+    var nB = adaKomponen ? rekapBaru.b : num_(p.b);
+    var nC = adaKomponen ? rekapBaru.c : num_(p.c);
+    var nTotal = adaKomponen ? rekapBaru.total : num_(p.total);
+    var nSkor = adaKomponen ? rekapBaru.skor : num_(p.skor);
+    var nKondisi = kondisiDari_(nSkor, p.statusUnit) || p.kondisi || '';
+
     var values = {
       'ID Inspeksi': clientId || ('FSI-' + now.getTime() + '-' + Math.random().toString(36).slice(2, 8)),
       'Tanggal': tanggal,
@@ -409,12 +432,12 @@ function writeInspection_(p) {
       'Spesifikasi': p.spec || '',
       'Status Unit': p.statusUnit || '',
       'Petugas': p.inspector || '',
-      'A': num_(p.a),
-      'B': num_(p.b),
-      'C': num_(p.c),
-      'Total': num_(p.total),
-      'Skor': num_(p.skor),
-      'Kondisi': kondisiDari_(num_(p.skor), p.statusUnit) || p.kondisi || '',
+      'A': nA,
+      'B': nB,
+      'C': nC,
+      'Total': nTotal,
+      'Skor': nSkor,
+      'Kondisi': nKondisi,
       'Catatan': p.catatan || ''
     };
 
@@ -455,11 +478,11 @@ function writeInspection_(p) {
       spec: values['Spesifikasi'],
       statusUnit: values['Status Unit'],
       inspector: values['Petugas'],
-      a: num_(p.a),
-      b: num_(p.b),
-      c: num_(p.c),
-      total: num_(p.total),
-      skor: num_(p.skor),
+      a: nA,
+      b: nB,
+      c: nC,
+      total: nTotal,
+      skor: nSkor,
       kondisi: values['Kondisi'],
       catatan: values['Catatan'],
       komponen: p.tipe === 'Irrigator' ? pick_(komponen, KOMPONEN_IRRIGATOR) : pick_(komponen, KOMPONEN_MESIN),
@@ -569,7 +592,24 @@ function updateInspection_(p) {
     var rec = rowToRecord_(header, row, rowIndex, componentIndex_());
 
     var tipe = String(p.tipe || rec.tipe || '');
-    var komponen = p.komponen || rec.komponen || {};
+    /* ---- gabungkan, jangan timpa dengan kosong ----
+       Dulu nilai komponen yang TIDAK ada di payload ikut ditulis '' sehingga
+       mengubah satu komponen menghapus 45 komponen lain di baris itu.
+       Sekarang: nama yang tidak dikirim → nilai lama dipertahankan;
+       nama yang dikirim kosong / bukan A-B-C → dihapus (memang diniatkan). */
+    var komponen = {};
+    var kunciLama;
+    for (kunciLama in rec.komponen) {
+      if (rec.komponen.hasOwnProperty(kunciLama)) komponen[kunciLama] = rec.komponen[kunciLama];
+    }
+    if (p.komponen) {
+      for (kunciLama in p.komponen) {
+        if (!p.komponen.hasOwnProperty(kunciLama)) continue;
+        var gKirim = normalizeGrade_(p.komponen[kunciLama]);
+        if (gKirim) komponen[kunciLama] = gKirim;
+        else delete komponen[kunciLama];
+      }
+    }
     var set = function (name, value) {
       if (map[name]) row[map[name] - 1] = value;
     };
@@ -884,8 +924,13 @@ function serviceRead_() {
   var logSh = serviceLogSheet_();
   var lhr = serviceHeaderRow_(logSh);
   var llast = logSh.getLastRow();
-  out.logHeader = logSh.getRange(lhr, 1, 1, 8).getValues()[0].map(function (v) { return String(v); });
-  out.logRows = llast > lhr ? logSh.getRange(lhr + 1, 1, llast - lhr, 8).getValues().map(isoRow_) : [];
+  /* 15 kolom (A..O): selain 8 kolom pencatatan, ikut dikirim kolom bantu
+     “Rata-Rata Operating Time Harian” dan “Next Service” milik sheet — dulu
+     hanya A..H sehingga web kehilangan rerata HM/hari yang sudah dihitung
+     spreadsheet (banyak unit jadi “Data HM kurang” padahal datanya ada). */
+  var lcols = Math.max(8, Math.min(15, logSh.getLastColumn()));
+  out.logHeader = logSh.getRange(lhr, 1, 1, lcols).getValues()[0].map(function (v) { return String(v); });
+  out.logRows = llast > lhr ? logSh.getRange(lhr + 1, 1, llast - lhr, lcols).getValues().map(isoRow_) : [];
 
   return out;
 }
@@ -1204,7 +1249,9 @@ function syncLatestToMaster() {
     if (!h.kode) continue;
     var key = String(h.tipe) + '|' + String(h.kode);
     var prev = latest[key];
-    if (!prev || String(h.timestamp) >= String(prev.timestamp)) latest[key] = h;
+    var msH = msDariTs_(h.timestamp || h.tanggal);
+    var msPrev = prev ? msDariTs_(prev.timestamp || prev.tanggal) : -1;
+    if (!prev || msH >= msPrev) latest[key] = h;
   }
 
   var src = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
@@ -1263,18 +1310,22 @@ function syncLatestToMaster() {
       if (rec) {
         terisi++;
         var statusUnit = statusVals[r] ? String(statusVals[r][0] || '').trim() : '';
-        var kondisiFinal = kondisiDari_(rec.skor || 0, statusUnit);
+        /* Hitung ulang dari komponen: kolom ringkasan Data Inspeksi bisa basi
+           (mis. baris lama hasil backfill) — jangan disalin apa adanya. */
+        var rekapRec = hitungRingkasan_(rec.komponen || {}, statusUnit);
+        var skorPakai = rekapRec.total ? rekapRec.skor : (rec.skor || 0);
+        var kondisiFinal = kondisiDari_(skorPakai, statusUnit);
         var temuan = listTemuan_(rec.komponen, tipe === 'Mesin' ? KOMPONEN_MESIN : KOMPONEN_IRRIGATOR);
         var values = {
           'TGL INSPEKSI TERAKHIR': rec.tanggal || '',
           'JAM': (rec.timestamp && String(rec.timestamp).indexOf('T') > -1)
             ? Utilities.formatDate(new Date(rec.timestamp), 'Asia/Jakarta', 'HH:mm')
             : (String(rec.timestamp || '').split(' ')[1] || '').slice(0, 5),
-          'SKOR': rec.skor || 0,
+          'SKOR': skorPakai,
           'KONDISI': kondisiFinal,
-          'A': rec.a || 0,
-          'B': rec.b || 0,
-          'C': rec.c || 0,
+          'A': rekapRec.total ? rekapRec.a : (rec.a || 0),
+          'B': rekapRec.total ? rekapRec.b : (rec.b || 0),
+          'C': rekapRec.total ? rekapRec.c : (rec.c || 0),
           'PETUGAS': rec.inspector || '',
           'TEMUAN (B/C)': temuan
         };
@@ -1492,6 +1543,15 @@ function indexOfHeader_(header, name) {
 
 function pad2_(n) { return (n < 10 ? '0' : '') + n; }
 
+/** Epoch ms dari teks/ISO waktu apa pun ('' bila tak terbaca). Dipakai untuk
+ *  membandingkan "inspeksi terbaru" — perbandingan teks SALAH untuk
+ *  '2026-03-05 9:14:00' vs '2026-03-05 10:00:00'. */
+function msDariTs_(v) {
+  var s = isoDariTeks_(String(v == null ? '' : v));
+  var t = new Date(s).getTime();
+  return isFinite(t) ? t : 0;
+}
+
 
 /* ==================================================================
  *  AUDIT & PERBAIKAN DATA  (v1.7.2)
@@ -1564,6 +1624,8 @@ function auditData_() {
     baris: 0,
     hitung: { ringkasan: 0, skor: 0, kondisi: 0, komponenHilang: 0, komponenAsing: 0, idGanda: 0, kodeAsing: 0, tanggalRusak: 0, statusBeda: 0 },
     contoh: [],
+    /* status di Data Inspeksi ≠ status di sheet master (perlu dicek manual) */
+    statusBeda: [],
     master: { mesin: 0, irrigator: 0 }
   };
   if (last < 2) return hasil;
@@ -1647,6 +1709,11 @@ function auditData_() {
       if (t.status.toLowerCase() !== String(statusMaster[kk] || '').trim().toLowerCase()) {
         catat(0, t.kode, 'statusBeda',
           'Status terbaru di Data Inspeksi “' + t.status + '” ≠ master “' + (statusMaster[kk] || '-') + '”');
+        /* daftar khusus: contoh[] bisa penuh oleh temuan lain, padahal status
+           berbeda butuh keputusan manusia (mana yang benar di sheet) */
+        if (hasil.statusBeda.length < 50) {
+          hasil.statusBeda.push({ tipe: tipe, kode: t.kode, sheet: t.status, master: String(statusMaster[kk] || '') });
+        }
       }
     }
   };

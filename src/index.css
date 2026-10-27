@@ -59,6 +59,9 @@ body {
   .scroll-area { @apply overflow-auto overscroll-contain; }
   /* ---- target sentuh di layar kecil / perangkat sentuh ---- */
   .tap { @apply inline-flex min-h-9 min-w-9 items-center justify-center; }
+  /* .tap-sm: tombol mini / tautan aksi — di HP dinaikkan jadi 32 px agar
+     tetap nyaman disentuh tanpa memakan ruang (dipakai badge & tombol kecil) */
+  .tap-sm { @apply inline-flex items-center; }
 
 }
 
@@ -126,5 +129,16 @@ body {
   .btn-ghost.\!py-1,
   .btn-ghost.\!px-2 {
     min-height: 38px;
+  }
+  .tap-sm {
+    min-height: 32px;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+  /* kotak centang pengaturan: area tekan = seluruh baris, tapi kotaknya
+     sendiri tetap dinaikkan ke 24 px (WCAG 2.5.8) */
+  input[type='checkbox'] {
+    min-height: 24px;
+    min-width: 24px;
   }
 }

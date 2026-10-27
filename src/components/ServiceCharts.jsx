@@ -35,7 +35,7 @@ export function TrenServiceChart({ data = [], height = 270 }) {
             key={m.id}
             onClick={() => setMode(m.id)}
             className={cx(
-              'rounded-lg border px-2 py-1 text-[10.5px] font-semibold transition',
+              'tap-sm rounded-lg border px-2 text-[10.5px] font-semibold transition',
               mode === m.id ? 'border-brand/50 bg-brand/15 text-white' : 'border-white/10 bg-white/[0.02] text-slate-400 hover:text-slate-200'
             )}
           >
@@ -230,7 +230,7 @@ export function TopTerlambatChart({ data = [], height = 250, onPick }) {
         <button
           key={d.kode}
           onClick={() => onPick?.(d.kode)}
-          className="rounded-md border border-white/10 bg-white/[0.03] px-1.5 py-1 font-mono text-[9.5px] text-slate-300 transition hover:border-brand/40 hover:text-white"
+          className="tap-sm rounded-md border border-white/10 bg-white/[0.03] px-1.5 font-mono text-[9.5px] text-slate-300 transition hover:border-brand/40 hover:text-white"
           title={`Buka detail ${d.kode} — telat ${d.telat} hari`}
         >
           {d.kode} <span className="text-rose-300">{d.telat}h</span>

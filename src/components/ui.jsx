@@ -279,6 +279,7 @@ export function Segmented({ value, onChange, options, size = 'md' }) {
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
+          aria-pressed={value === o.value}
           className={cx(
             'inline-flex items-center justify-center whitespace-nowrap rounded-[10px] font-semibold transition',
             'max-sm:min-h-9',

@@ -32,6 +32,60 @@ export const kondisiOf = (score, statusUnit) => {
 export const kondisiUnit = (unit) =>
   kondisiOf(unit?.score ?? 0, unit?.status ?? unit?.statusUnit)
 
+/**
+ * REKAP EFEKTIF SATU SESI INSPEKSI — sumber kebenaran untuk tampilan.
+ *
+ * Kolom `A/B/C/Total/Skor/Kondisi` di sheet bisa BASI terhadap nilai komponen
+ * yang tersimpan di baris yang sama (mis. baris hasil backfill lama: 45A+1C di
+ * sel, tetapi kolom tertulis 45/0/2 dan total 47). Menampilkan kolom itu berarti
+ * dashboard & Riwayat melaporkan temuan yang tidak ada.
+ *
+ * Aturan:
+ *   1. bila record membawa `komponen` → hitung ulang dari komponen (selalu menang);
+ *   2. bila tidak ada komponen → pakai kolom sheet apa adanya;
+ *   3. kondisi SELALU mengikuti aturan “Status Rusak ⇒ Kritis”.
+ *
+ * `selisihSheet` = true bila kolom sheet tidak sama dengan hasil hitung komponen
+ * (dipakai untuk menandai data yang perlu diperbaiki di spreadsheet).
+ */
+export function rekapRecord(r = {}) {
+  const komp = r && typeof r.komponen === 'object' && r.komponen ? r.komponen : null
+  const num = (v) => {
+    const n = Number(String(v ?? '').replace(',', '.').replace(/[^\d.-]/g, ''))
+    return Number.isFinite(n) ? n : 0
+  }
+  let a = 0, b = 0, c = 0
+  if (komp) {
+    for (const v of Object.values(komp)) {
+      if (v === 'A') a++
+      else if (v === 'B') b++
+      else if (v === 'C') c++
+    }
+  }
+  const totalKomponen = a + b + c
+  const dariKomponen = totalKomponen > 0
+  const kolom = { a: num(r.a), b: num(r.b), c: num(r.c), total: num(r.total), skor: num(r.skor) }
+  const hasil = dariKomponen
+    ? {
+        a,
+        b,
+        c,
+        total: totalKomponen,
+        skor: Math.round(((a * 100 + b * 60) / totalKomponen) * 10) / 10,
+      }
+    : { a: kolom.a, b: kolom.b, c: kolom.c, total: kolom.total || kolom.a + kolom.b + kolom.c, skor: kolom.skor }
+  const status = r.statusUnit ?? r.status ?? ''
+  const kondisi = kondisiOf(hasil.skor, status)
+  const selisihSheet =
+    !!r.kondisi &&
+    (String(r.kondisi).trim() !== kondisi ||
+      (dariKomponen && (kolom.a !== hasil.a || kolom.b !== hasil.b || kolom.c !== hasil.c || kolom.total !== hasil.total)))
+  return { ...hasil, kondisi, dariKomponen, selisihSheet }
+}
+
+/** Ringkasan cepat untuk badge “data perlu diperbaiki”. */
+export const butuhPerbaikanSheet = (records = []) => records.filter((r) => rekapRecord(r).selisihSheet).length
+
 export const GRADE_COLOR = Object.fromEntries(GRADES.map((g) => [g.value, g.color]))
 
 /** Warna bar skor — mengikuti kondisi (bukan skor mentah) agar unit Rusak tidak tampil hijau. */
@@ -289,10 +343,11 @@ export function trendByPeriod(records = [], period = 'bulan') {
     if (!k) return
     const rec = map.get(k) || { key: k, label: fmtShort(k, period), inspeksi: 0, a: 0, b: 0, c: 0, skorSum: 0, unit: new Set() }
     rec.inspeksi++
-    rec.a += r.a || 0
-    rec.b += r.b || 0
-    rec.c += r.c || 0
-    rec.skorSum += r.skor || 0
+    const rk = rekapRecord(r) // hitung dari komponen, jangan percaya kolom sheet
+    rec.a += rk.a
+    rec.b += rk.b
+    rec.c += rk.c
+    rec.skorSum += rk.skor
     rec.unit.add(`${r.tipe}-${r.kode}`)
     map.set(k, rec)
   })
@@ -315,9 +370,10 @@ export function topInspectors(records = [], limit = 5) {
   records.forEach((r) => {
     const k = (r.inspector || 'Tanpa Nama').trim() || 'Tanpa Nama'
     const rec = map.get(k) || { name: k, jumlah: 0, c: 0, skorSum: 0 }
+    const rk = rekapRecord(r)
     rec.jumlah++
-    rec.c += r.c || 0
-    rec.skorSum += r.skor || 0
+    rec.c += rk.c
+    rec.skorSum += rk.skor
     map.set(k, rec)
   })
   return [...map.values()]

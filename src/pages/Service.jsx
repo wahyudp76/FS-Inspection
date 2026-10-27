@@ -20,6 +20,7 @@ import {
   readServiceCache,
   ringkasService,
   kualitasService,
+  lengkapiUnitDariLog,
   catatService,
   tarikSetelahCatat,
   INTERVAL_HM,
@@ -115,13 +116,19 @@ const MingguChips = ({ mingguBulan }) => {
   )
 }
 
-export default function Service({ notify, openFormSignal = 0, serviceSync = null }) {
+export default function Service({ notify, openFormSignal = 0, serviceSync = null, master = [] }) {
   const cached = useMemo(() => readServiceCache(), [])
   const [units, setUnits] = useState(cached?.units || [])
   const [log, setLog] = useState(cached?.log || [])
   const [duplikat, setDuplikat] = useState(cached?.duplikat || 0)
   const [barisEvalRaw, setBarisEvalRaw] = useState(cached?.barisEval || 0)
   const [syncedAt, setSyncedAt] = useState(cached?.syncedAt || null)
+  /* berapa unit datang dari tb_service1 vs hasil turunan log/master (v1.9.0) */
+  const [asal, setAsal] = useState({
+    unitEval: cached?.unitEval ?? (cached?.units?.filter?.((u) => u.sumber !== 'log')?.length || 0),
+    dariLog: cached?.tambahanDariLog || 0,
+    dariMaster: cached?.tambahanDariMaster || 0,
+  })
   const [memuat, setMemuat] = useState(!cached)
   const [galat, setGalat] = useState('')
 
@@ -177,28 +184,39 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   /* terapkan satu set data service (cache lokal, hasil tombol Sinkron, atau tarikan manual) */
   const terapkan = useCallback((data) => {
     if (!data) return
-    setUnits(data.units || [])
+    /* lengkapi lagi di sisi tampilan: unit master yang belum pernah service
+       tetap muncul (status “belum”) walau tidak ada di tb_service1 / tb_service2 */
+    const lengkap = lengkapiUnitDariLog(data.units || [], data.log || [], {
+      intervalHm: data.intervalHm || INTERVAL_HM,
+      master,
+    })
+    setUnits(lengkap.units)
+    setAsal({
+      unitEval: Number.isFinite(data.unitEval) ? data.unitEval : (data.units || []).filter((u) => u.sumber !== 'log').length,
+      dariLog: (data.tambahanDariLog || 0) + lengkap.dariLog,
+      dariMaster: (data.tambahanDariMaster || 0) + lengkap.dariMaster,
+    })
     setLog(data.log || [])
     setDuplikat(data.duplikat || 0)
     setBarisEvalRaw(data.barisEval || 0)
     setSyncedAt(data.syncedAt || null)
     setGalat('')
     setMemuat(false)
-  }, [])
+  }, [master])
 
   /* tarik sendiri hanya sebagai cadangan bila header belum punya data — bukan tombol tersendiri */
   const muat = useCallback(
     async ({ diam = false } = {}) => {
       if (!diam) setMemuat(true)
       try {
-        terapkan(await fetchServiceData())
+        terapkan(await fetchServiceData({ master }))
       } catch (e) {
         setGalat(e?.message || 'Gagal menarik data service dari Google Sheets.')
       } finally {
         setMemuat(false)
       }
     },
-    [terapkan]
+    [terapkan, master]
   )
 
   /* hasil tombol Sinkron di header selalu menang atas cache lokal */
@@ -359,7 +377,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             <button
               onClick={() => setBukaKualitas((v) => !v)}
               className={cx(
-                'inline-flex items-center gap-1 rounded border px-1.5 py-0.5 transition',
+                'tap-sm inline-flex items-center gap-1 rounded border px-1.5 transition',
                 kualitas.masalah.some((m) => m.level === 'error')
                   ? 'border-rose-500/35 bg-rose-500/10 text-rose-300 hover:bg-rose-500/20'
                   : 'border-amber-500/35 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
@@ -370,10 +388,23 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               <IconChevron size={10} className={bukaKualitas ? 'rotate-180' : ''} />
             </button>
           )}
-          <a href={SERVICE_SHEET.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-brand/90 hover:text-brand">
+          <a href={SERVICE_SHEET.url} target="_blank" rel="noreferrer" className="tap-sm inline-flex items-center gap-1 font-semibold text-brand/90 hover:text-brand">
             Buka sheet <IconExternal size={10} />
           </a>
         </p>
+        {(asal.dariLog > 0 || asal.dariMaster > 0) && (
+          <div className="mx-3 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-sky-500/25 bg-sky-500/[0.07] px-3 py-2 text-[11px] text-sky-200/90 sm:mx-4">
+            <IconSheet size={12} />
+            <span>
+              Sheet <span className="font-semibold">tb_service1</span> (Data Service Engine) hanya memuat{' '}
+              <span className="font-semibold">{fmt(asal.unitEval)}</span> unit
+              {asal.dariLog > 0 && <> · <span className="font-semibold">{fmt(asal.dariLog)}</span> unit dihitung dari catatan tb_service2</>}
+              {asal.dariMaster > 0 && <> · <span className="font-semibold">{fmt(asal.dariMaster)}</span> unit master belum pernah service</>}
+              . Data diturunkan otomatis agar tidak ada unit yang hilang dari halaman ini.
+            </span>
+          </div>
+        )}
+
         {bukaKualitas && kualitas.masalah.length > 0 && (
           <div className="mx-3 mb-3 space-y-1.5 rounded-xl border border-white/[0.07] bg-white/[0.02] p-2.5 sm:mx-4">
             <p className="text-[10px] uppercase tracking-wider text-slate-500">
@@ -651,7 +682,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                       setFKode({ label: `${s.label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsStatus[s.id] || new Set() })
                       setHalEval(0)
                     }}
-                    className="flex w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-white/[0.04]"
+                    className="flex min-h-8 w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-white/[0.04]"
                   >
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
                     <span className="min-w-0 flex-1 truncate text-[11px] text-slate-400">{s.label}</span>
@@ -847,7 +878,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                 key={t.value}
                 onClick={() => setTabPerhatian(t.value)}
                 className={cx(
-                  'shrink-0 rounded-lg border px-2.5 py-1.5 text-[11px] font-semibold transition',
+                  'shrink-0 rounded-lg border px-2.5 py-2 text-[11px] font-semibold transition max-sm:min-h-9',
                   tabPerhatian === t.value ? 'border-brand/50 bg-brand/15 text-white' : 'border-white/10 bg-white/[0.02] text-slate-400'
                 )}
               >

@@ -360,3 +360,25 @@ node scripts/make-icons.mjs       # butuh CHROME_PATH bila Chromium tak standar
 ```
 
 **Memasang sebagai aplikasi:** Chrome/Edge desktop → ikon *Install* di address bar · Android → *Add to Home screen* · iPhone/iPad (Safari) → *Share ▸ Add to Home Screen*.
+
+---
+
+## 🧪 v1.9.0 (27 Okt 2026) — hasil audit data spreadsheet ↔ web
+
+- **Ringkasan A/B/C/Total/Skor selalu dihitung di server** dari nilai komponen
+  (`submit`, `update`, dan `syncLatestToMaster`). Angka dari klien / kolom sheet
+  yang basi tidak lagi dipercaya — inilah penyebab baris “meleset +1” di sheet lama.
+- **Ubah satu komponen tidak lagi menghapus komponen lain** saat menyunting sesi.
+- **Halaman Riwayat & Dashboard** menampilkan A/B/C/Skor/Kondisi hasil hitung komponen,
+  dan aturan **Rusak ⇒ Kritis** selalu berlaku di tampilan.
+- **Service Engine tidak lagi kosong** bila sheet `Data Service Engine` (tb_service1)
+  belum terisi: evaluasi diturunkan dari catatan `Monitor Kasie FS` (tb_service2) +
+  master, memakai kolom *Rata-Rata Operating Time Harian* dan *Next Service* milik sheet.
+- **Pengaturan ▸ Kualitas Data Sheet** kini menampilkan daftar unit yang statusnya
+  berbeda antara `Data Inspeksi` dan master.
+- Alat audit baru: `tools/livedata.mjs` (data asli ↔ kode) dan `tools/liveuicheck.mjs`
+  (UI 6 rute × 3 lebar layar). Lihat [`AUDIT-2026-10-27.md`](AUDIT-2026-10-27.md).
+
+> Setelah menarik versi ini, jalankan **sekali**: tempel `apps-script/Code.gs` →
+> *Deploy ▸ New version* → **Pengaturan ▸ Kualitas Data Sheet ▸ Audit** → **Perbaiki otomatis**
+> → **Audit** (harus “Bersih”).

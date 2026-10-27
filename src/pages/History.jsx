@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
-import { cx, fmtDateTime, trendByPeriod, periodKey, pct, kondisiOf, scoreColor } from '../lib/analytics'
+import { cx, fmtDateTime, trendByPeriod, periodKey, pct, kondisiOf, scoreColor, rekapRecord } from '../lib/analytics'
 import { GRADES } from '../lib/config'
 import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, Empty, Segmented, Select } from '../components/ui'
 import { TrendChart, GradeStack } from '../components/charts'
@@ -124,19 +124,30 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
   useEffect(() => { setPage(0); setExpanded(null) }, [tipe, inspector, q, perPage])
 
   const trend = useMemo(() => trendByPeriod(filtered, period), [filtered, period])
+  /* Semua angka diambil dari nilai KOMPONEN (rekapRecord), bukan kolom ringkasan
+     sheet yang bisa basi — lihat catatan di src/lib/analytics.js. */
   const summary = useMemo(() => {
     const total = filtered.length
-    const a = filtered.reduce((s, r) => s + (r.a || 0), 0)
-    const b = filtered.reduce((s, r) => s + (r.b || 0), 0)
-    const c = filtered.reduce((s, r) => s + (r.c || 0), 0)
-    const skor = total ? Math.round((filtered.reduce((s, r) => s + (r.skor || 0), 0) / total) * 10) / 10 : 0
+    let a = 0, b = 0, c = 0, skorSum = 0, perlu = 0
+    for (const r of filtered) {
+      const rk = rekapRecord(r)
+      a += rk.a
+      b += rk.b
+      c += rk.c
+      skorSum += rk.skor
+      if (rk.selisihSheet) perlu++
+    }
+    const skor = total ? Math.round((skorSum / total) * 10) / 10 : 0
     const unit = new Set(filtered.map((r) => `${r.tipe}:${r.kode}`)).size
-    return { total, a, b, c, skor, unit, pending: filtered.filter((r) => r.pending).length }
+    return { total, a, b, c, skor, unit, perlu, pending: filtered.filter((r) => r.pending).length }
   }, [filtered])
 
   const exportCsv = () => {
     const head = ['Tanggal', 'Waktu Kirim', 'Tipe', 'Kode Unit', 'Wilayah', 'Petugas', 'A', 'B', 'C', 'Total', 'Skor', 'Kondisi', 'Catatan']
-    const body = filtered.map((r) => [r.tanggal, r.timestamp, r.tipe, r.kode, r.wilayah, r.inspector, r.a, r.b, r.c, r.total, r.skor, r.kondisi, r.catatan])
+    const body = filtered.map((r) => {
+      const rk = rekapRecord(r)
+      return [r.tanggal, r.timestamp, r.tipe, r.kode, r.wilayah, r.inspector, rk.a, rk.b, rk.c, rk.total, rk.skor, rk.kondisi, r.catatan]
+    })
     const csv = [head, ...body].map((row) => row.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n')
     const blob = new Blob([`\ufeff${csv}`], { type: 'text/csv;charset=utf-8' })
     const a = document.createElement('a')
@@ -173,6 +184,17 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
           <span>
             {summary.pending} inspeksi masih di antrean lokal — tekan <span className="font-semibold">Sinkron</span> di header
             untuk mengirimnya ke Google Sheets.
+          </span>
+        </div>
+      )}
+
+      {summary.perlu > 0 && (
+        <div className="flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/25 bg-amber-500/[0.06] px-3.5 py-2.5 text-[11.5px] text-amber-200/90">
+          <IconAlert size={14} />
+          <span>
+            {summary.perlu} sesi di sheet punya <span className="font-semibold">kolom ringkasan A/B/C/Skor/Kondisi yang tidak cocok</span>
+            {' '}dengan nilai komponennya. Angka di halaman ini sudah dihitung ulang dari komponen; rapikan sheet lewat
+            {' '}<span className="font-semibold">Pengaturan ▸ Kualitas Data Sheet ▸ Perbaiki otomatis</span>.
           </span>
         </div>
       )}
@@ -230,7 +252,8 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
               const key = r.id || `${r.kode}-${r.timestamp}`
               const isOpen = expanded === key
               const groups = groupFor(r.tipe)
-              const warna = scoreColor(r.skor, r.statusUnit)
+              const rk = rekapRecord(r)
+              const warna = scoreColor(rk.skor, r.statusUnit)
               return (
                 <div key={`m-${key}`} className="rounded-xl border border-white/[0.07] bg-white/[0.02] p-3">
                   <div className="flex items-start gap-2">
@@ -238,7 +261,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="font-mono text-[13px] font-bold text-white">{r.kode}</span>
                         <span className="chip !py-0.5 !text-[9.5px]">{r.tipe}</span>
-                        <KondisiPill kondisi={r.kondisi} />
+                        <KondisiPill kondisi={rk.kondisi} />
                       </div>
                       <p className="mt-0.5 truncate text-[10.5px] text-slate-500">
                         {r.wilayah || '—'} · {r.inspector || 'Tanpa nama'}
@@ -273,16 +296,16 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                   <div className="mt-2 flex items-center gap-2">
                     <span className="shrink-0 font-mono text-[10.5px] text-slate-400">{r.tanggal}</span>
                     <span className="shrink-0 text-[10px] text-slate-600">{fmtDateTime(r.timestamp).split('·')[1]}</span>
-                    <Bar value={r.skor} color={warna} height={5} />
-                    <span className="w-8 shrink-0 text-right font-mono text-[11px] text-slate-300">{Math.round(r.skor)}</span>
+                    <Bar value={rk.skor} color={warna} height={5} />
+                    <span className="w-8 shrink-0 text-right font-mono text-[11px] text-slate-300">{Math.round(rk.skor)}</span>
                   </div>
                   <div className="mt-1.5 flex items-center gap-2 text-[10.5px]">
                     <span className="font-mono">
-                      <span className="text-emerald-400">{r.a}</span>
+                      <span className="text-emerald-400">{rk.a}</span>
                       <span className="text-slate-600">/</span>
-                      <span className="text-amber-400">{r.b}</span>
+                      <span className="text-amber-400">{rk.b}</span>
                       <span className="text-slate-600">/</span>
-                      <span className="text-rose-400">{r.c}</span>
+                      <span className="text-rose-400">{rk.c}</span>
                     </span>
                     {r.pending && <span className="rounded bg-amber-500/15 px-1 text-[9px] font-semibold text-amber-300">antrean lokal</span>}
                   </div>
@@ -352,17 +375,17 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                         <td className="px-2 py-2.5 text-[11px] text-slate-400">{r.tipe}</td>
                         <td className="px-2 py-2.5 text-[11.5px] text-slate-300">{r.inspector || '—'}</td>
                         <td className="px-2 py-2.5 text-center font-mono text-[11px]">
-                          <span className="text-emerald-400">{r.a}</span><span className="text-slate-600">/</span>
-                          <span className="text-amber-400">{r.b}</span><span className="text-slate-600">/</span>
-                          <span className="text-rose-400">{r.c}</span>
+                          <span className="text-emerald-400">{rekapRecord(r).a}</span><span className="text-slate-600">/</span>
+                          <span className="text-amber-400">{rekapRecord(r).b}</span><span className="text-slate-600">/</span>
+                          <span className="text-rose-400">{rekapRecord(r).c}</span>
                         </td>
                         <td className="px-2 py-2.5">
                           <div className="flex items-center gap-2">
-                            <Bar value={r.skor} color={scoreColor(r.skor, r.statusUnit)} height={5} />
-                            <span className="w-8 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(r.skor)}</span>
+                            <Bar value={rekapRecord(r).skor} color={scoreColor(rekapRecord(r).skor, r.statusUnit)} height={5} />
+                            <span className="w-8 shrink-0 font-mono text-[11px] text-slate-300">{Math.round(rekapRecord(r).skor)}</span>
                           </div>
                         </td>
-                        <td className="px-2 py-2.5"><KondisiPill kondisi={r.kondisi} /></td>
+                        <td className="px-2 py-2.5"><KondisiPill kondisi={rekapRecord(r).kondisi} /></td>
                         <td className="px-4 py-2.5 text-right">
                           <div className="flex justify-end gap-1">
                             <button

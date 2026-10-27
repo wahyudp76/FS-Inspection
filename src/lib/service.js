@@ -219,6 +219,153 @@ export function parseService1(header = [], rows = []) {
   return { units: unik, header, duplikat, baris: units.length }
 }
 
+/**
+ * LENGKAPI EVALUASI UNIT DARI tb_service2 (+ master).
+ *
+ * Masalah nyata: sheet `Data Service Engine` (tb_service1) berisi rumus milik
+ * pengguna, dan isinya bisa kosong / terpotong (per 27 Okt 2026 hanya 2 dari
+ * 151 unit). Seluruh halaman Service dulu bergantung pada sheet itu, sehingga
+ * 149 unit hilang dari layar meski catatan servicenya ADA di tb_service2.
+ *
+ * Fungsi ini menurunkan evaluasi yang setara untuk unit yang tidak ada di
+ * tb_service1 — memakai data yang memang tersedia:
+ *   service terakhir  : catatan tb_service2 paling baru
+ *   HM terakhir       : HM pada catatan itu
+ *   rerata HM/hari    : median laju antar catatan unit tersebut (yang wajar)
+ *   HM service berikut: HM terakhir + interval (250)
+ *   tanggal berikut   : tanggal terakhir + sisa HM ÷ rerata
+ *   warning           : selisih hari hari ini → tanggal berikut (negatif = masih ada waktu)
+ * Unit master yang belum pernah service tetap dimunculkan dengan status `belum`.
+ *
+ * `sumber` menandai asal tiap unit: 'evaluasi' (tb_service1) atau 'log'.
+ *
+ * @returns {{units: Array, tambahan: number, dariLog: number, dariMaster: number}}
+ */
+export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
+  const intervalHm = opts.intervalHm || INTERVAL_HM
+  const master = Array.isArray(opts.master) ? opts.master : []
+  const hariIni = opts.hariIni || todayIso()
+  const sudah = new Set(units.map((u) => norm(u.kode)))
+  const hasil = units.map((u) => ({ ...u, sumber: u.sumber || 'evaluasi' }))
+
+  /* kelompokkan catatan per unit (kronologis naik) */
+  const per = new Map()
+  for (const r of log) {
+    const k = norm(r.kode)
+    if (!k) continue
+    if (!per.has(k)) per.set(k, [])
+    per.get(k).push(r)
+  }
+  for (const arr of per.values()) arr.sort((a, b) => (a.tanggalMs || 0) - (b.tanggalMs || 0))
+
+  const median = (arr) => {
+    if (!arr.length) return null
+    const s = [...arr].sort((a, b) => a - b)
+    const t = s.length >> 1
+    return s.length % 2 ? s[t] : (s[t - 1] + s[t]) / 2
+  }
+
+  let dariLog = 0
+  for (const [k, arr] of per) {
+    if (sudah.has(k)) continue
+    const akhir = arr[arr.length - 1]
+    const awal = arr[0]
+    /* laju HM/hari dari pasangan catatan berurutan yang masuk akal */
+    const laju = []
+    for (let i = 1; i < arr.length; i++) {
+      const hari = ((arr[i].tanggalMs || 0) - (arr[i - 1].tanggalMs || 0)) / 86400000
+      const dHm = arr[i].hm != null && arr[i - 1].hm != null ? arr[i].hm - arr[i - 1].hm : null
+      if (hari > 0 && dHm != null && dHm > 0 && dHm <= BATAS_DELTA_HM) laju.push(dHm / hari)
+    }
+    /* rerata HM/hari: pakai kolom “Rata-Rata Operating Time Harian” milik sheet
+       bila ada (itu yang dipakai rumus tb_service1), kalau tidak hitung dari
+       laju HM antar catatan unit tersebut */
+    const rerataSheet = [...arr].reverse().map((r) => r.rerata).find((n) => n != null && n > 0) ?? null
+    const rerata = rerataSheet ?? (laju.length ? Math.round(median(laju) * 10) / 10 : null)
+    const hm = akhir.hm != null ? akhir.hm : null
+    const nextHm = hm != null ? hm + intervalHm : null
+    /* tanggal service berikutnya: pakai isian sheet lebih dulu */
+    const nextIsoSheet = [...arr].reverse().map((r) => r.nextIso).find(Boolean) || ''
+    let nextIso = nextIsoSheet
+    if (!nextIso && rerata && rerata > 0 && hm != null) {
+      const sisaHari = Math.round((nextHm - hm) / rerata)
+      nextIso = tambahHari(akhir.tanggal, sisaHari)
+    }
+    const warning = nextIso ? -selisihHari(hariIni, nextIso) : null
+
+    let status
+    if (hm == null) status = 'belum'
+    else if (warning == null) status = 'tanpaJadwal'
+    else if (warning > 0) status = 'terlambat'
+    else if (warning >= -AMAN_HARI) status = 'segera'
+    else status = 'aman'
+
+    hasil.push({
+      no: null,
+      kode: String(akhir.kode || k).toUpperCase(),
+      jenis: String(akhir.kode || '').slice(0, 3).toUpperCase(),
+      posisi: String(akhir.posisi || '').toUpperCase(),
+      terakhirRaw: akhir.tanggal || '',
+      terakhirIso: akhir.tanggal || '',
+      hm,
+      rerata,
+      nextRaw: nextIso,
+      nextIso,
+      nextHm,
+      warning,
+      sisaHari: warning == null ? null : -warning,
+      mingguBulan: {},
+      note: harianCatatan(arr.length, awal, akhir),
+      status,
+      sumber: 'log',
+      dariCatatan: arr.length,
+    })
+    dariLog++
+  }
+
+  /* unit master yang belum punya catatan service sama sekali */
+  let dariMaster = 0
+  const adaLog = new Set([...per.keys()])
+  for (const m of master) {
+    const kode = String(m?.kode || '').trim()
+    const k = norm(kode)
+    if (!k || sudah.has(k) || adaLog.has(k)) continue
+    sudah.add(k)
+    hasil.push({
+      no: null,
+      kode: kode.toUpperCase(),
+      jenis: kode.slice(0, 3).toUpperCase(),
+      /* posisi resmi hanya FM3/FM4/PG2/PG3/OP2 — wilayah master lain (mis.
+         GUAVA/BANANA) tidak dipakai sebagai divisi agar filter tetap bersih */
+      posisi: POSISI_DIKENAL.includes(String(m.wilayah || '').trim().toUpperCase())
+        ? String(m.wilayah).trim().toUpperCase()
+        : '',
+      terakhirRaw: '',
+      terakhirIso: '',
+      hm: null,
+      rerata: null,
+      nextRaw: '',
+      nextIso: '',
+      nextHm: null,
+      warning: null,
+      sisaHari: null,
+      mingguBulan: {},
+      note: 'Belum pernah service',
+      status: 'belum',
+      sumber: 'log',
+      dariCatatan: 0,
+    })
+    dariMaster++
+  }
+
+  return { units: hasil, tambahan: dariLog + dariMaster, dariLog, dariMaster }
+}
+
+export const POSISI_DIKENAL = ['FM3', 'FM4', 'PG2', 'PG3', 'OP2']
+
+const harianCatatan = (n, awal, akhir) =>
+  n > 1 ? `${n} catatan service · sejak ${awal.tanggal}` : '1 catatan service'
+
 /** tb_service2 → daftar pencatatan service (blok A:H) */
 export function parseService2(header = [], rows = []) {
   if (!rows.length) return []
@@ -231,6 +378,9 @@ export function parseService2(header = [], rows = []) {
     minggu: colIndex(header, ['Minggu Service']),
     kode: colIndex(header, ['Kode Mesin']),
     hm: colIndex(header, ['HM Service']),
+    /* kolom bantu milik sheet (dikirim sejak Code.gs 1.9.0) */
+    rerata: colIndex(header, ['Rata-Rata Operating Time Harian', 'Rata-rata Operating Time Harian']),
+    nextTgl: colIndex(header, ['Next Service']),
   }
   const log = rows
     .map((r, i) => {
@@ -250,6 +400,8 @@ export function parseService2(header = [], rows = []) {
         minggu: numOrNull(r[ix.minggu]) || mingguKe(tgl?.iso),
         kode,
         hm,
+        rerata: numOrNull(r[ix.rerata]),
+        nextIso: parseTanggal(r[ix.nextTgl])?.iso || '',
       }
     })
     .filter(Boolean)
@@ -891,7 +1043,7 @@ function writeServiceCache(data) {
  * Browser tidak bisa membaca CSV gviz langsung (CORS), jadi endpoint yang membaca
  * kedua sheet sekaligus lalu mengirim header + barisnya.
  */
-export async function fetchServiceData() {
+export async function fetchServiceData({ master = [] } = {}) {
   if (!getEndpoint()) {
     const err = new Error(
       'Endpoint Apps Script belum diatur. Isi di menu Pengaturan ▸ Koneksi sheet, lalu pastikan Code.gs versi 1.6.0 sudah di-deploy (New version).'
@@ -901,10 +1053,24 @@ export async function fetchServiceData() {
   }
   const json = await postApi({ action: 'svcread' }, 45000)
   const r = json.result || {}
-  const { units, duplikat, baris } = parseService1(r.evalHeader || [], r.evalRows || [])
+  const intervalHm = r.intervalHm || INTERVAL_HM
+  const { units: evalUnits, duplikat, baris } = parseService1(r.evalHeader || [], r.evalRows || [])
   const log = parseService2(r.logHeader || [], r.logRows || [])
-  const data = { units, log, duplikat: duplikat || 0, barisEval: baris || units.length, syncedAt: new Date().toISOString(), intervalHm: r.intervalHm || INTERVAL_HM }
-  writeServiceCache({ units, log, duplikat: data.duplikat, barisEval: data.barisEval, syncedAt: data.syncedAt })
+  /* tb_service1 bisa kosong/terpotong → lengkapi dari tb_service2 + master agar
+     unit yang punya catatan service tidak hilang dari layar (v1.9.0) */
+  const lengkap = lengkapiUnitDariLog(evalUnits, log, { intervalHm, master })
+  const data = {
+    units: lengkap.units,
+    log,
+    duplikat: duplikat || 0,
+    barisEval: baris || evalUnits.length,
+    unitEval: evalUnits.length,
+    tambahanDariLog: lengkap.dariLog,
+    tambahanDariMaster: lengkap.dariMaster,
+    syncedAt: new Date().toISOString(),
+    intervalHm,
+  }
+  writeServiceCache(data)
   return data
 }
 
