@@ -76,14 +76,18 @@ const AXIS = { stroke: 'rgba(148,163,184,0.35)', tick: { fill: '#64748b', fontSi
  *                   kosong menganga di bawah grafik saat kartu sebelahnya lebih
  *                   tinggi. `minH` menjaga grafik tetap terbaca di layar pendek.
  */
-export function ChartBox({ height = 240, minH = 150, maxH, className = '', children }) {
-  /* Mode "fill": grafik MENGISI kotak kartu (yang tingginya seragam per baris
-     grid). Tinggi wadah diukur dulu (ResizeObserver) lalu diteruskan sebagai
-     piksel — persentase (height:100%) kolaps bila tinggi induk `auto` (HP).
-     `minH` menjaga grafik tidak pernah lebih pendek dari tinggi desainnya. */
+export function ChartBox({ height = 240, minH = 150, maxH, rasio = 1.25, className = '', children }) {
+  /* Mode "fill": kartu menentukan tinggi kotak (grid membuat semua kartu satu
+     baris sama tinggi), lalu grafik digambar setinggi kotak itu — TETAPI
+     pertumbuhannya dibatasi `rasio` x tinggi desain supaya grafik tidak melar
+     vertikal. Sisa ruang dibagi rata atas-bawah (justify-center) sehingga
+     tidak menumpuk jadi pita kosong di bawah grafik.
+
+     Tinggi diukur (ResizeObserver) lalu diteruskan sebagai piksel: persentase
+     (height:100%) kolaps bila tinggi induk `auto` (HP). */
   const [ref, ukur] = useHeight()
   if (height === 'fill') {
-    const batas = maxH ? Math.max(maxH, minH) : Infinity
+    const batas = Math.max(maxH ?? Math.round(minH * rasio), minH)
     const px = ukur ? Math.min(Math.max(ukur, minH), batas) : minH
     return (
       <div

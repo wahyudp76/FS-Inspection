@@ -270,12 +270,12 @@ export default function Dashboard({ data, records, navigate }) {
               centerValue={sum.total}
               onSlice={(name) => navigate('unit')}
             />
-            <div className="mt-auto space-y-2 pt-3">
+            <div className="mt-auto space-y-1.5 pt-2">
               {statusData.map((s) => (
                 <div key={s.name} className="flex items-center gap-2">
-                  <span className="w-16 text-[11px] text-slate-600">{s.name}</span>
-                  <Bar value={pct(s.value, sum.total)} color={s.color} height={5} />
-                  <span className="w-10 text-right font-mono text-[11px] text-slate-600">{pct(s.value, sum.total)}%</span>
+                  <span className="w-16 text-[10.5px] text-slate-600">{s.name}</span>
+                  <Bar value={pct(s.value, sum.total)} color={s.color} height={4} />
+                  <span className="w-10 text-right font-mono text-[10.5px] text-slate-600">{pct(s.value, sum.total)}%</span>
                 </div>
               ))}
             </div>
@@ -380,11 +380,7 @@ export default function Dashboard({ data, records, navigate }) {
               </div>
             ))}
           </div>
-          <p className="hidden px-4 pb-2 text-[9.5px] leading-relaxed text-slate-500 sm:block">
-            Klik batang <span className="font-semibold text-teal-700">Mesin</span> atau{' '}
-            <span className="font-semibold text-cyan-700">Irrigator</span> untuk melihat daftar unit + analisa rentang skor.
-          </p>
-          <div className="mt-auto space-y-1.5 border-t border-slate-900/[0.09] px-4 py-3">
+          <div className="mt-auto space-y-1 border-t border-slate-900/[0.09] px-3 py-2">
             {komposisi.slice(0, 4).map((k) => (
               <div key={k.name} className="flex items-center gap-2">
                 <span className="w-10 font-mono text-[10.5px] text-slate-600">{k.name}</span>

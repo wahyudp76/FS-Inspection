@@ -671,7 +671,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             ) : (
               <Empty title="Belum ada data" desc="Tarik data dari sheet untuk melihat komposisi status." />
             )}
-            <div className="mt-auto space-y-1.5 pt-3">
+            <div className="mt-auto grid grid-cols-1 gap-1 pt-2 sm:grid-cols-2">
               {SERVICE_STATUS.map((s) => {
                 const n = bulanRingkas.byStatus[s.id] || 0
                 const pct = bulanRingkas.totalUnit ? Math.round((n / bulanRingkas.totalUnit) * 100) : 0
@@ -682,7 +682,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                       setFKode({ label: `${s.label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsStatus[s.id] || new Set() })
                       setHalEval(0)
                     }}
-                    className="flex min-h-8 w-full items-center gap-2 rounded-lg px-1.5 py-1 text-left transition hover:bg-slate-900/[0.04]"
+                    className="flex min-h-8 w-full items-center gap-2 rounded-lg border border-slate-900/[0.08] bg-slate-900/[0.02] px-1.5 py-1 text-left transition hover:bg-slate-900/[0.05]"
                   >
                     <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
                     <span className="min-w-0 flex-1 truncate text-[11px] text-slate-600">{s.label}</span>
