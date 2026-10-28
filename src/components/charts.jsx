@@ -1,3 +1,62 @@
+export function GradeStack({ data = [], height = 220, minH = 220 }) {
+  /* Skala 100% (bukan jumlah mentah): komponen “A” bisa ribuan kali lipat B/C,
+     sehingga batang B & C nyaris tak terlihat bila memakai angka mentah. */
+  const rows = data.map((d) => {
+    const total = (d.a || 0) + (d.b || 0) + (d.c || 0)
+    const bag = (n) => (total ? Math.round((n / total) * 1000) / 10 : 0)
+    return { ...d, total, aPct: bag(d.a), bPct: bag(d.b), cPct: bag(d.c) }
+  })
+  const TipGrade = ({ active, payload }) => {
+    if (!active || !payload?.length) return null
+    const r = payload[0].payload
+    const baris = [
+      ['A · Baik', r.a, '#22c55e'],
+      ['B · Perhatian', r.b, '#f59e0b'],
+      ['C · Rusak', r.c, '#f43f5e'],
+    ]
+    return (
+      <div className="rounded-xl border border-slate-900/[0.09] bg-white px-3 py-2 text-[11px] shadow-card">
+        <p className="mb-1 font-semibold text-slate-800">{r.label}</p>
+        {baris.map(([nama, nilai, warna]) => (
+          <div key={nama} className="flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ background: warna }} />
+            <span className="text-slate-600">{nama}</span>
+            <span className="ml-auto font-mono font-semibold text-slate-900">
+              {nilai || 0}
+              <span className="ml-1 font-normal text-slate-500">
+                ({r.total ? Math.round(((nilai || 0) / r.total) * 100) : 0}%)
+              </span>
+            </span>
+          </div>
+        ))}
+      </div>
+    )
+  }
+  return (
+    <ChartBox height={height} minH={minH}>
+      <ResponsiveContainer width="100%" height={rcHeight(height)}>
+        <BarChart data={rows} margin={{ top: 8, right: 6, left: 0, bottom: 0 }} barCategoryGap="30%">
+          <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10.5 }} />
+          <YAxis
+            domain={[0, 100]}
+            width={38}
+            axisLine={false}
+            tickLine={false}
+            tick={{ fill: '#64748b', fontSize: 10 }}
+            tickFormatter={(v) => `${v}%`}
+          />
+          <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<TipGrade />} />
+          <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 11 }} />
+          <Bar dataKey="aPct" name="A · Baik" stackId="g" fill="#22c55e" />
+          <Bar dataKey="bPct" name="B · Perhatian" stackId="g" fill="#f59e0b" />
+          <Bar dataKey="cPct" name="C · Rusak" stackId="g" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartBox>
+  )
+}
+
 import React from 'react'
 import {
   ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid,
@@ -7,6 +66,67 @@ import {
 import { cx } from '../lib/analytics'
 
 const AXIS = { stroke: 'rgba(148,163,184,0.35)', tick: { fill: '#64748b', fontSize: 11 } }
+
+/**
+ * Pembungkus grafik.
+ *
+ * `height` angka  → tinggi tetap (dipakai di HP / saat tata letak berderet).
+ * `height="fill"` → grafik MENGISI sisa tinggi kartu (kartu harus `flex flex-col`
+ *                   dan pembungkusnya `flex-1 min-h-0`), sehingga tidak ada ruang
+ *                   kosong menganga di bawah grafik saat kartu sebelahnya lebih
+ *                   tinggi. `minH` menjaga grafik tetap terbaca di layar pendek.
+ */
+export function ChartBox({ height = 240, minH = 150, className = '', children }) {
+  /* Mode "fill": tinggi wadah diukur (ResizeObserver) lalu diteruskan sebagai
+     piksel. Persentase (height: 100%) TIDAK bisa dipakai karena tinggi induk
+     bersifat `auto` di HP — akibatnya grafik kolaps/menghilang. */
+  const [ref, ukur] = useHeight()
+  if (height === 'fill') {
+    return (
+      <div ref={ref} className={cx('w-full flex-1', className)} style={{ minHeight: minH }}>
+        <div className="w-full" style={{ height: ukur || minH }}>
+          {typeof children === 'function' ? children(ukur || minH) : children}
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className={cx('w-full', className)} style={{ height }}>
+      {typeof children === 'function' ? children(height) : children}
+    </div>
+  )
+}
+
+/** Tinggi elemen (px) — dipakai ChartBox mode "fill". */
+export function useHeight() {
+  const ref = React.useRef(null)
+  const [h, setH] = React.useState(0)
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([e]) => setH(Math.round(e.contentRect.height)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, h]
+}
+
+/** Lebar elemen (px) — untuk menyesuaikan label grafik di layar sempit. */
+export function useWidth() {
+  const ref = React.useRef(null)
+  const [w, setW] = React.useState(0)
+  React.useEffect(() => {
+    const el = ref.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([e]) => setW(Math.round(e.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  return [ref, w]
+}
+
+/** Tinggi efektif untuk ResponsiveContainer. */
+const rcHeight = (h) => (h === 'fill' ? '100%' : h)
 
 export function TipBox({ active, payload, label, suffix = '', formatter }) {
   if (!active || !payload?.length) return null
@@ -29,11 +149,13 @@ export function TipBox({ active, payload, label, suffix = '', formatter }) {
 }
 
 /* --------------------------- Donut --------------------------- */
-export function Donut({ data, height = 210, innerRadius = 54, outerRadius = 78, centerLabel, centerValue, onSlice, showLegend = true }) {
+export function Donut({ data, height = 210, minH = 210, innerRadius = '52%', outerRadius = '76%', centerLabel, centerValue, onSlice, showLegend = true }) {
   const total = data.reduce((s, d) => s + d.value, 0)
   return (
-    <div>
-      <div style={{ height }} className="relative">
+    /* Tinggi "fill" → donat ikut membesar (radius memakai persentase) sehingga
+       tidak menyisakan bidang kosong saat kartu sebelahnya lebih tinggi. */
+    <ChartBox height={height} minH={minH}>
+      <div className="relative h-full w-full">
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
@@ -56,8 +178,15 @@ export function Donut({ data, height = 210, innerRadius = 54, outerRadius = 78, 
           {centerLabel && <span className="text-[10px] uppercase tracking-wider text-slate-500">{centerLabel}</span>}
         </div>
       </div>
-      {showLegend && (
-        <div className="mt-1 grid grid-cols-3 gap-1.5">
+    </ChartBox>
+  )
+}
+
+/** Legenda kotak (dipisah agar bisa diletakkan di luar area grafik). */
+export function DonutLegend({ data, onSlice }) {
+  if (!data.length) return null
+  return (
+    <div className="grid grid-cols-3 gap-1.5">
           {data.map((d) => (
             <button
               key={d.name}
@@ -71,16 +200,15 @@ export function Donut({ data, height = 210, innerRadius = 54, outerRadius = 78, 
               <span className="font-mono text-[13px] font-semibold text-slate-900">{d.value}</span>
             </button>
           ))}
-        </div>
-      )}
     </div>
   )
 }
 
 /* --------------------- Wilayah stacked bar --------------------- */
-export function WilayahChart({ data, height = 230, onBar }) {
+export function WilayahChart({ data, height = 230, minH = 230, onBar }) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ChartBox height={height} minH={minH}>
+    <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <BarChart data={data} margin={{ top: 8, right: 6, left: -22, bottom: 0 }} barCategoryGap="28%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
         <XAxis dataKey="wilayah" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 11 }} />
@@ -92,13 +220,15 @@ export function WilayahChart({ data, height = 230, onBar }) {
         <Bar dataKey="rusak" name="Rusak" stackId="a" fill="#f43f5e" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
 /* ------------------ Komponen bermasalah (horizontal) ------------------ */
-export function IssuesBar({ data, height = 300, onItem }) {
+export function IssuesBar({ data, height = 300, minH = 300, onItem }) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ChartBox height={height} minH={minH}>
+    <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 26, left: 4, bottom: 0 }} barCategoryGap="22%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
         <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
@@ -119,28 +249,42 @@ export function IssuesBar({ data, height = 300, onItem }) {
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
 /* --------------------------- Radar grup --------------------------- */
-export function GroupRadar({ data, height = 260 }) {
+export function GroupRadar({ data, height = 260, minH = 260 }) {
+  /* Label grup memanjang (“Instrument & Monitoring”) gampang terpotong di HP.
+     Lebar kartu diukur: layar sempit → radius dikecilkan & margin dilebarkan. */
+  const [ref, w] = useWidth()
+  const sempit = w > 0 && w < 360
   return (
-    <ResponsiveContainer width="100%" height={height}>
-      <RadarChart data={data} outerRadius="78%" margin={{ top: 12, right: 24, bottom: 8, left: 24 }}>
-        <PolarGrid stroke="rgba(148,163,184,0.16)" />
-        <PolarAngleAxis dataKey="grup" tick={{ fill: '#5b6b7c', fontSize: 9.5 }} />
-        <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
-        <Tooltip content={<TipBox formatter={(v) => `${v}%`} />} />
-        <Radar name="Skor kondisi" dataKey="nilai" stroke="#0d9488" fill="#0d9488" fillOpacity={0.28} strokeWidth={2} />
-      </RadarChart>
-    </ResponsiveContainer>
+    <div ref={ref} className="h-full w-full">
+      <ChartBox height={height} minH={minH}>
+        <ResponsiveContainer width="100%" height={rcHeight(height)}>
+          <RadarChart
+            data={data}
+            outerRadius={sempit ? '62%' : '74%'}
+            margin={sempit ? { top: 10, right: 12, bottom: 6, left: 12 } : { top: 12, right: 20, bottom: 8, left: 20 }}
+          >
+            <PolarGrid stroke="rgba(148,163,184,0.16)" />
+            <PolarAngleAxis dataKey="grup" tick={{ fill: '#5b6b7c', fontSize: sempit ? 8.5 : 9.5 }} />
+            <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
+            <Tooltip content={<TipBox formatter={(v) => `${v}%`} />} />
+            <Radar name="Skor kondisi" dataKey="nilai" stroke="#0d9488" fill="#0d9488" fillOpacity={0.28} strokeWidth={2} />
+          </RadarChart>
+        </ResponsiveContainer>
+      </ChartBox>
+    </div>
   )
 }
 
 /* ------------------------ Trend inspeksi ------------------------ */
-export function TrendChart({ data, height = 250, showSkor = true }) {
+export function TrendChart({ data, height = 250, minH = 250, showSkor = true }) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ChartBox height={height} minH={minH}>
+    <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <ComposedChart data={data} margin={{ top: 8, right: 8, left: -24, bottom: 0 }}>
         <defs>
           <linearGradient id="gIns" x1="0" y1="0" x2="0" y2="1">
@@ -160,13 +304,15 @@ export function TrendChart({ data, height = 250, showSkor = true }) {
         {showSkor && <Line yAxisId="r" type="monotone" dataKey="skor" name="Skor rata-rata" stroke="#059669" strokeWidth={2} dot={{ r: 2.5, fill: '#059669' }} />}
       </ComposedChart>
     </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
 /* ------------------ Distribusi skor (histogram) ------------------ */
-export function ScoreHistogram({ data, height = 180, onBucket }) {
+export function ScoreHistogram({ data, height = 180, minH = 180, onBucket }) {
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ChartBox height={height} minH={minH}>
+    <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <BarChart data={data} margin={{ top: 18, right: 6, left: -14, bottom: 0 }} barCategoryGap="20%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
@@ -177,6 +323,7 @@ export function ScoreHistogram({ data, height = 180, onBucket }) {
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
@@ -185,14 +332,15 @@ export function ScoreHistogram({ data, height = 180, onBucket }) {
  * Histogram dua batang per rentang. Klik batang → `onBar({ range, tipe })`
  * untuk membuka pop-up daftar unit + analisis rentang tersebut.
  */
-export function ScoreHistogramSplit({ data, height = 200, onBar }) {
+export function ScoreHistogramSplit({ data, height = 200, minH = 200, onBar }) {
   const klik = (tipe) => (d) => {
     const label = d?.label ?? d?.payload?.label
     const range = data.find((x) => x.label === label)
     if (range) onBar?.({ range, tipe })
   }
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ChartBox height={height} minH={minH}>
+    <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <BarChart data={data} margin={{ top: 18, right: 6, left: -16, bottom: 0 }} barCategoryGap="24%" barGap={2}>
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
         <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
@@ -212,6 +360,7 @@ export function ScoreHistogramSplit({ data, height = 200, onBar }) {
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+    </ChartBox>
   )
 }
 
@@ -219,7 +368,7 @@ export function ScoreHistogramSplit({ data, height = 200, onBar }) {
 export function Spark({ data, color = '#0d9488', height = 34 }) {
   if (!data?.length) return <div style={{ height }} />
   return (
-    <ResponsiveContainer width="100%" height={height}>
+    <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 0 }}>
         <defs>
           <linearGradient id={`sp-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
@@ -233,20 +382,3 @@ export function Spark({ data, color = '#0d9488', height = 34 }) {
   )
 }
 
-/* ------------------ A/B/C stacked over period ------------------ */
-export function GradeStack({ data, height = 220 }) {
-  return (
-    <ResponsiveContainer width="100%" height={height}>
-      <BarChart data={data} margin={{ top: 8, right: 6, left: -26, bottom: 0 }} barCategoryGap="26%">
-        <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10.5 }} />
-        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} />
-        <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" temuan" />} />
-        <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 11 }} />
-        <Bar dataKey="a" name="A · Baik" stackId="g" fill="#22c55e" />
-        <Bar dataKey="b" name="B · Perhatian" stackId="g" fill="#f59e0b" />
-        <Bar dataKey="c" name="C · Rusak" stackId="g" fill="#f43f5e" radius={[4, 4, 0, 0]} />
-      </BarChart>
-    </ResponsiveContainer>
-  )
-}

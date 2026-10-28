@@ -216,7 +216,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
 
       <div className="flex flex-col gap-4">
       <div className="order-1 grid gap-4 xl:grid-cols-12">
-        <Card className="xl:col-span-7">
+        <Card className="flex flex-col xl:col-span-7">
           <CardHeader
             title="Tren Inspeksi"
             sub="Volume sesi & rata-rata skor"
@@ -226,14 +226,14 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
               ]} />
             }
           />
-          <div className="px-1 pb-3 pt-1">
-            {trend.length ? <TrendChart data={trend} height={240} /> : <Empty title="Belum ada data" desc="Tarik data dari sheet atau kirim inspeksi baru." icon={<IconHistory size={20} />} />}
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-1">
+            {trend.length ? <TrendChart data={trend} height="fill" /> : <Empty title="Belum ada data" desc="Tarik data dari sheet atau kirim inspeksi baru." icon={<IconHistory size={20} />} />}
           </div>
         </Card>
-        <Card className="xl:col-span-5">
-          <CardHeader title="Komposisi Temuan" sub="A / B / C per periode" />
-          <div className="px-1 pb-3 pt-1">
-            {trend.length ? <GradeStack data={trend} height={240} /> : <Empty title="Belum ada temuan" icon={<IconAlert size={20} />} />}
+        <Card className="flex flex-col xl:col-span-5">
+          <CardHeader title="Komposisi Temuan" sub="Proporsi A / B / C per periode (100%)" />
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-1">
+            {trend.length ? <GradeStack data={trend} height="fill" /> : <Empty title="Belum ada temuan" icon={<IconAlert size={20} />} />}
           </div>
         </Card>
       </div>

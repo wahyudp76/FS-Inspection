@@ -13,7 +13,7 @@ export const Card = ({ className = '', children, ...p }) => (
 
 export function CardHeader({ title, sub, right, icon }) {
   return (
-    <div className="flex items-start justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
+    <div className="flex flex-wrap items-start justify-between gap-3 px-4 pt-4 sm:px-5 sm:pt-5">
       <div className="flex items-start gap-2.5">
         {/* ikon judul dalam ubin bergradasi teal (aksesori visual, konsisten di semua kartu) */}
         {icon && (

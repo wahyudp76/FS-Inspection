@@ -133,6 +133,9 @@ export function componentIssues(assets = [], limit = 12) {
       const total = r.a + r.b + r.c
       return { ...r, total, issue: r.b + r.c, issueRate: pct(r.b + r.c, total), health: pct(r.a * 100 + r.b * 60, total * 100) }
     })
+    /* “paling bermasalah” = yang benar-benar punya temuan; komponen tanpa temuan
+       hanya mengisi grafik dengan batang nol (ruang kosong tanpa informasi). */
+    .filter((r) => r.issue > 0)
     .sort((x, y) => y.issue - x.issue || y.c - x.c)
     .slice(0, limit)
 }

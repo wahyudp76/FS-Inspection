@@ -3,8 +3,10 @@ import {
   ResponsiveContainer, ComposedChart, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, LabelList,
 } from 'recharts'
 import { cx } from '../lib/analytics'
-import { TipBox } from './charts'
+import { TipBox, ChartBox } from './charts'
 import { IconCheck } from './icons'
+
+const rcHeight = (h) => (h === 'fill' ? '100%' : h)
 
 const fmt = (n) => (n == null ? '—' : new Intl.NumberFormat('id-ID').format(n))
 
@@ -13,7 +15,7 @@ const fmt = (n) => (n == null ? '—' : new Intl.NumberFormat('id-ID').format(n)
    Batang bertumpuk: service tepat interval / terlambat / lebih awal,
    garis: % tepat waktu, garis putus: jumlah unit berbeda yang diservice.
    ============================================================ */
-export function TrenServiceChart({ data = [], height = 270 }) {
+export function TrenServiceChart({ data = [], height = 270, minH = 270 }) {
   const [mode, setMode] = useState('tepat')
 
   const ringkas = useMemo(() => {
@@ -25,8 +27,8 @@ export function TrenServiceChart({ data = [], height = 270 }) {
   if (!data.length) return <p className="px-3 py-6 text-center text-[11.5px] text-slate-500">Belum ada pencatatan service untuk dibuat tren.</p>
 
   return (
-    <div>
-      <div className="mb-2 flex flex-wrap items-center gap-1.5 px-1">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-2 flex shrink-0 flex-wrap items-center gap-1.5 px-1">
         {[
           { id: 'tepat', label: 'Ketepatan interval' },
           { id: 'volume', label: 'Volume & unit' },
@@ -47,7 +49,8 @@ export function TrenServiceChart({ data = [], height = 270 }) {
         </span>
       </div>
 
-      <ResponsiveContainer width="100%" height={height}>
+      <ChartBox height={height} minH={minH} className="flex-1">
+      <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 10, right: 6, left: -22, bottom: 0 }} barCategoryGap="24%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
           <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
@@ -84,6 +87,7 @@ export function TrenServiceChart({ data = [], height = 270 }) {
           )}
         </ComposedChart>
       </ResponsiveContainer>
+      </ChartBox>
     </div>
   )
 }
@@ -92,7 +96,7 @@ export function TrenServiceChart({ data = [], height = 270 }) {
    2. CAKUPAN PER DIVISI — fokus "belum service"
    Batang 100% bertumpuk per posisi + ringkasan angka & tombol saring.
    ============================================================ */
-export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
+export function DivisiCakupanChart({ data = [], onPick, height = 190, minH = 190 }) {
   const urut = useMemo(() => [...data].sort((a, b) => b.belum - a.belum || b.total - a.total), [data])
   const total = urut.reduce((a, d) => a + d.total, 0)
   const belum = urut.reduce((a, d) => a + d.belum, 0)
@@ -111,8 +115,8 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
   }))
 
   return (
-    <div>
-      <div className="mb-1 flex items-baseline justify-between gap-2 px-1">
+    <div className="flex h-full min-h-0 flex-col">
+      <div className="mb-1 flex shrink-0 items-baseline justify-between gap-2 px-1">
         <p className="text-[10.5px] text-slate-500">
           <span className="font-mono text-[15px] font-semibold text-rose-600">{belum}</span> dari{' '}
           <span className="font-mono text-slate-700">{total}</span> engine belum pernah diservice
@@ -122,7 +126,8 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
         </span>
       </div>
 
-      <ResponsiveContainer width="100%" height={height}>
+      <ChartBox height={height} minH={minH} className="flex-1">
+      <ResponsiveContainer width="100%" height="100%">
         <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 34, left: 4, bottom: 0 }} barCategoryGap="26%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} allowDecimals={false} />
@@ -137,8 +142,9 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
+      </ChartBox>
 
-      <div className="mt-2 grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+      <div className="mt-2 grid shrink-0 grid-cols-2 gap-1.5 sm:grid-cols-4">
         {urut.map((d) => (
           <button
             key={d.posisi}
@@ -167,13 +173,14 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190 }) {
 /* ============================================================
    3. SEBARAN URGENSI — sisa hari menuju warning date
    ============================================================ */
-export function UrgensiChart({ data = [], onClickEmber, height = 200 }) {
+export function UrgensiChart({ data = [], onClickEmber, height = 200, minH = 200 }) {
   const total = data.reduce((a, d) => a + d.jumlah, 0)
   if (!total) return <p className="px-3 py-6 text-center text-[11.5px] text-slate-500">Belum ada jadwal untuk dihitung.</p>
 
   return (
-    <div>
-      <ResponsiveContainer width="100%" height={height}>
+    <div className="flex h-full min-h-0 flex-col">
+      <ChartBox height={height} minH={minH} className="flex-1">
+    <ResponsiveContainer width="100%" height={rcHeight(height)}>
         <BarChart data={data} layout="vertical" margin={{ top: 2, right: 30, left: 2, bottom: 0 }} barCategoryGap="22%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
           <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} allowDecimals={false} />
@@ -187,7 +194,8 @@ export function UrgensiChart({ data = [], onClickEmber, height = 200 }) {
           </Bar>
         </BarChart>
       </ResponsiveContainer>
-      <p className="px-1 text-[10px] leading-relaxed text-slate-500">
+    </ChartBox>
+      <p className="shrink-0 px-1 text-[10px] leading-relaxed text-slate-500">
         Diurut dari yang paling mendesak. Klik batang untuk menyaring tabel evaluasi.
       </p>
     </div>
@@ -197,7 +205,7 @@ export function UrgensiChart({ data = [], onClickEmber, height = 200 }) {
 /* ============================================================
    4. TOP 10 ENGINE PALING TERLAMBAT
    ============================================================ */
-export function TopTerlambatChart({ data = [], height = 250, onPick }) {
+export function TopTerlambatChart({ data = [], height = 250, minH = 250, onPick }) {
   if (!data.length) {
     return (
       <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-10 text-center">
@@ -209,8 +217,9 @@ export function TopTerlambatChart({ data = [], height = 250, onPick }) {
   }
   const barData = [...data].reverse().map((d) => ({ ...d, label: d.kode }))
   return (
-    <div>
-    <ResponsiveContainer width="100%" height={height}>
+    <div className="flex h-full min-h-0 flex-col">
+    <ChartBox height={height} minH={minH} className="flex-1">
+    <ResponsiveContainer width="100%" height={rcHeight(height) === '100%' ? '100%' : rcHeight(height)}>
       <BarChart data={barData} layout="vertical" margin={{ top: 2, right: 32, left: 2, bottom: 0 }} barCategoryGap="24%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
         <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} unit=" hr" />
@@ -224,8 +233,9 @@ export function TopTerlambatChart({ data = [], height = 250, onPick }) {
         </Bar>
       </BarChart>
     </ResponsiveContainer>
+    </ChartBox>
     {/* batang grafik tipis di HP → sediakan tombol daftar yang pasti bisa ditekan */}
-    <div className="mt-1 flex flex-wrap gap-1">
+    <div className="mt-1 flex shrink-0 flex-wrap gap-1">
       {data.slice(0, 5).map((d) => (
         <button
           key={d.kode}

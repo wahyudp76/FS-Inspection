@@ -148,3 +148,18 @@ Memeriksa langsung di browser: `color-scheme` dokumen, latar body, **tidak ada
 permukaan gelap** (`rgb` gelap) atau bayangan hitam pekat di 6 rute + 2 modal,
 serta kartu notifikasi untuk status sukses/gagal selalu berlatar terang dengan
 teks terbaca.
+
+## `layoutcheck.mjs` — komposisi grafik vs kartu
+
+`node tools/layoutcheck.mjs` — membuka Dashboard/Riwayat/Service lalu melaporkan
+per grafik: ukuran kontainer, tinggi kartu, sisa ruang atas/bawah di dalam kartu,
+dan ruang kosong di area grafik (beda kontainer vs `svg`). Dipakai untuk memastikan
+grafik mengisi kartunya tanpa kolaps dan tanpa meluber. Butuh Vite di `:5199`.
+
+## `shot.mjs` — tangkapan layar per rute
+
+`ROUTES=dashboard,service TAG=layout W=1440 H=1000 node tools/shot.mjs` — satu
+tangkapan satu-halaman penuh per rute ke `audit-shots/<tag>-<rute>-<W>.png`,
+sekaligus mencetak jumlah error JavaScript. Untuk tampilan HP pakai `W=390 H=844`
+dan `TAG=layoutm`.
+

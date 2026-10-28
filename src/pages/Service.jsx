@@ -641,7 +641,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
 
       {/* ---------------- grafik ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">
-        <Card className="xl:col-span-5">
+        <Card className="flex flex-col xl:col-span-5">
           <CardHeader
             title="Komposisi Status"
             sub={`Kondisi per ${bulanRingkas.refLabel}${bulanRingkas.bulanBerjalan ? ' (bulan berjalan)' : ''}`}
@@ -652,11 +652,11 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               </span>
             }
           />
-          <div className="px-3 pb-4 pt-2">
+          <div className="flex min-h-0 flex-1 flex-col px-3 pb-4 pt-2">
             {bulanRingkas.totalUnit ? (
               <Donut
                 data={donutData}
-                height={210}
+                height="fill"
                 showLegend={false}
                 centerValue={fmt(bulanRingkas.totalUnit)}
                 centerLabel="engine"
@@ -671,7 +671,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             ) : (
               <Empty title="Belum ada data" desc="Tarik data dari sheet untuk melihat komposisi status." />
             )}
-            <div className="mt-3 space-y-1.5">
+            <div className="mt-auto space-y-1.5 pt-3">
               {SERVICE_STATUS.map((s) => {
                 const n = bulanRingkas.byStatus[s.id] || 0
                 const pct = bulanRingkas.totalUnit ? Math.round((n / bulanRingkas.totalUnit) * 100) : 0
@@ -695,31 +695,31 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           </div>
         </Card>
 
-        <Card className="xl:col-span-7">
+        <Card className="flex flex-col xl:col-span-7">
           <CardHeader
             title="Tren Service Engine"
             sub="Per bulan, dari sheet “Monitor Kasie FS” (tb_service2)"
             icon={<IconTrend size={15} />}
             right={<span className="hidden rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-600 sm:inline">interval target 250 HM</span>}
           />
-          <div className="px-1 pb-3 pt-2">
-            <TrenServiceChart data={ringkasan.perBulan} height={250} />
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
+            <TrenServiceChart data={ringkasan.perBulan} height="fill" />
           </div>
         </Card>
       </div>
 
       {/* ---------------- analitik service ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">
-        <Card className="xl:col-span-5">
+        <Card className="flex flex-col xl:col-span-5">
           <CardHeader
             title="Cakupan per Divisi"
             sub={`Status tiap posisi per ${bulanRingkas.refLabel}`}
             icon={<IconEngine size={15} />}
           />
-          <div className="px-2 pb-3 pt-2">
+          <div className="flex min-h-0 flex-1 flex-col px-2 pb-3 pt-2">
             <DivisiCakupanChart
               data={bulanRingkas.perPosisi}
-              height={168}
+              height="fill"
               onPick={(posisi) => {
                 setFPosisi([posisi])
                 setFStatus([])
@@ -729,16 +729,16 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           </div>
         </Card>
 
-        <Card className="xl:col-span-4">
+        <Card className="flex flex-col xl:col-span-4">
           <CardHeader
             title="Sebaran Urgensi"
             sub={`Sisa hari menuju warning date per ${bulanRingkas.refLabel}`}
             icon={<IconAlert size={15} />}
           />
-          <div className="px-1 pb-3 pt-2">
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
             <UrgensiChart
               data={bulanRingkas.urgensi}
-              height={168}
+              height="fill"
               onClickEmber={(id) => {
                 const map = { lewat30: 'terlambat', lewat8: 'terlambat', lewat7: 'terlambat', tempo: 'segera', aman30: 'aman', aman: 'aman' }
                 const label = (URGENSI.find((e) => e.id === id)?.label || id)
@@ -749,12 +749,12 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           </div>
         </Card>
 
-        <Card className="xl:col-span-3">
+        <Card className="flex flex-col xl:col-span-3">
           <CardHeader title="10 Paling Terlambat" sub={`Hari lewat warning date per ${bulanRingkas.refLabel}`} icon={<IconWrench size={15} />} />
-          <div className="px-1 pb-3 pt-2">
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
             <TopTerlambatChart
               data={bulanRingkas.topTerlambat}
-              height={214}
+              height="fill"
               onPick={(kode) => {
                 const u = units.find((x) => x.kode === kode)
                 if (u) setDetailUnit(u)

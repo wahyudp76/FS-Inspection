@@ -11,7 +11,7 @@ import BucketModal from '../components/BucketModal'
 import DetailDrawer from './UnitsDetail'
 import {
   IconTruck, IconDroplet, IconShield, IconAlert, IconClipboard, IconTrend, IconChevron, IconSpark,
-  IconCalendar, IconUser, IconGauge, IconList,
+  IconCalendar, IconUser, IconGauge, IconList, IconCheck,
 } from '../components/icons'
 
 const STATUS_COLORS = { Terpasang: '#0d9488', Standby: '#7c3aed', Rusak: '#f43f5e' }
@@ -240,15 +240,15 @@ export default function Dashboard({ data, records, navigate }) {
 
       {/* ---------------- charts row 1 ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">
-        <Card className="xl:col-span-8">
+        <Card className="flex flex-col xl:col-span-8">
           <CardHeader
             title="Tren Inspeksi"
             sub={`Jumlah sesi inspeksi & rata-rata skor per ${period}`}
             right={<span className="chip">{filteredRecords.length} sesi terdata</span>}
           />
-          <div className="px-1 pb-3 pt-2">
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
             {trend.length ? (
-              <TrendChart data={trend} height={252} />
+              <TrendChart data={trend} height="fill" />
             ) : (
               <Empty
                 title="Belum ada riwayat inspeksi"
@@ -260,16 +260,17 @@ export default function Dashboard({ data, records, navigate }) {
           </div>
         </Card>
 
-        <Card className="xl:col-span-4">
+        <Card className="flex flex-col xl:col-span-4">
           <CardHeader title="Status Unit" sub="Distribusi status operasional aset" />
-          <div className="card-pad pt-2">
+          <div className="card-pad flex min-h-0 flex-1 flex-col pt-2">
             <Donut
               data={statusData}
+              height="fill"
               centerLabel="total unit"
               centerValue={sum.total}
               onSlice={(name) => navigate('unit')}
             />
-            <div className="mt-3 space-y-2">
+            <div className="mt-auto space-y-2 pt-3">
               {statusData.map((s) => (
                 <div key={s.name} className="flex items-center gap-2">
                   <span className="w-16 text-[11px] text-slate-600">{s.name}</span>
@@ -284,7 +285,7 @@ export default function Dashboard({ data, records, navigate }) {
 
       {/* ---------------- charts row 2 ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">
-        <Card className="xl:col-span-7">
+        <Card className="flex flex-col xl:col-span-7">
           <CardHeader
             title="Komponen Paling Bermasalah"
             sub="Akumulasi temuan B (perlu perhatian) & C (rusak) pada master aset"
@@ -300,15 +301,23 @@ export default function Dashboard({ data, records, navigate }) {
               />
             }
           />
-          <div className="px-1 pb-3">
-            <IssuesBar data={issues} height={324} />
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3">
+            {issues.length ? (
+              <IssuesBar data={issues} height="fill" />
+            ) : (
+              <Empty
+                title={`Tidak ada temuan pada ${issueTab === 'Mesin' ? 'mesin' : 'irrigator'}`}
+                desc="Semua komponen bernilai A (baik) pada master aset saat ini."
+                icon={<IconCheck size={20} />}
+              />
+            )}
           </div>
         </Card>
 
-        <Card className="xl:col-span-5">
+        <Card className="flex flex-col xl:col-span-5">
           <CardHeader title="Profil Kondisi per Sistem" sub={tipe === 'Irrigator' ? 'Kelompok komponen irrigator' : 'Kelompok komponen mesin'} />
-          <div className="px-1 pb-1">
-            <GroupRadar data={radar} height={252} />
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-1">
+            <GroupRadar data={radar} height="fill" />
           </div>
           <div className="border-t border-slate-900/[0.09] px-4 py-3">
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
@@ -326,22 +335,22 @@ export default function Dashboard({ data, records, navigate }) {
 
       {/* ---------------- charts row 3 ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">
-        <Card className="xl:col-span-5">
+        <Card className="flex flex-col xl:col-span-5">
           <CardHeader title="Kondisi per Wilayah" sub="Sebaran status unit tiap wilayah kerja" />
-          <div className="px-1 pb-3">
-            <WilayahChart data={wilayah} height={236} />
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-3">
+            <WilayahChart data={wilayah} height="fill" />
           </div>
         </Card>
 
-        <Card className="xl:col-span-3">
+        <Card className="flex flex-col xl:col-span-3">
           <CardHeader
             title="Distribusi Skor"
             sub="Mesin vs Irrigator · klik batang untuk analisa"
           />
-          <div className="px-1 pb-1">
+          <div className="flex min-h-0 flex-1 flex-col px-1 pb-1">
             <ScoreHistogramSplit
               data={bucketsSplit}
-              height={200}
+              height="fill"
               onBar={({ range, tipe: t }) => setBucketSel({ range, tipe: t })}
             />
           </div>
@@ -375,7 +384,7 @@ export default function Dashboard({ data, records, navigate }) {
             Klik batang <span className="font-semibold text-teal-700">Mesin</span> atau{' '}
             <span className="font-semibold text-cyan-700">Irrigator</span> untuk melihat daftar unit + analisa rentang skor.
           </p>
-          <div className="space-y-1.5 border-t border-slate-900/[0.09] px-4 py-3">
+          <div className="mt-auto space-y-1.5 border-t border-slate-900/[0.09] px-4 py-3">
             {komposisi.slice(0, 4).map((k) => (
               <div key={k.name} className="flex items-center gap-2">
                 <span className="w-10 font-mono text-[10.5px] text-slate-600">{k.name}</span>
