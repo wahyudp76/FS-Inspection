@@ -77,14 +77,13 @@ const AXIS = { stroke: 'rgba(148,163,184,0.35)', tick: { fill: '#64748b', fontSi
  *                   tinggi. `minH` menjaga grafik tetap terbaca di layar pendek.
  */
 export function ChartBox({ height = 240, minH = 150, maxH, className = '', children }) {
-  /* Mode "fill": tinggi wadah diukur (ResizeObserver) lalu diteruskan sebagai
+  /* Mode "fill": grafik MENGISI kotak kartu (yang tingginya seragam per baris
+     grid). Tinggi wadah diukur dulu (ResizeObserver) lalu diteruskan sebagai
      piksel — persentase (height:100%) kolaps bila tinggi induk `auto` (HP).
-     Pertumbuhan DIBATASI (default 1,2x tinggi desain) supaya grafik tidak
-     melar vertikal mengikuti kartu yang tinggi; sisa ruang dibagi rata atas
-     bawah (justify-center) sehingga tidak jadi pita kosong di bawah grafik. */
+     `minH` menjaga grafik tidak pernah lebih pendek dari tinggi desainnya. */
   const [ref, ukur] = useHeight()
   if (height === 'fill') {
-    const batas = Math.max(maxH ?? Math.round(minH * 1.2), minH)
+    const batas = maxH ? Math.max(maxH, minH) : Infinity
     const px = ukur ? Math.min(Math.max(ukur, minH), batas) : minH
     return (
       <div

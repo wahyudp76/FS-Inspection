@@ -144,25 +144,27 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190, minH = 190
       </ResponsiveContainer>
       </ChartBox>
 
-      <div className="mt-2 grid shrink-0 grid-cols-2 gap-1.5 sm:grid-cols-4">
+      {/* Ringkasan divisi: chip satu baris supaya kartu tidak jadi tinggi
+          (tinggi kartu menentukan tinggi seluruh baris grid). */}
+      <div className="mt-1.5 flex shrink-0 flex-wrap gap-1">
         {urut.map((d) => (
           <button
             key={d.posisi}
             onClick={() => onPick?.(d.posisi)}
-            className="rounded-lg border border-slate-900/[0.10] bg-slate-900/[0.02] px-2 py-1.5 text-left transition hover:border-slate-900/15 hover:bg-slate-900/[0.04]"
-            title={`Saring tabel ke divisi ${d.posisi}`}
+            title={`Saring tabel ke divisi ${d.posisi} · ${d.sudah}/${d.total} pernah diservice (${d.sudahPct}%)`}
+            className="flex min-h-8 items-center gap-1.5 rounded-lg border border-slate-900/[0.10] bg-slate-900/[0.02] px-2 py-1 text-left transition hover:border-slate-900/15 hover:bg-slate-900/[0.04]"
           >
-            <p className="flex items-center justify-between text-[10px] font-semibold text-slate-700">
-              {d.posisi}
-              <span className="font-mono text-[10px] text-slate-500">{d.total}</span>
-            </p>
-            <p className={cx('mt-0.5 font-mono text-[11px] font-semibold', d.belum ? 'text-rose-600' : 'text-emerald-700')}>
+            <span className="text-[10px] font-semibold text-slate-700">{d.posisi}</span>
+            <span className="font-mono text-[10px] text-slate-500">{d.total}</span>
+            <span
+              className={cx(
+                'font-mono text-[10px] font-semibold',
+                d.belum ? 'text-rose-600' : 'text-emerald-700',
+              )}
+            >
               {d.belum ? `${d.belum} belum` : 'lengkap'}
-            </p>
-            <div className="mt-1 h-1 w-full overflow-hidden rounded-full bg-slate-900/[0.06]">
-              <div className="h-full rounded-full bg-emerald-400" style={{ width: `${d.sudahPct}%` }} />
-            </div>
-            <p className="mt-0.5 text-[9px] text-slate-500">{d.sudah}/{d.total} pernah diservice · {d.sudahPct}%</p>
+            </span>
+            <span className="font-mono text-[9.5px] text-slate-400">{d.sudahPct}%</span>
           </button>
         ))}
       </div>

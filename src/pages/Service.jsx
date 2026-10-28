@@ -640,7 +640,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       </Card>
 
       {/* ---------------- grafik ---------------- */}
-      <div className="grid items-start gap-4 xl:grid-cols-12">
+      <div className="grid gap-4 xl:grid-cols-12">
         <Card className="flex flex-col xl:col-span-5">
           <CardHeader
             title="Komposisi Status"
@@ -709,7 +709,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       </div>
 
       {/* ---------------- analitik service ---------------- */}
-      <div className="grid items-start gap-4 xl:grid-cols-12">
+      <div className="grid gap-4 xl:grid-cols-12">
         <Card className="flex flex-col xl:col-span-5">
           <CardHeader
             title="Cakupan per Divisi"
@@ -764,7 +764,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
         </Card>
       </div>
 
-      <div className="grid items-start gap-4 xl:grid-cols-12">
+      <div className="grid gap-4 xl:grid-cols-12">
         <Card className="xl:col-span-5">
           <CardHeader
             title="Ringkasan Ketepatan Interval"

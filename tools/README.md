@@ -163,3 +163,9 @@ tangkapan satu-halaman penuh per rute ke `audit-shots/<tag>-<rute>-<W>.png`,
 sekaligus mencetak jumlah error JavaScript. Untuk tampilan HP pakai `W=390 H=844`
 dan `TAG=layoutm`.
 
+
+## `rowcheck.mjs` — kesimetrisan kartu
+
+`node tools/rowcheck.mjs` — mencetak ukuran tiap `.card` dikelompokkan per baris
+grid di Dashboard/Riwayat/Service. Semua kartu dalam satu baris harus bertinggi
+sama (grid `items-stretch`); yang menyesuaikan adalah grafik di dalamnya.
