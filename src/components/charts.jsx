@@ -76,16 +76,24 @@ const AXIS = { stroke: 'rgba(148,163,184,0.35)', tick: { fill: '#64748b', fontSi
  *                   kosong menganga di bawah grafik saat kartu sebelahnya lebih
  *                   tinggi. `minH` menjaga grafik tetap terbaca di layar pendek.
  */
-export function ChartBox({ height = 240, minH = 150, className = '', children }) {
+export function ChartBox({ height = 240, minH = 150, maxH, className = '', children }) {
   /* Mode "fill": tinggi wadah diukur (ResizeObserver) lalu diteruskan sebagai
-     piksel. Persentase (height: 100%) TIDAK bisa dipakai karena tinggi induk
-     bersifat `auto` di HP — akibatnya grafik kolaps/menghilang. */
+     piksel — persentase (height:100%) kolaps bila tinggi induk `auto` (HP).
+     Pertumbuhan DIBATASI (default 1,2x tinggi desain) supaya grafik tidak
+     melar vertikal mengikuti kartu yang tinggi; sisa ruang dibagi rata atas
+     bawah (justify-center) sehingga tidak jadi pita kosong di bawah grafik. */
   const [ref, ukur] = useHeight()
   if (height === 'fill') {
+    const batas = Math.max(maxH ?? Math.round(minH * 1.2), minH)
+    const px = ukur ? Math.min(Math.max(ukur, minH), batas) : minH
     return (
-      <div ref={ref} className={cx('w-full flex-1', className)} style={{ minHeight: minH }}>
-        <div className="w-full" style={{ height: ukur || minH }}>
-          {typeof children === 'function' ? children(ukur || minH) : children}
+      <div
+        ref={ref}
+        className={cx('flex w-full flex-1 flex-col justify-center', className)}
+        style={{ minHeight: minH }}
+      >
+        <div className="w-full" style={{ height: px }}>
+          {typeof children === 'function' ? children(px) : children}
         </div>
       </div>
     )

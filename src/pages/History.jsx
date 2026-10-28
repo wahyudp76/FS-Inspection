@@ -215,7 +215,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
       </div>
 
       <div className="flex flex-col gap-4">
-      <div className="order-1 grid gap-4 xl:grid-cols-12">
+      <div className="order-1 grid items-start gap-4 xl:grid-cols-12">
         <Card className="flex flex-col xl:col-span-7">
           <CardHeader
             title="Tren Inspeksi"

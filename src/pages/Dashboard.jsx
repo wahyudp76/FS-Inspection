@@ -239,7 +239,7 @@ export default function Dashboard({ data, records, navigate }) {
       </div>
 
       {/* ---------------- charts row 1 ---------------- */}
-      <div className="grid gap-4 xl:grid-cols-12">
+      <div className="grid items-start gap-4 xl:grid-cols-12">
         <Card className="flex flex-col xl:col-span-8">
           <CardHeader
             title="Tren Inspeksi"
@@ -284,7 +284,7 @@ export default function Dashboard({ data, records, navigate }) {
       </div>
 
       {/* ---------------- charts row 2 ---------------- */}
-      <div className="grid gap-4 xl:grid-cols-12">
+      <div className="grid items-start gap-4 xl:grid-cols-12">
         <Card className="flex flex-col xl:col-span-7">
           <CardHeader
             title="Komponen Paling Bermasalah"
@@ -334,7 +334,7 @@ export default function Dashboard({ data, records, navigate }) {
       </div>
 
       {/* ---------------- charts row 3 ---------------- */}
-      <div className="grid gap-4 xl:grid-cols-12">
+      <div className="grid items-start gap-4 xl:grid-cols-12">
         <Card className="flex flex-col xl:col-span-5">
           <CardHeader title="Kondisi per Wilayah" sub="Sebaran status unit tiap wilayah kerja" />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-3">
