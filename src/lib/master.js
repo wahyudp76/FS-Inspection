@@ -23,11 +23,33 @@ const SCORE_C = 0
 const hariRecord = (r) => dayKeyWIB(recordMs(r))
 
 /** Hitung A/B/C/skor dari objek komponen {nama: 'A'|'B'|'C'} */
+/**
+ * Normalisasi nilai komponen dari sheet: `A`/`B`/`C` (huruf besar-kecil),
+ * dengan spasi/NBSP, atau teks panjang (“baik”, “rusak”, “perhatian”).
+ * Nilai tak dikenal → '' (dianggap kosong, TIDAK dihitung diam-diam sebagai A).
+ * Tanpa ini, sel `a` kecil atau ` C ` membuat skor unit melambung ke 100.
+ */
+export function normalGrade(v) {
+  const t = String(v == null ? '' : v)
+    .replace(/\u00a0/g, ' ')
+    .trim()
+    .toUpperCase()
+  if (!t) return ''
+  if (t === 'A' || t === 'B' || t === 'C') return t
+  const satu = t.replace(/[^A-Z]/g, '')
+  if (satu === 'A' || satu === 'B' || satu === 'C') return satu
+  if (t.startsWith('BAIK') || t.startsWith('GOOD')) return 'A'
+  if (t.startsWith('PERHATIAN') || t.startsWith('WARNING')) return 'B'
+  if (t.startsWith('RUSAK') || t.startsWith('BROKEN') || t.startsWith('KRITIS')) return 'C'
+  return ''
+}
+
 export function rekapKomponen(komponen = {}) {
   let a = 0
   let b = 0
   let c = 0
-  for (const v of Object.values(komponen)) {
+  for (const raw of Object.values(komponen)) {
+    const v = normalGrade(raw)
     if (v === 'A') a++
     else if (v === 'B') b++
     else if (v === 'C') c++
@@ -104,8 +126,8 @@ export function bacaMasterLive(live, tipe) {
     const grades = String(r[5] || '')
     const components = {}
     for (let i = 0; i < kmap.length; i++) {
-      const g = grades[i]
-      if (g === 'A' || g === 'B' || g === 'C') components[kmap[i]] = g
+      const g = normalGrade(grades[i])
+      if (g) components[kmap[i]] = g
     }
     const rekap = rekapKomponen(components)
     const status = normalStatus(r[4]) || String(r[4] || '').trim()

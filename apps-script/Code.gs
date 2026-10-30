@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.9'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.10'; // naikkan setiap kali kode berubah besar
 /* 1.9.1 — warna kolom KONDISI di sheet master dipasang lewat CONDITIONAL
    FORMATTING (bukan hanya setBackground): aturan format bersyarat milik sheet
    selalu menang atas warna sel, jadi sel “Kritis” bisa tetap hijau. Aturan kita

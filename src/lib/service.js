@@ -416,10 +416,26 @@ export function parseService2(header = [], rows = []) {
     r.hmAnomali = r.hmDelta != null && (r.hmDelta > BATAS_DELTA_HM || r.hmDelta < 0)
     if (r.hm != null) prevHm.set(r.kode, r.hm)
   }
-  /* urutan tampil: terbaru dulu */
-  const urut = log.sort((a, b) => (b.tanggalMs - a.tanggalMs) || (b.no - a.no))
-  return urut
+  /* ---- buang pencatatan GANDA di tb_service2 ----
+     Sheet sering memuat baris yang sama dua kali (posisi + kode + tanggal + HM
+     identik); bila dibiarkan, grafik volume/bulan dan hitungan “service bulan
+     ini” membengkak (per 30 Okt 2026: 104 baris September, hanya 67 yang unik).
+     Kunci: posisi|kode|tanggal|HM. Baris tanpa tanggal tidak digabung. */
+  const kunciUnik = new Set()
+  const bersih = []
+  let ganda = 0
+  for (const r of log) {
+    if (!r.tanggal) { bersih.push(r); continue }
+    const key = [r.posisi, r.kode, r.tanggal, r.hm == null ? '' : r.hm].join('|')
+    if (kunciUnik.has(key)) { ganda++; continue }
+    kunciUnik.add(key)
+    bersih.push(r)
+  }
+  /* jumlah ganda disimpan sebagai properti array agar bisa dilaporkan di UI */
+  bersih.duplikat = ganda
 
+  /* urutan tampil: terbaru dulu */
+  return bersih.sort((a, b) => (b.tanggalMs - a.tanggalMs) || (b.no - a.no))
 }
 
 /* ----------------------------- ringkasan ----------------------------- */
@@ -963,6 +979,16 @@ export function kualitasService(units = [], log = [], meta = {}) {
     })
   }
 
+  if (meta.duplikatLog) {
+    masalah.push({
+      level: 'warn',
+      kode: 'log-ganda',
+      jumlah: meta.duplikatLog,
+      pesan: `${meta.duplikatLog} baris ganda di tb_service2 (posisi+kode+tanggal+HM sama) — diabaikan agar volume service tidak dobel`,
+      contoh: log.filter((r) => r.tanggal).slice(0, 0),
+    })
+  }
+
   const tanggalRusak = log.filter((r) => r.tanggalRaw && !r.tanggal)
   if (tanggalRusak.length) {
     masalah.push({
@@ -1065,6 +1091,8 @@ export async function fetchServiceData({ master = [] } = {}) {
     units: lengkap.units,
     log,
     duplikat: duplikat || 0,
+    duplikatLog: log.duplikat || 0,
+    barisLog: (r.logRows || []).length,
     barisEval: baris || evalUnits.length,
     unitEval: evalUnits.length,
     tambahanDariLog: lengkap.dariLog,

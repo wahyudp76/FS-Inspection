@@ -1,11 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Shell from './components/Shell'
 import Dashboard from './pages/Dashboard'
-import Inspect from './pages/Inspect'
-import Units from './pages/Units'
-import History from './pages/History'
-import Service from './pages/Service'
-import Settings from './pages/Settings'
+/* Halaman selain Dashboard dimuat saat dibutuhkan (code splitting per rute):
+   unduhan pertama lebih kecil, halaman lain diambil saat tab-nya dibuka dan
+   setelah itu tersimpan di cache service worker (tetap bisa offline). */
+const Inspect = lazy(() => import('./pages/Inspect'))
+const Units = lazy(() => import('./pages/Units'))
+const History = lazy(() => import('./pages/History'))
+const Service = lazy(() => import('./pages/Service'))
+const Settings = lazy(() => import('./pages/Settings'))
 import assetsData from './data/assets.json'
 import { readLocalHistory, sortRecords, readMasterCache, masterCacheAge } from './lib/api'
 import { readServiceCache } from './lib/service'
@@ -16,6 +19,21 @@ import { releaseScrollLock } from './lib/scrollLock'
 import QuickInspect from './components/QuickInspect'
 import { terapkanInspeksiTerbaru, gabungMasterLive } from './lib/master'
 import { syncAll, ringkasSync } from './lib/sync'
+
+/** Tampilan sementara saat potongan halaman sedang diunduh. */
+const MemuatHalaman = () => (
+  <div className="space-y-4" aria-busy="true" aria-live="polite">
+    <div className="card card-pad flex items-center gap-3">
+      <span className="h-4 w-4 animate-spin rounded-full border-2 border-teal-600/30 border-t-teal-600" />
+      <span className="text-[12px] text-slate-600">Memuat halaman…</span>
+    </div>
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {[0, 1, 2].map((i) => (
+        <div key={i} className="card h-28 animate-pulse bg-slate-900/[0.02]" />
+      ))}
+    </div>
+  </div>
+)
 
 const readHash = () => {
   const h = (window.location.hash || '').replace(/^#\/?/, '')
@@ -225,6 +243,7 @@ export default function App() {
   }, [])
 
   const page = useMemo(() => {
+    const isi = (() => {
     switch (route) {
       case 'inspeksi':
         return <Inspect data={data} records={allRecords} onSubmitted={handleSubmitted} navigate={navigate} initial={params} />
@@ -260,6 +279,8 @@ export default function App() {
       default:
         return <Dashboard data={data} records={allRecords} navigate={navigate} />
     }
+    })()
+    return <Suspense fallback={<MemuatHalaman />}>{isi}</Suspense>
   }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted, handleUpdated, handleDeleted, notify, svcSignal])
 
   return (

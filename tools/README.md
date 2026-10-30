@@ -169,3 +169,38 @@ dan `TAG=layoutm`.
 `node tools/rowcheck.mjs` — mencetak ukuran tiap `.card` dikelompokkan per baris
 grid di Dashboard/Riwayat/Service. Semua kartu dalam satu baris harus bertinggi
 sama (grid `items-stretch`); yang menyesuaikan adalah grafik di dalamnya.
+
+## `dataquality.mjs` — kualitas data sheet & kecocokan sheet ↔ web
+
+`node tools/dataquality.mjs` (butuh `tools/mockapi.mjs` di :8111, data CSV di `data/`).
+Memeriksa: ringkasan A/B/C/Total/Skor/Kondisi yang tidak cocok dengan komponen,
+tanggal tak terbaca, ID/kode ganda, kode unit yang tidak ada di master, komponen
+terisi < 60%, baris log service ganda, dan HM yang menurun. Sekaligus membandingkan
+angka yang benar-benar dipakai web (aksi `history` / `master` / `svcread`) dengan
+isi sheet. Hasil detail: `audit-shots/dataquality.json`.
+
+## `svcquality.mjs` — verifikasi dedupe log service di UI
+
+`node tools/svcquality.mjs` (Vite :5199). Memastikan baris ganda `tb_service2`
+dibuang sehingga grafik volume service memakai baris unik, dan pengguna melihat
+catatan kualitas datanya.
+
+## `syncguard.mjs` — penjaga sinkron
+
+`node tools/syncguard.mjs` (Vite :5199). Dua skenario: (1) sheet “Data Inspeksi”
+terbaca kosong tidak boleh menghapus cache lokal; (2) nilai komponen huruf kecil
+(`"a"`, `" c "`) tetap dihitung. Memakai intersepsi jaringan — sheet asli tidak
+disentuh.
+
+## `stabilitycheck.mjs` — ketahanan aplikasi
+
+`node tools/stabilitycheck.mjs` (Vite :5199). Menguji: localStorage diblokir,
+cache rusak (JSON tidak valid), endpoint Apps Script mati, pindah tab cepat 20×,
+dan muat ulang 5× (memori tidak merangkak naik).
+
+## `perfcheck.mjs` — performa & berat halaman
+
+`node tools/perfcheck.mjs` (build `docs/`, mock :8111). Mencetak ukuran tiap
+potongan bundel, metrik muat (TTFB/DCL/load/first-paint), byte yang benar-benar
+diunduh, jumlah elemen DOM, pemakaian heap, ukuran cache localStorage, dan waktu
+respons tiap aksi Apps Script. Ringkasan disimpan ke `perf-last.json`.

@@ -191,6 +191,23 @@ export async function fetchHistory({ silent = false, force = false } = {}) {
     }
 
     const fresh = expandRecords(json.records || [], json.kmap)
+
+    /* ---- JARING PENGAMAN: balasan kosong tidak boleh mengosongkan layar ----
+       Bila sheet tiba-tiba terbaca 0 baris (deploy Apps Script salah, kuota,
+       sheet sedang dikosongkan orang lain, atau balasan terpotong) sedangkan
+       cache lokal masih berisi data, JANGAN timpa cache. Tampilkan data lama
+       + tandai galat supaya pengguna tahu ada yang tidak beres. */
+    if (!fresh.length && local.length) {
+      return {
+        records: sortRecords(local),
+        syncedAt: cached.syncedAt || null,
+        offline: false,
+        pending: pending.length,
+        unchanged: true,
+        kosongDiSheet: true,
+        error: 'Sheet “Data Inspeksi” terbaca kosong — data lama di perangkat tetap dipakai.',
+      }
+    }
     writeRev(json.rev || '')
     /* buang pending yang ternyata SUDAH masuk sheet (clientId sama) → tidak dobel di layar */
     const serverIds = new Set(fresh.map((r) => r.clientId || r.id).filter(Boolean))

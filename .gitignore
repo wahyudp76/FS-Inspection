@@ -24,3 +24,5 @@ data/
 
 # tangkapan layar hasil audit UI
 audit-shots/
+perf-last.json
+data2/

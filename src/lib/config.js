@@ -4,6 +4,29 @@
  *  1. .env  ->  VITE_APPS_SCRIPT_URL=https://script.google.com/macros/s/xxx/exec
  *  2. Menu "Pengaturan" di dashboard (tersimpan di localStorage browser)
  */
+/* ---- akses localStorage yang TIDAK pernah melempar ----
+   Mode privat / cookie diblokir / kuota penuh membuat getItem & setItem
+   melempar SecurityError/QuotaExceededError. Satu panggilan tanpa penjaga
+   cukup untuk mematikan seluruh halaman (React gagal render). */
+export const bacaLS = (kunci, bawaan = '') => {
+  try {
+    const v = localStorage.getItem(kunci)
+    return v == null ? bawaan : v
+  } catch {
+    return bawaan
+  }
+}
+
+export const tulisLS = (kunci, nilai) => {
+  try {
+    if (nilai == null) localStorage.removeItem(kunci)
+    else localStorage.setItem(kunci, String(nilai))
+    return true
+  } catch {
+    return false
+  }
+}
+
 const LS_ENDPOINT = 'fsi:endpoint'
 const LS_AUTO_MASTER = 'fsi:auto-master'
 const LS_AUTO_REFRESH = 'fsi:auto-refresh'

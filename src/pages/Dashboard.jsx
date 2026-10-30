@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react'
 import {
   fleetSummary, componentIssues, byWilayah, scoreBucketsSplit, groupProfile, unitTypeBreakdown,
   trendByPeriod, topInspectors, latestByUnit, pct, fmtDateTime, relativeTime, kondisiOf, cx, periodKey, scoreColor,
-  rekapRecord,
+  rekapRecord, butuhPerbaikanSheet,
 } from '../lib/analytics'
 import { daysAgoWIB } from '../lib/time'
 import { Card, CardHeader, Kpi, Bar, KondisiPill, StatusPill, Empty, Segmented, ScoreRing, GradePill } from '../components/ui'
@@ -27,6 +27,12 @@ export default function Dashboard({ data, records, navigate }) {
 
   const mesin = data.mesin || []
   const irrigator = data.irrigator || []
+
+  /* Baris sheet “Data Inspeksi” yang kolom A/B/C/Total/Skor/Kondisinya tidak
+     cocok dengan nilai komponennya. Dashboard tetap memakai hasil hitung ulang
+     dari komponen (akurat), tetapi sheet perlu diperbaiki agar laporan lain
+     (rumus Google Sheets, ekspor) tidak memakai angka lama. */
+  const sheetSelisih = useMemo(() => butuhPerbaikanSheet(records || []), [records])
 
   const scoped = useMemo(() => (tipe === 'Mesin' ? mesin : tipe === 'Irrigator' ? irrigator : [...mesin, ...irrigator]), [tipe, mesin, irrigator])
   const sum = useMemo(() => fleetSummary(scoped), [scoped])
@@ -237,6 +243,24 @@ export default function Dashboard({ data, records, navigate }) {
           <IconClipboard size={13} /> Mulai Inspeksi
         </button>
       </div>
+
+      {/* ---------------- peringatan kualitas data sheet ---------------- */}
+      {sheetSelisih > 0 && (
+        <div className="card card-pad flex flex-col gap-2 border-l-2 border-l-amber-500/70 sm:flex-row sm:flex-wrap sm:items-center">
+          <span className="flex items-center gap-2 text-[12px] font-semibold text-amber-700">
+            <IconAlert size={14} /> Data sheet perlu diselaraskan
+          </span>
+          <p className="min-w-[220px] flex-1 text-[12px] leading-relaxed text-slate-600">
+            <span className="font-semibold text-slate-800">{sheetSelisih} baris</span> di sheet
+            “Data Inspeksi” punya kolom A/B/C/Total/Skor yang tidak cocok dengan nilai komponennya.
+            Angka di web sudah dihitung ulang dari komponen (akurat), tetapi sheet tetap perlu
+            diperbaiki agar rumus & ekspor di Google Sheets ikut benar.
+          </p>
+          <button onClick={() => navigate('pengaturan')} className="btn-ghost !py-1.5 !text-[12px]">
+            Perbaiki di Pengaturan <IconChevron size={13} />
+          </button>
+        </div>
+      )}
 
       {/* ---------------- charts row 1 ---------------- */}
       <div className="grid gap-4 xl:grid-cols-12">

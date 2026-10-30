@@ -1,4 +1,5 @@
 import { GRADES } from './config'
+import { normalGrade } from './master'
 import { tsMs, recordMs, compareRecordsAsc, dayKeyWIB, daysAgoWIB } from './time'
 
 const SCORE_MAP = Object.fromEntries(GRADES.map((g) => [g.value, g.score]))
@@ -56,7 +57,8 @@ export function rekapRecord(r = {}) {
   }
   let a = 0, b = 0, c = 0
   if (komp) {
-    for (const v of Object.values(komp)) {
+    for (const raw of Object.values(komp)) {
+      const v = normalGrade(raw)
       if (v === 'A') a++
       else if (v === 'B') b++
       else if (v === 'C') c++
@@ -104,7 +106,8 @@ export function fleetSummary(assets = []) {
 
   let a = 0, b = 0, c = 0, comps = 0
   assets.forEach((u) => {
-    Object.values(u.components || {}).forEach((v) => {
+    Object.values(u.components || {}).forEach((raw) => {
+      const v = normalGrade(raw)
       if (v === 'A') a++
       else if (v === 'B') b++
       else if (v === 'C') c++

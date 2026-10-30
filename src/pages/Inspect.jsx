@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { cx, scoreOf, kondisiOf, pct, groupOfComponent, fmtDateTime, latestByUnit, clamp } from '../lib/analytics'
-import { GRADES, gradeMeta, isConfigured, getAutoSyncMaster, TARGET_SHEET, kondisiMeta } from '../lib/config'
+import { GRADES, gradeMeta, isConfigured, getAutoSyncMaster, TARGET_SHEET, kondisiMeta, bacaLS, tulisLS } from '../lib/config'
 import { submitInspection, syncMaster } from '../lib/api'
 import { Card, CardHeader, Bar, GradePill, KondisiPill, StatusPill, ScoreRing, Empty, Segmented, Toast, MultiSelect } from '../components/ui'
 import {
@@ -21,7 +21,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
   const [kode, setKode] = useState(initial?.kode || '')
   const [query, setQuery] = useState('')
   const [grades, setGrades] = useState({})
-  const [inspector, setInspector] = useState(() => localStorage.getItem(LS_INSPECTOR) || '')
+  const [inspector, setInspector] = useState(() => bacaLS(LS_INSPECTOR))
   const [tanggal, setTanggal] = useState(todayISO())
   const [catatan, setCatatan] = useState('')
   const [submitting, setSubmitting] = useState(false)
@@ -570,7 +570,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
               <IconUser size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
               <input
                 value={inspector}
-                onChange={(e) => { setInspector(e.target.value); localStorage.setItem(LS_INSPECTOR, e.target.value) }}
+                onChange={(e) => { setInspector(e.target.value); tulisLS(LS_INSPECTOR, e.target.value) }}
                 placeholder="Nama lengkap"
                 className="input !pl-9"
               />

@@ -121,6 +121,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   const [units, setUnits] = useState(cached?.units || [])
   const [log, setLog] = useState(cached?.log || [])
   const [duplikat, setDuplikat] = useState(cached?.duplikat || 0)
+  const [duplikatLog, setDuplikatLog] = useState(cached?.duplikatLog || 0)
   const [barisEvalRaw, setBarisEvalRaw] = useState(cached?.barisEval || 0)
   const [syncedAt, setSyncedAt] = useState(cached?.syncedAt || null)
   /* berapa unit datang dari tb_service1 vs hasil turunan log/master (v1.9.0) */
@@ -178,7 +179,10 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   /* grafik “kondisi per bulan”: status dihitung per akhir bulan acuan */
   const bulanRingkas = useMemo(() => ringkasBulan(units, log, acuanAktif), [units, log, acuanAktif])
   /* audit ringan kualitas data sheet (dipakai badge di header) */
-  const kualitas = useMemo(() => kualitasService(units, log, { duplikat }), [units, log, duplikat])
+  const kualitas = useMemo(
+    () => kualitasService(units, log, { duplikat, duplikatLog }),
+    [units, log, duplikat, duplikatLog]
+  )
   const [bukaKualitas, setBukaKualitas] = useState(false)
 
   /* terapkan satu set data service (cache lokal, hasil tombol Sinkron, atau tarikan manual) */
@@ -198,6 +202,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
     })
     setLog(data.log || [])
     setDuplikat(data.duplikat || 0)
+    setDuplikatLog(data.duplikatLog || 0)
     setBarisEvalRaw(data.barisEval || 0)
     setSyncedAt(data.syncedAt || null)
     setGalat('')
@@ -305,6 +310,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       setUnits(segar.units)
       setLog(segar.log)
       setDuplikat(segar.duplikat || 0)
+      setDuplikatLog(segar.duplikatLog || 0)
       setBarisEvalRaw(segar.barisEval || 0)
       setSyncedAt(segar.syncedAt)
     } else {
