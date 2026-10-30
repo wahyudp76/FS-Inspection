@@ -338,6 +338,57 @@ export async function fetchMasterLive({ silent = false, force = false } = {}) {
   }
 }
 
+/**
+ * REPAIR ALL — satu tombol untuk membereskan semua temuan di banner/panel
+ * kualitas data, LANGSUNG menulis ke spreadsheet:
+ *   1. ringkasan A/B/C/Total/Skor/Kondisi di “Data Inspeksi” + master
+ *      Mesin/Irrigator (komponen kosong diisi dari master lebih dulu),
+ *   2. rumus kolom D–F (Month / Bulan Service / Minggu Service) di tb_service2,
+ *   3. buang baris ganda di tb_service2 (posisi+kode+tanggal+HM sama).
+ *
+ * Deployment Apps Script lama belum mengenal aksi `repairall`; bila ditolak,
+ * fungsi ini otomatis mengerjakan langkah 1 & 2 satu per satu (tetap berhasil,
+ * hanya lebih lambat). Cache lokal dibuang supaya layar tidak memakai data lama.
+ */
+export async function repairAll() {
+  const mulai = Date.now()
+  let hasil = null
+  try {
+    const json = await post({ action: 'repairall' }, 300000)
+    hasil = json.result || null
+  } catch (e) {
+    /* fallback: deployment lama tanpa aksi repairall */
+    hasil = { catatan: `Aksi repairall tidak tersedia (${e.message}) — dijalankan bertahap.` }
+    hasil.ringkasan = await repairData({ sheet: 'semua', tulisKomponenHilang: true })
+    try {
+      hasil.rumusService = await serviceRepair()
+    } catch (e2) {
+      hasil.rumusService = { error: e2.message }
+    }
+    hasil.dedupeService = { error: 'Butuh deployment Apps Script terbaru (aksi svcdedupe).' }
+  }
+
+  /* sheet sudah berubah → cache lokal pasti basi */
+  clearMasterCache()
+  writeRev('')
+  try {
+    localStorage.removeItem(LS_SERVICE)
+  } catch {
+    /* abaikan */
+  }
+  const r = hasil?.ringkasan || {}
+  return {
+    ...hasil,
+    ms: Date.now() - mulai,
+    ringkas:
+      `${r.komponenDiisi || 0} sel komponen diisi · ` +
+      `${r.inspeksi || 0} baris inspeksi dirapikan · ` +
+      `${(r.mesin || 0) + (r.irrigator || 0)} baris master ditulis` +
+      (hasil?.dedupeService?.dihapus ? ` · ${hasil.dedupeService.dihapus} baris ganda service dihapus` : '') +
+      (hasil?.rumusService?.diperbaiki ? ` · ${hasil.rumusService.diperbaiki} rumus service diperbaiki` : ''),
+  }
+}
+
 /** Perbaiki kolom D/E/F (Month, Bulan Service, Minggu Service) di tb_service2 yang error/kosong */
 export async function serviceRepair() {
   const json = await post({ action: 'svcrepair' }, 180000)

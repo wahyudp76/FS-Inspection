@@ -116,7 +116,7 @@ const MingguChips = ({ mingguBulan }) => {
   )
 }
 
-export default function Service({ notify, openFormSignal = 0, serviceSync = null, master = [] }) {
+export default function Service({ notify, openFormSignal = 0, serviceSync = null, master = [], onRepairAll, repairing = false }) {
   const cached = useMemo(() => readServiceCache(), [])
   const [units, setUnits] = useState(cached?.units || [])
   const [log, setLog] = useState(cached?.log || [])
@@ -413,9 +413,28 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
 
         {bukaKualitas && kualitas.masalah.length > 0 && (
           <div className="mx-3 mb-3 space-y-1.5 rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-2.5 sm:mx-4">
-            <p className="text-[10px] uppercase tracking-wider text-slate-500">
-              Hasil audit data sheet ({kualitas.totalMasalah} temuan) — perbaiki di spreadsheet, lalu tekan “Sinkron” di header
-            </p>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-[10px] uppercase tracking-wider text-slate-500">
+                Hasil audit data sheet ({kualitas.totalMasalah} temuan) — “Repair All” memperbaiki langsung di spreadsheet
+              </p>
+              <button
+                type="button"
+                onClick={() => {
+                  const pesan =
+                    'Repair All akan LANGSUNG mengubah spreadsheet:\n\n' +
+                    '• membuang baris ganda di tb_service2 (Monitor Kasie FS)\n' +
+                    '• memperbaiki rumus Month / Bulan Service / Minggu Service\n' +
+                    '• merapikan ringkasan A/B/C/Skor/Kondisi di “Data Inspeksi” + master\n\n' +
+                    'Lanjutkan?'
+                  if (!window.confirm(pesan)) return
+                  onRepairAll?.()
+                }}
+                disabled={repairing}
+                className="btn-primary !min-h-8 !py-1 !text-[11px]"
+              >
+                <IconCheck size={12} /> {repairing ? 'Memperbaiki…' : 'Repair All'}
+              </button>
+            </div>
             {kualitas.masalah.map((m) => (
               <div key={m.kode} className="flex items-start gap-2 text-[11px] leading-relaxed">
                 <span

@@ -16,7 +16,7 @@ import {
 
 const STATUS_COLORS = { Terpasang: '#0d9488', Standby: '#7c3aed', Rusak: '#f43f5e' }
 
-export default function Dashboard({ data, records, navigate }) {
+export default function Dashboard({ data, records, navigate, onRepairAll, repairing = false }) {
   const [tipe, setTipe] = useState('Semua')
   const [period, setPeriod] = useState('bulan')
   const [issueTab, setIssueTab] = useState('Mesin')
@@ -256,9 +256,28 @@ export default function Dashboard({ data, records, navigate }) {
             Angka di web sudah dihitung ulang dari komponen (akurat), tetapi sheet tetap perlu
             diperbaiki agar rumus & ekspor di Google Sheets ikut benar.
           </p>
-          <button onClick={() => navigate('pengaturan')} className="btn-ghost !py-1.5 !text-[12px]">
-            Perbaiki di Pengaturan <IconChevron size={13} />
-          </button>
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <button
+              onClick={() => {
+                const pesan =
+                  'Repair All akan LANGSUNG mengubah spreadsheet:\n\n' +
+                  `• mengisi ${sheetSelisih} baris “Data Inspeksi” supaya kolom A/B/C/Total/Skor/Kondisi cocok dengan nilai komponen\n` +
+                  '• merapikan ringkasan + warna kolom KONDISI di sheet Mesin & Irrigator\n' +
+                  '• memperbaiki rumus Month / Bulan / Minggu di tb_service2\n' +
+                  '• membuang baris ganda di tb_service2\n\n' +
+                  'Lanjutkan?'
+                if (!window.confirm(pesan)) return
+                onRepairAll?.()
+              }}
+              disabled={repairing}
+              className="btn-primary !py-1.5 !text-[12px]"
+            >
+              <IconCheck size={13} /> {repairing ? 'Memperbaiki sheet…' : 'Repair All'}
+            </button>
+            <button onClick={() => navigate('pengaturan')} className="btn-ghost !py-1.5 !text-[12px]">
+              Rincian <IconChevron size={13} />
+            </button>
+          </div>
         </div>
       )}
 

@@ -204,3 +204,11 @@ dan muat ulang 5× (memori tidak merangkak naik).
 potongan bundel, metrik muat (TTFB/DCL/load/first-paint), byte yang benar-benar
 diunduh, jumlah elemen DOM, pemakaian heap, ukuran cache localStorage, dan waktu
 respons tiap aksi Apps Script. Ringkasan disimpan ke `perf-last.json`.
+
+## `repairall.mjs` — uji tombol “Repair All”
+
+`node tools/repairall.mjs` (mock :8111 dengan state awal dari CSV + Vite :5199).
+Membuka Dashboard, menekan **Repair All** di banner peringatan, lalu memastikan
+sheet benar-benar berubah: ringkasan A/B/C/Skor/Kondisi dirapikan, komponen kosong
+diisi dari master, rumus service diperbaiki, baris ganda tb_service2 dibuang, dan
+banner hilang setelah data ditarik ulang.

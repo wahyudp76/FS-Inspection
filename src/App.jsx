@@ -10,7 +10,7 @@ const History = lazy(() => import('./pages/History'))
 const Service = lazy(() => import('./pages/Service'))
 const Settings = lazy(() => import('./pages/Settings'))
 import assetsData from './data/assets.json'
-import { readLocalHistory, sortRecords, readMasterCache, masterCacheAge } from './lib/api'
+import { readLocalHistory, sortRecords, readMasterCache, masterCacheAge, repairAll } from './lib/api'
 import { readServiceCache } from './lib/service'
 import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
@@ -53,6 +53,9 @@ export default function App() {
   const [toast, setToast] = useState(null)
   const [quickOpen, setQuickOpen] = useState(false)
   const [svcSignal, setSvcSignal] = useState(0)
+  /* status “Repair All” (memperbaiki sheet langsung dari banner/panel) */
+  const [repairing, setRepairing] = useState(false)
+  const [repairHasil, setRepairHasil] = useState(null)
   /* master terkini dari sheet (aksi `master`); snapshot build hanya cadangan */
   const [masterLive, setMasterLive] = useState(() => readMasterCache()?.live || null)
   const [masterSyncedAt, setMasterSyncedAt] = useState(() => readMasterCache()?.syncedAt || null)
@@ -146,6 +149,41 @@ export default function App() {
     })()
     return inFlight.current
   }, [])
+
+  /**
+   * REPAIR ALL — memperbaiki sheet langsung dari tombol di banner/panel
+   * kualitas data: ringkasan inspeksi + master, rumus service, baris ganda
+   * service. Setelah sheet diubah, semua data ditarik ulang supaya layar dan
+   * sheet kembali sama.
+   */
+  const doRepairAll = useCallback(async () => {
+    if (repairing) return null
+    if (!getEndpoint()) {
+      setToast({ type: 'info', message: 'Endpoint Apps Script belum diatur — buka Pengaturan ▸ Koneksi sheet.' })
+      return null
+    }
+    setRepairing(true)
+    setToast({ type: 'info', message: 'Repair All: memperbaiki sheet… jangan tutup halaman ini.' })
+    try {
+      const hasil = await repairAll()
+      setRepairHasil(hasil)
+      /* tarik ulang seluruh data (master, riwayat, service) setelah sheet diubah */
+      const lap = await syncAll({ tulisMaster: false })
+      if (lap.master.liveData) setMasterLive(lap.master.liveData)
+      if (lap.master.syncedAt) setMasterSyncedAt(lap.master.syncedAt)
+      if (lap.riwayat.records) setRecords(lap.riwayat.records)
+      if (lap.service.data) setServiceSync({ data: lap.service.data, at: new Date().toISOString() })
+      setSyncLaporan(lap)
+      setSync({ syncing: false, syncedAt: lap.selesai, offline: lap.offline })
+      setToast({ type: 'success', message: `Repair All selesai (${(hasil.ms / 1000).toFixed(1).replace('.', ',')} dtk): ${hasil.ringkas}` })
+      return hasil
+    } catch (e) {
+      setToast({ type: 'error', message: `Repair All gagal: ${e.message}` })
+      return null
+    } finally {
+      setRepairing(false)
+    }
+  }, [repairing])
 
   useEffect(() => {
     doSync({ silent: true })
@@ -263,10 +301,21 @@ export default function App() {
           />
         )
       case 'service':
-        return <Service notify={notify} openFormSignal={svcSignal} serviceSync={serviceSync} master={data.mesin} />
+        return (
+          <Service
+            notify={notify}
+            openFormSignal={svcSignal}
+            serviceSync={serviceSync}
+            master={data.mesin}
+            onRepairAll={doRepairAll}
+            repairing={repairing}
+          />
+        )
       case 'pengaturan':
         return (
           <Settings
+            onRepairAll={doRepairAll}
+            repairing={repairing}
             onSync={() => doSync()}
             records={records}
             demo={demo}
@@ -277,11 +326,19 @@ export default function App() {
           />
         )
       default:
-        return <Dashboard data={data} records={allRecords} navigate={navigate} />
+        return (
+          <Dashboard
+            data={data}
+            records={allRecords}
+            navigate={navigate}
+            onRepairAll={doRepairAll}
+            repairing={repairing}
+          />
+        )
     }
     })()
     return <Suspense fallback={<MemuatHalaman />}>{isi}</Suspense>
-  }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, sync.syncing, handleSubmitted, handleUpdated, handleDeleted, notify, svcSignal])
+  }, [route, params, data, records, allRecords, demo, toggleDemo, navigate, doSync, doRepairAll, repairing, sync.syncing, handleSubmitted, handleUpdated, handleDeleted, notify, svcSignal, serviceSync])
 
   return (
     <Shell

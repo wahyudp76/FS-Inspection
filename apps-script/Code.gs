@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.10'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.11'; // naikkan setiap kali kode berubah besar
 /* 1.9.1 — warna kolom KONDISI di sheet master dipasang lewat CONDITIONAL
    FORMATTING (bukan hanya setBackground): aturan format bersyarat milik sheet
    selalu menang atas warna sel, jadi sel “Kritis” bisa tetap hijau. Aturan kita
@@ -171,6 +171,21 @@ function doPost(e) {
     }
     if (action === 'svcrepair') {
       return json_({ ok: true, result: serviceRepairRumus_(), version: SCRIPT_VERSION });
+    }
+    if (action === 'svcdedupe') {
+      return json_({ ok: true, result: serviceDedupe_(), version: SCRIPT_VERSION });
+    }
+    if (action === 'repairall') {
+      /* satu tombol “Repair All”: ringkasan inspeksi + master, rumus service,
+         lalu buang baris ganda log service. Semua menulis ke spreadsheet. */
+      var hasil = {};
+      try { hasil.ringkasan = repairRingkasan_(body.payload || {}); }
+      catch (e1) { hasil.ringkasan = { error: String(e1 && e1.message ? e1.message : e1) }; }
+      try { hasil.rumusService = serviceRepairRumus_(); }
+      catch (e2) { hasil.rumusService = { error: String(e2 && e2.message ? e2.message : e2) }; }
+      try { hasil.dedupeService = serviceDedupe_(); }
+      catch (e3) { hasil.dedupeService = { error: String(e3 && e3.message ? e3.message : e3) }; }
+      return json_({ ok: true, result: hasil, version: SCRIPT_VERSION });
     }
     if (action === 'svcping') {
       var info = serviceInfo_();
@@ -858,6 +873,14 @@ function parseTanggal_(v) {
   if (m) return new Date(+m[1], +m[2] - 1, +m[3], 12, 0, 0);
   m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
   if (m) return new Date(+m[3], +m[2] - 1, +m[1], 12, 0, 0);
+  /* tanggal ketik manual dengan tahun 2 digit di sheet: "17/09/26" (= 2026).
+     Sheet berformat Indonesia (dd/mm), jadi hari lebih dulu. */
+  m = s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{2})(?!\d)/);
+  if (m) {
+    var yy = +m[3];
+    var thn = yy >= 70 ? 1900 + yy : 2000 + yy;
+    return new Date(thn, +m[2] - 1, +m[1], 12, 0, 0);
+  }
   return null;
 }
 
@@ -2157,6 +2180,55 @@ function revisiMaster_() {
  *
  * @return {Object} {diperiksa, diperbaiki, gagal, pemisah}
  */
+/**
+ * HAPUS BARIS GANDA DI tb_service2 (sheet “Monitor Kasie FS”, blok A:H).
+ *
+ * Sheet sering memuat baris yang sama dua kali (posisi + kode unit + tanggal +
+ * HM identik). Akibatnya grafik volume service & KPI “service bulan ini”
+ * membengkak (per 30 Okt 2026: 104 baris September, hanya 67 yang unik).
+ *
+ * Baris PERTAMA dipertahankan, duplikat berikutnya dihapus (dari bawah ke atas
+ * supaya nomor baris tidak bergeser). Baris tanpa kode unit / tanpa tanggal
+ * tidak disentuh. Dipanggil dari tombol “Repair All” di web.
+ */
+function serviceDedupe_() {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var sh = serviceLogSheet_();
+    var hdr = serviceHeaderRow_(sh);
+    var last = sh.getLastRow();
+    var out = { diperiksa: 0, dihapus: 0, sisa: 0, contoh: [] };
+    if (last <= hdr) return out;
+
+    var vals = sh.getRange(hdr + 1, 1, last - hdr, 8).getValues();
+    var kunci = {};
+    var buang = [];
+    for (var i = 0; i < vals.length; i++) {
+      var kode = String(vals[i][6] || '').trim().toUpperCase();
+      if (!kode) continue;
+      var tgl = vals[i][2] instanceof Date ? vals[i][2] : parseTanggal_(vals[i][2]);
+      if (!tgl || isNaN(tgl.getTime())) continue;
+      out.diperiksa++;
+      var iso = Utilities.formatDate(tgl, 'Asia/Jakarta', 'yyyy-MM-dd');
+      var hm = String(vals[i][7] == null ? '' : vals[i][7]).replace(',', '.').trim();
+      var key = [String(vals[i][0] || '').trim().toUpperCase(), kode, iso, hm].join('|');
+      if (kunci[key]) {
+        buang.push(hdr + 1 + i);
+        if (out.contoh.length < 5) out.contoh.push(kode + ' ' + iso);
+      } else {
+        kunci[key] = true;
+      }
+    }
+    for (var b = buang.length - 1; b >= 0; b--) sh.deleteRow(buang[b]);
+    out.dihapus = buang.length;
+    out.sisa = out.diperiksa - out.dihapus;
+    return out;
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function serviceRepairRumus_() {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);
