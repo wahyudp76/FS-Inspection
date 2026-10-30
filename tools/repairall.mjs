@@ -91,6 +91,12 @@ const jalankan = async () => {
   cek(!banner2, 'banner hilang setelah sheet diperbaiki & data ditarik ulang')
   cek(err.length === 0, 'tanpa error JavaScript', err.slice(0, 2).join(' | '))
 
+  /* halaman Pengaturan memakai jalur yang sama */
+  await page.goto(`${BASE}/#/pengaturan`, { waitUntil: 'networkidle' })
+  await page.waitForTimeout(3000)
+  const adaDiPengaturan = await page.evaluate(() => [...document.querySelectorAll('button')].some((b) => b.innerText.trim() === 'Perbaiki otomatis'))
+  cek(adaDiPengaturan, 'Pengaturan memakai jalur Repair All yang sama (tombol tersedia)')
+
   await browser.close()
   console.log(gagal.length ? `\n❌ ${gagal.length} pemeriksaan gagal` : '\n✅ Repair All bekerja (sheet benar-benar berubah)')
   process.exit(gagal.length ? 1 : 0)

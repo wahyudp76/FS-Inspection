@@ -14,7 +14,7 @@ const STEPS = [
   { t: 'Tempel URL di sini', d: 'Simpan endpoint, lalu uji koneksi. Sheet "Data Inspeksi" akan dibuat/diperbarui otomatis.' },
 ]
 
-export default function Settings({ onSync, records, demo, onToggleDemo, syncLaporan = null, syncing = false, syncedAt = null }) {
+export default function Settings({ onRepairAll, repairing = false, onSync, records, demo, onToggleDemo, syncLaporan = null, syncing = false, syncedAt = null }) {
   const [url, setUrl] = useState(getEndpoint())
   const [testing, setTesting] = useState(false)
   const [toast, setToast] = useState(null)
@@ -327,11 +327,22 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
             </button>
             <button
               className="btn-primary"
-              disabled={busyRepair || !isConfigured()}
+              disabled={busyRepair || repairing || !isConfigured()}
               onClick={async () => {
-                if (!window.confirm('Perbaiki sheet? Nilai komponen yang kosong akan diisi dari master, lalu A/B/C/Total/Skor/Kondisi dihitung ulang dari komponen.')) return
+                if (!window.confirm('Perbaiki sheet? Nilai komponen yang kosong akan diisi dari master, lalu A/B/C/Total/Skor/Kondisi dihitung ulang dari komponen.\n\nTermasuk: rumus service tb_service2 diperbaiki dan baris ganda di tb_service2 dibuang.')) return
                 setBusyRepair(true)
                 try {
+                  /* jalur utama: Repair All (ringkasan + rumus service + dedupe
+                     log service) — sama dengan tombol di banner & panel Service */
+                  if (onRepairAll) {
+                    const hasil = await onRepairAll()
+                    if (hasil) {
+                      const ulang = await auditData()
+                      setAudit(ulang)
+                      setToast({ type: 'success', message: `Perbaikan selesai: ${hasil.ringkas}` })
+                    }
+                    return
+                  }
                   const r = await repairData()
                   setToast({
                     type: 'success',
@@ -351,7 +362,7 @@ export default function Settings({ onSync, records, demo, onToggleDemo, syncLapo
                 }
               }}
             >
-              <IconCheck size={14} /> {busyRepair ? 'Memperbaiki…' : 'Perbaiki otomatis'}
+              <IconCheck size={14} /> {busyRepair || repairing ? 'Memperbaiki…' : 'Perbaiki otomatis'}
             </button>
           </div>
 
