@@ -75,9 +75,12 @@ const kosong = () => ({
  * @param {Function} [opts.onTahap] dipanggil `(id, 'mulai'|'selesai')` tiap tahap
  * @param {boolean} [opts.tulisMaster] true = tulis ulang ringkasan ke sheet master
  *   (dipakai Sinkron manual; tarikan otomatis tiap 5 menit tidak menulis apa pun)
+ * @param {boolean} [opts.paksa] true = minta data penuh (rev dikosongkan). Tarikan
+ *   otomatis cukup mengirim `rev` terakhir: bila sheet tidak berubah, Apps Script
+ *   menjawab ±80 byte, bukan 115 kB riwayat + 40 kB master.
  * @returns {Promise<Object>} laporan lengkap (lihat `kosong()`)
  */
-export async function syncAll({ onTahap, tulisMaster = false } = {}) {
+export async function syncAll({ onTahap, tulisMaster = false, paksa = tulisMaster } = {}) {
   const laporan = kosong()
   const t0 = Date.now()
   const lapor = (tahap, ok, error = '') => {
@@ -135,13 +138,14 @@ export async function syncAll({ onTahap, tulisMaster = false } = {}) {
 
   const tarikMaster = async () => {
     try {
-      const m = await fetchMasterLive({ silent: true, force: true })
+      const m = await fetchMasterLive({ silent: true, force: paksa })
       const unit = (m.live?.mesin?.length || 0) + (m.live?.irrigator?.length || 0)
       laporan.master = {
         ok: !!m.live && !m.error,
         unit,
         live: !!m.live,
         syncedAt: m.syncedAt || null,
+        unchanged: !!m.unchanged,
         liveData: m.live || null,
         error: m.error || (m.live ? '' : 'Master belum pernah ditarik'),
       }
@@ -155,12 +159,13 @@ export async function syncAll({ onTahap, tulisMaster = false } = {}) {
 
   const tarikRiwayat = async () => {
     try {
-      const h = await fetchHistory({ silent: true, force: true })
+      const h = await fetchHistory({ silent: true, force: paksa })
       laporan.riwayat = {
         ok: !h.error,
         jumlah: h.records?.length || 0,
         records: h.records || null,
         syncedAt: h.syncedAt || null,
+        unchanged: !!h.unchanged,
         error: h.error || '',
       }
       lapor('riwayat', laporan.riwayat.ok, laporan.riwayat.error)

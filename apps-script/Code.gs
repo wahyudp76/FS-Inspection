@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.12'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.13'; // naikkan setiap kali kode berubah besar
 /* 1.9.1 — warna kolom KONDISI di sheet master dipasang lewat CONDITIONAL
    FORMATTING (bukan hanya setBackground): aturan format bersyarat milik sheet
    selalu menang atas warna sel, jadi sel “Kritis” bisa tetap hijau. Aturan kita
@@ -419,6 +419,29 @@ function writeInspection_(p) {
         lama.duplicate = true;
         return lama;
       }
+    }
+
+    /* ---- VALIDASI WAJIB ----
+       Tanpa ini, permintaan kosong (klik ganda, sisa antrean rusak, atau
+       pemanggilan manual) menulis baris sampah ke “Data Inspeksi”: kode unit
+       & tipe kosong, 0 komponen, Kondisi “Kritis”. Baris seperti itu membuat
+       hitungan dashboard & audit kacau dan sulit dilacak. */
+    var kodeUnit_ = String(p.kode || '').trim().toUpperCase();
+    if (!kodeUnit_) {
+      throw new Error('Data inspeksi ditolak: “Kode Unit” kosong. Pilih unit dulu sebelum menyimpan.');
+    }
+    var tipeCek_ = String(p.tipe || '').trim();
+    if (tipeCek_ !== 'Mesin' && tipeCek_ !== 'Irrigator') {
+      throw new Error('Data inspeksi ditolak: “Tipe Aset” harus Mesin atau Irrigator (diterima: “' + tipeCek_ + '”).');
+    }
+    var jumlahNilai_ = 0;
+    var komp_ = p.komponen || {};
+    for (var kk_ in komp_) {
+      var gr_ = String(komp_[kk_] || '').trim().toUpperCase();
+      if (gr_ === 'A' || gr_ === 'B' || gr_ === 'C') jumlahNilai_++;
+    }
+    if (!jumlahNilai_ && !num_(p.a) && !num_(p.b) && !num_(p.c)) {
+      throw new Error('Data inspeksi ditolak: belum ada satu pun komponen dinilai.');
     }
 
     var now = new Date();

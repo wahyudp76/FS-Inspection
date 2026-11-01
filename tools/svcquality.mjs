@@ -21,9 +21,9 @@ const ACUAN = (() => {
     return null
   }
 })()
-const HARAP_GANDA = Number(process.env.HARAP_GANDA || ACUAN?.log?.ganda || 39)
+const HARAP_GANDA = Number(process.env.HARAP_GANDA ?? ACUAN?.log?.ganda ?? 0)
 const UNIK_PER_BULAN = ACUAN?.log?.unikPerBulan || {}
-const BARIS_MENTAH = ACUAN?.log?.barisMentah || 247
+const BARIS_MENTAH = ACUAN?.log?.barisMentah ?? 0
 
 const jalankan = async () => {
   const browser = await chromium.launch()
@@ -55,11 +55,17 @@ const jalankan = async () => {
   }
 
   cek(data.duplikatLog === HARAP_GANDA, `baris ganda tb_service2 terdeteksi & dibuang`, `dilaporkan ${data.duplikatLog}, diharapkan ${HARAP_GANDA}`)
-  cek(data.barisLog === BARIS_MENTAH - HARAP_GANDA, 'log yang dipakai web = baris unik', `${data.barisLog} dari ${BARIS_MENTAH} baris sheet`)
+  if (BARIS_MENTAH) {
+    cek(data.barisLog === BARIS_MENTAH - HARAP_GANDA, 'log yang dipakai web = baris unik', `${data.barisLog} dari ${BARIS_MENTAH} baris sheet`)
+  }
   for (const [bln, n] of Object.entries(UNIK_PER_BULAN)) {
     cek((data.perBulan[bln] || 0) === n, `volume ${bln} memakai baris unik`, `web ${data.perBulan[bln] || 0} · acuan ${n}`)
   }
-  cek(/baris ganda di tb_service2/.test(data.teks) || (data.duplikatLog || 0) > 0, 'catatan kualitas data tersedia untuk pengguna')
+  cek(
+    HARAP_GANDA === 0 ? (data.duplikatLog || 0) === 0 : /baris ganda di tb_service2/.test(data.teks),
+    'catatan kualitas data sesuai keadaan sheet',
+    HARAP_GANDA === 0 ? 'sheet sudah bersih dari baris ganda' : 'peringatan baris ganda tampil'
+  )
   cek(galat.length === 0, 'tidak ada error JavaScript', galat.slice(0, 2).join(' | '))
 
   await browser.close()

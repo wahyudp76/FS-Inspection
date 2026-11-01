@@ -120,12 +120,14 @@ export default function App() {
           setToast({ type: 'success', message: `${lap.kirim.terkirim} inspeksi lokal berhasil dikirim ke sheet.` })
         }
 
-        /* sheet → web: master aset (status unit, komponen, skor) */
-        if (lap.master.liveData) setMasterLive(lap.master.liveData)
+        /* sheet → web: master aset (status unit, komponen, skor).
+           `unchanged` = sheet tidak berubah sejak tarikan terakhir → jangan
+           timpa state supaya layar tidak dihitung ulang percuma. */
+        if (lap.master.liveData && !lap.master.unchanged) setMasterLive(lap.master.liveData)
         if (lap.master.syncedAt) setMasterSyncedAt(lap.master.syncedAt)
 
         /* sheet → web: riwayat inspeksi */
-        if (lap.riwayat.records) setRecords(lap.riwayat.records)
+        if (lap.riwayat.records && !lap.riwayat.unchanged) setRecords(lap.riwayat.records)
 
         /* sheet → web: service engine (tb_service1 + tb_service2) */
         if (lap.service.data) setServiceSync({ data: lap.service.data, at: new Date().toISOString() })

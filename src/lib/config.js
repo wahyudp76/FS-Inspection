@@ -92,7 +92,11 @@ export const setAutoRefresh = (on) => {
   }
 }
 
-export const isConfigured = () => /^https:\/\/script\.google\.com\/macros\/s\/.+\/exec/.test(getEndpoint())
+/* Endpoint dianggap siap bila berupa URL http(s) yang berakhiran /exec.
+   Dulu hanya menerima host script.google.com, sehingga deployment lewat proxy
+   (atau Web App versi googleusercontent.com) dilaporkan “belum diatur” padahal
+   permintaan ke sheet berjalan normal. */
+export const isConfigured = () => /^https?:\/\/\S+\/exec(\?.*)?$/.test(getEndpoint())
 
 /* ------- sheet tujuan (hanya untuk ditampilkan di UI) ------- */
 export const TARGET_SHEET = {
