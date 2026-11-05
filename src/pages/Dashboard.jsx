@@ -8,6 +8,7 @@ import { daysAgoWIB } from '../lib/time'
 import { Card, CardHeader, Kpi, Bar, KondisiPill, StatusPill, Empty, Segmented, ScoreRing, GradePill } from '../components/ui'
 import { Donut, WilayahChart, IssuesBar, GroupRadar, TrendChart, ScoreHistogramSplit, TipBox } from '../components/charts'
 import BucketModal from '../components/BucketModal'
+import Tunda from '../components/Tunda'
 import DetailDrawer from './UnitsDetail'
 import {
   IconTruck, IconDroplet, IconShield, IconAlert, IconClipboard, IconTrend, IconChevron, IconSpark,
@@ -291,7 +292,7 @@ export default function Dashboard({ data, records, navigate, onRepairAll, repair
           />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
             {trend.length ? (
-              <TrendChart data={trend} height="fill" />
+              <Tunda className="h-full w-full"><TrendChart data={trend} height="fill" /></Tunda>
             ) : (
               <Empty
                 title="Belum ada riwayat inspeksi"
@@ -306,13 +307,15 @@ export default function Dashboard({ data, records, navigate, onRepairAll, repair
         <Card className="flex flex-col xl:col-span-4">
           <CardHeader title="Status Unit" sub="Distribusi status operasional aset" />
           <div className="card-pad flex min-h-0 flex-1 flex-col pt-2">
-            <Donut
-              data={statusData}
-              height="fill"
-              centerLabel="total unit"
-              centerValue={sum.total}
-              onSlice={(name) => navigate('unit')}
-            />
+            <Tunda className="h-full w-full">
+              <Donut
+                data={statusData}
+                height="fill"
+                centerLabel="total unit"
+                centerValue={sum.total}
+                onSlice={(name) => navigate('unit')}
+              />
+            </Tunda>
             <div className="mt-auto space-y-1.5 pt-2">
               {statusData.map((s) => (
                 <div key={s.name} className="flex items-center gap-2">
@@ -346,7 +349,7 @@ export default function Dashboard({ data, records, navigate, onRepairAll, repair
           />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-3">
             {issues.length ? (
-              <IssuesBar data={issues} height="fill" />
+              <Tunda className="h-full w-full"><IssuesBar data={issues} height="fill" /></Tunda>
             ) : (
               <Empty
                 title={`Tidak ada temuan pada ${issueTab === 'Mesin' ? 'mesin' : 'irrigator'}`}
@@ -360,7 +363,7 @@ export default function Dashboard({ data, records, navigate, onRepairAll, repair
         <Card className="flex flex-col xl:col-span-5">
           <CardHeader title="Profil Kondisi per Sistem" sub={tipe === 'Irrigator' ? 'Kelompok komponen irrigator' : 'Kelompok komponen mesin'} />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-1">
-            <GroupRadar data={radar} height="fill" />
+            <Tunda className="h-full w-full"><GroupRadar data={radar} height="fill" /></Tunda>
           </div>
           <div className="border-t border-slate-900/[0.09] px-4 py-3">
             <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
@@ -381,7 +384,7 @@ export default function Dashboard({ data, records, navigate, onRepairAll, repair
         <Card className="flex flex-col xl:col-span-5">
           <CardHeader title="Kondisi per Wilayah" sub="Sebaran status unit tiap wilayah kerja" />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-3">
-            <WilayahChart data={wilayah} height="fill" />
+            <Tunda className="h-full w-full"><WilayahChart data={wilayah} height="fill" /></Tunda>
           </div>
         </Card>
 
@@ -391,11 +394,13 @@ export default function Dashboard({ data, records, navigate, onRepairAll, repair
             sub="Mesin vs Irrigator · klik batang untuk analisa"
           />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-1">
-            <ScoreHistogramSplit
-              data={bucketsSplit}
-              height="fill"
-              onBar={({ range, tipe: t }) => setBucketSel({ range, tipe: t })}
-            />
+            <Tunda className="h-full w-full">
+              <ScoreHistogramSplit
+                data={bucketsSplit}
+                height="fill"
+                onBar={({ range, tipe: t }) => setBucketSel({ range, tipe: t })}
+              />
+            </Tunda>
           </div>
           {/* HP: batang chart terlalu kecil untuk jari → sediakan tombol per rentang */}
           <div className="space-y-1 px-3 pb-2 sm:hidden">

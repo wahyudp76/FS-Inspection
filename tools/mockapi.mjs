@@ -12,7 +12,7 @@ const ctx = loadCode(env)
    supaya aksi audit / repair bisa diuji end-to-end di browser. */
 if (process.env.MASTER === '1') {
   const fs = await import('node:fs')
-  const DATA_DIR = process.env.DATA_DIR || '/home/user/data'
+  const DATA_DIR = process.env.DATA_DIR || path.join(HERE, '..', 'data')
   /* MASTER_DIR: sumber CSV master saja (mis. salinan dengan SPC0224 sudah
      diperbaiki) sementara data inspeksi tetap dari DATA_DIR. */
   const MASTER_DIR = process.env.MASTER_DIR || DATA_DIR
@@ -25,7 +25,7 @@ if (process.env.MASTER === '1') {
   const irrigator = muat(env.ss.insertSheet('Irrigator'), 'irrigator.csv')
 
   /* sheet service (tb_service2 & tb_service1) untuk menguji aksi svcrecord/svcrepair */
-  const SVC_DIR = process.env.SVC_DIR || '/home/user/data2'
+  const SVC_DIR = process.env.SVC_DIR || path.join(HERE, '..', 'data2')
   const muatSvc = (nama, file) => {
     const p = path.join(SVC_DIR, file)
     if (!fs.existsSync(p)) return null

@@ -20,7 +20,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 const require = createRequire(import.meta.url)
 const HERE = path.dirname(new URL(import.meta.url).pathname)
-const { chromium } = require('/home/user/tools/node_modules/playwright-core')
+const { chromium } = require('playwright-core')
 
 const SITE = process.env.SITE || 'http://localhost:8099/'
 const ENDPOINT = process.env.ENDPOINT || 'http://localhost:8113/'

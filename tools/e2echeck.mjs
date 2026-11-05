@@ -49,7 +49,15 @@ const riwayat = async () => {
 
 const jalankan = async () => {
   const awal = await riwayat()
-  const kode = 'SPC0224' /* unit yang statusnya Rusak di master */
+  /* Unit uji + status master AWAL-nya dibaca dulu. Uji sebelumnya bisa saja
+     meninggalkan status berbeda, jadi invarian yang diuji bukan “harus Rusak”,
+     melainkan “inspeksi tidak pernah mengubah status master”. */
+  const m0 = await api({ action: 'master', payload: {} })
+  const daftarMesin = m0.result?.mesin || []
+  const kandidat = process.env.UNIT_UJI || 'SPC0224'
+  const barisAwal = daftarMesin.find((r) => String(r[0]).toUpperCase() === kandidat) || daftarMesin[0]
+  const kode = String(barisAwal?.[0] || kandidat).toUpperCase()
+  const statusAwal = String(barisAwal?.[4] || '').trim()
   const hariIni = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10) /* WIB */
 
   const browser = await chromium.launch()
@@ -129,7 +137,10 @@ const jalankan = async () => {
     const b = Object.values(komp).filter((v) => v === 'B').length
     const c = Object.values(komp).filter((v) => v === 'C').length
     cek(a === Number(r.a) && b === Number(r.b) && c === Number(r.c), 'ringkasan A/B/C di sheet = hitungan komponen', `sheet ${r.a}/${r.b}/${r.c} · komponen ${a}/${b}/${c}`)
-    cek(String(r.kondisi || '').trim() === 'Kritis', 'status Rusak ⇒ KONDISI Kritis', String(r.kondisi))
+    const harusKritis = statusAwal.toLowerCase() === 'rusak'
+    const skor = Number(r.skor)
+    const harap = harusKritis ? 'Kritis' : skor >= 90 ? 'Baik' : skor >= 70 ? 'Perlu Perhatian' : 'Kritis'
+    cek(String(r.kondisi || '').trim() === harap, `KONDISI sesuai aturan (${harusKritis ? 'Rusak ⇒ Kritis' : 'dari skor'})`, String(r.kondisi))
     cek(!!r.id && !!r.inspector, 'baris punya ID & petugas', `${r.id} · ${r.inspector}`)
   }
 
@@ -141,6 +152,7 @@ const jalankan = async () => {
     kode,
     statusUnit: 'Rusak',
     inspector: 'Uji Otomatis',
+    catatan: 'harness e2echeck (dihapus otomatis setelah uji)',
     tanggal: hariIni,
     komponen: { Accu: 'A', 'Kabel Accu': 'C' },
   }
@@ -159,12 +171,26 @@ const jalankan = async () => {
   if (barisMaster) {
     const grade = String(barisMaster[5] || '')
     cek(/C/.test(grade), 'komponen master memuat temuan C dari inspeksi terbaru', `${(grade.match(/C/g) || []).length} sel C`)
-    cek(String(barisMaster[4] || '').trim() === 'Rusak', 'status master tidak ditimpa inspeksi (otoritas sheet)', String(barisMaster[4]))
+    cek(
+      String(barisMaster[4] || '').trim() === statusAwal,
+      'status master tidak ditimpa inspeksi (otoritas sheet)',
+      `${statusAwal || '—'} → ${barisMaster[4]}`
+    )
   } else {
     cek(false, 'unit ditemukan di master')
   }
 
   cek(err.length === 0, 'tanpa error JavaScript', err.slice(0, 2).join(' | '))
+
+  /* ---- bersihkan baris uji supaya sheet tidak menumpuk setiap kali diuji ---- */
+  const akhir = await riwayat()
+  const sisa = akhir.filter((r) => String(r.inspector || '').trim() === 'Uji Otomatis')
+  for (const r of sisa) {
+    try { await api({ action: 'delete', payload: { id: r.id } }) } catch { /* abaikan */ }
+  }
+  const bersih = (await riwayat()).filter((r) => String(r.inspector || '').trim() === 'Uji Otomatis').length
+  cek(bersih === 0, 'baris uji dibersihkan lagi', `${sisa.length} dihapus · sisa ${bersih}`)
+
   await browser.close()
 
   console.log(gagal.length ? `\n❌ ${gagal.length} pemeriksaan gagal` : '\n✅ jalur tulis web → sheet benar')

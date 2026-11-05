@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { Card, CardHeader, Kpi, Empty, Segmented, MultiSelect, Skeleton } from '../components/ui'
 import { Donut } from '../components/charts'
+import Tunda from '../components/Tunda'
 import {
   TrenServiceChart, DivisiCakupanChart, UrgensiChart, TopTerlambatChart, PetaMingguService,
 } from '../components/ServiceCharts'
@@ -679,20 +680,22 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           />
           <div className="flex min-h-0 flex-1 flex-col px-3 pb-4 pt-2">
             {bulanRingkas.totalUnit ? (
-              <Donut
-                data={donutData}
-                height="fill"
-                showLegend={false}
-                centerValue={fmt(bulanRingkas.totalUnit)}
-                centerLabel="engine"
-                onSlice={(name) => {
-                  const s = SERVICE_STATUS.find((x) => x.label === name)
-                  if (s) {
-                    setFKode({ label: `${s.label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsStatus[s.id] || new Set() })
-                    setHalEval(0)
-                  }
-                }}
-              />
+<Tunda className="h-full w-full">
+                              <Donut
+                  data={donutData}
+                  height="fill"
+                  showLegend={false}
+                  centerValue={fmt(bulanRingkas.totalUnit)}
+                  centerLabel="engine"
+                  onSlice={(name) => {
+                    const s = SERVICE_STATUS.find((x) => x.label === name)
+                    if (s) {
+                      setFKode({ label: `${s.label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsStatus[s.id] || new Set() })
+                      setHalEval(0)
+                    }
+                  }}
+                />
+              </Tunda>
             ) : (
               <Empty title="Belum ada data" desc="Tarik data dari sheet untuk melihat komposisi status." />
             )}
@@ -728,7 +731,9 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             right={<span className="hidden rounded-md border border-slate-900/10 bg-slate-900/[0.03] px-1.5 py-0.5 text-[9.5px] text-slate-600 sm:inline">interval target 250 HM</span>}
           />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
-            <TrenServiceChart data={ringkasan.perBulan} height="fill" />
+<Tunda className="h-full w-full">
+                          <TrenServiceChart data={ringkasan.perBulan} height="fill" />
+            </Tunda>
           </div>
         </Card>
       </div>
@@ -742,15 +747,17 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             icon={<IconEngine size={15} />}
           />
           <div className="flex min-h-0 flex-1 flex-col px-2 pb-3 pt-2">
-            <DivisiCakupanChart
-              data={bulanRingkas.perPosisi}
-              height="fill"
-              onPick={(posisi) => {
-                setFPosisi([posisi])
-                setFStatus([])
-                setHalEval(0)
-              }}
-            />
+<Tunda className="h-full w-full">
+                          <DivisiCakupanChart
+                data={bulanRingkas.perPosisi}
+                height="fill"
+                onPick={(posisi) => {
+                  setFPosisi([posisi])
+                  setFStatus([])
+                  setHalEval(0)
+                }}
+              />
+            </Tunda>
           </div>
         </Card>
 
@@ -761,30 +768,34 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
             icon={<IconAlert size={15} />}
           />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
-            <UrgensiChart
-              data={bulanRingkas.urgensi}
-              height="fill"
-              onClickEmber={(id) => {
-                const map = { lewat30: 'terlambat', lewat8: 'terlambat', lewat7: 'terlambat', tempo: 'segera', aman30: 'aman', aman: 'aman' }
-                const label = (URGENSI.find((e) => e.id === id)?.label || id)
-                setFKode({ label: `${label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsUrgensi[id] || new Set() })
-                setHalEval(0)
-              }}
-            />
+<Tunda className="h-full w-full">
+                          <UrgensiChart
+                data={bulanRingkas.urgensi}
+                height="fill"
+                onClickEmber={(id) => {
+                  const map = { lewat30: 'terlambat', lewat8: 'terlambat', lewat7: 'terlambat', tempo: 'segera', aman30: 'aman', aman: 'aman' }
+                  const label = (URGENSI.find((e) => e.id === id)?.label || id)
+                  setFKode({ label: `${label} · ${bulanAktif.acuan.singkat}`, set: bulanRingkas.setsUrgensi[id] || new Set() })
+                  setHalEval(0)
+                }}
+              />
+            </Tunda>
           </div>
         </Card>
 
         <Card className="flex flex-col xl:col-span-3">
           <CardHeader title="10 Paling Terlambat" sub={`Hari lewat warning date per ${bulanRingkas.refLabel}`} icon={<IconWrench size={15} />} />
           <div className="flex min-h-0 flex-1 flex-col px-1 pb-3 pt-2">
-            <TopTerlambatChart
-              data={bulanRingkas.topTerlambat}
-              height="fill"
-              onPick={(kode) => {
-                const u = units.find((x) => x.kode === kode)
-                if (u) setDetailUnit(u)
-              }}
-            />
+<Tunda className="h-full w-full">
+                          <TopTerlambatChart
+                data={bulanRingkas.topTerlambat}
+                height="fill"
+                onPick={(kode) => {
+                  const u = units.find((x) => x.kode === kode)
+                  if (u) setDetailUnit(u)
+                }}
+              />
+            </Tunda>
           </div>
         </Card>
       </div>

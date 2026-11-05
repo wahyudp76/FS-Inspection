@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
-const { chromium } = require('/home/user/tools/node_modules/playwright-core')
-const CHROME = process.env.CHROME || process.env.HOME + '/.cache/ms-playwright/chromium-1117/chrome-linux/chrome'
+const { chromium } = require('playwright-core')
+const CHROME = process.env.CHROME || undefined /* biarkan playwright-core memilih biner terpasang */
 const BASE = process.env.BASE || 'http://127.0.0.1:8099'
 const EP = process.env.EP || 'http://127.0.0.1:8112/exec'
 

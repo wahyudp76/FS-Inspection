@@ -13,7 +13,7 @@
 import path from 'node:path'
 import fs from 'node:fs'
 const HERE = path.dirname(new URL(import.meta.url).pathname)
-const DATA_DIR = process.env.DATA_DIR || '/home/user/data'
+const DATA_DIR = process.env.DATA_DIR || path.join(HERE, '..', 'data')
 const { parseCSV } = await import('./mock.gs.mjs')
 
 const assets = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'src', 'data', 'assets.json'), 'utf8'))

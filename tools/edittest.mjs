@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const { chromium } = require(process.env.PW_DIR ? process.env.PW_DIR + '/playwright-core' : 'playwright-core')
-const CHROME = process.env.CHROME || process.env.HOME + '/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome'
+const CHROME = process.env.CHROME || undefined /* biarkan playwright-core memilih biner terpasang */
 const EP = process.env.EP || 'http://127.0.0.1:8111/exec'
 const ping = async () => (await (await fetch(EP, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'ping' }) })).json())
 const hist = async () => (await (await fetch(EP, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'history', payload: { plain: true } }) })).json())

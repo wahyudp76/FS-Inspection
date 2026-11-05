@@ -7,9 +7,9 @@
  */
 import { createRequire } from 'node:module'
 const require_ = createRequire(import.meta.url)
-const { chromium } = require_(process.env.PW || '/home/user/tools/node_modules/playwright-core')
+const { chromium } = require_(process.env.PW || 'playwright-core')
 
-const CHROME = process.env.CHROME || process.env.HOME + '/.cache/ms-playwright/chromium-1117/chrome-linux/chrome'
+const CHROME = process.env.CHROME || undefined /* biarkan playwright-core memilih biner terpasang */
 const BASE = process.env.BASE || 'http://127.0.0.1:8099'
 const MOCK = process.env.MOCK || 'http://127.0.0.1:8113/'
 /* UI hanya mengaktifkan tombol untuk endpoint Apps Script asli (….google.com/…/exec),

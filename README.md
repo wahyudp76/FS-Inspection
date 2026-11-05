@@ -270,8 +270,7 @@ bash scripts/publish-pages.sh
 │   ├── build-data.mjs        # tarik tb_mesin & tb_irrigator → assets.json
 │   └── publish-pages.sh      # build docs/ + commit + push
 ├── docs/                     # hasil build untuk GitHub Pages (branch mode)
-├── public/
-│   └── assets-snapshot.json  # snapshot data master
+├── public/                   # ikon, manifest, service worker
 ├── src/
 │   ├── components/
 │   │   ├── charts.jsx        # semua grafik Recharts

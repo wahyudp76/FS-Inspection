@@ -11,10 +11,10 @@ import fs from 'node:fs'
 import path from 'node:path'
 import { createRequire } from 'node:module'
 const require_ = createRequire(import.meta.url)
-const { chromium } = require_(process.env.PW || '/home/user/tools/node_modules/playwright-core')
+const { chromium } = require_(process.env.PW || 'playwright-core')
 
 const HERE = path.dirname(new URL(import.meta.url).pathname)
-const CHROME = process.env.CHROME || process.env.HOME + '/.cache/ms-playwright/chromium-1117/chrome-linux/chrome'
+const CHROME = process.env.CHROME || undefined /* biarkan playwright-core memilih biner terpasang */
 const BASE = process.env.BASE || 'http://127.0.0.1:8099'
 const EP = process.env.EP || 'http://127.0.0.1:8112/exec'
 const LIVE = 'https://wahyudp76.github.io/FS-Inspection'

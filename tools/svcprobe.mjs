@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module'
 const require = createRequire(import.meta.url)
 const { chromium } = require((process.env.PW_DIR || '/home/user/tools/node_modules') + '/playwright-core')
-const CHROME = process.env.CHROME || process.env.HOME + '/.cache/ms-playwright/chromium-1117/chrome-linux/chrome'
+const CHROME = process.env.CHROME || undefined /* biarkan playwright-core memilih biner terpasang */
 const EP = 'http://127.0.0.1:8112/exec'
 const b = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] })
 for (const vp of [{ width: 390, height: 844, name: 'm' }, { width: 1440, height: 900, name: 'd' }]) {

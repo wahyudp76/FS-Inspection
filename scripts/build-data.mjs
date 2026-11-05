@@ -182,8 +182,10 @@ const payload = {
   irrigator,
 }
 
+/* Cukup satu salinan: `src/data/assets.json` ikut dibundel ke dalam JS.
+   Salinan di `public/` dulu menambah 274 kB berkas mati yang ikut ter-deploy
+   ke docs/ (diunduh sia-sia bila ada yang membukanya, dan memperbesar build). */
 await fs.writeFile(path.join(ROOT, 'src/data/assets.json'), JSON.stringify(payload))
-await fs.writeFile(path.join(ROOT, 'public/assets-snapshot.json'), JSON.stringify(payload))
 await fs.mkdir(path.join(ROOT, 'apps-script'), { recursive: true })
 await fs.writeFile(
   path.join(ROOT, 'apps-script/groups.generated.json'),
@@ -193,4 +195,4 @@ await fs.writeFile(
 const komponen = (g) => g.reduce((n, x) => n + x.items.length, 0)
 console.log(`✔ Mesin      : ${mesin.length} unit, ${komponen(GRUP_MESIN)} komponen`)
 console.log(`✔ Irrigator  : ${irrigator.length} unit, ${komponen(GRUP_IRR)} komponen`)
-console.log(`✔ Ditulis ke src/data/assets.json & public/assets-snapshot.json`)
+console.log(`✔ Ditulis ke src/data/assets.json`)

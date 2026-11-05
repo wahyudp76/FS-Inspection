@@ -6,7 +6,7 @@ const require = createRequire(import.meta.url)
 /* pakai playwright-core lokal (npm i -D playwright-core) atau dari PW_DIR */
 const { chromium } = require(process.env.PW_DIR ? process.env.PW_DIR + '/playwright-core' : 'playwright-core')
 import fs from 'node:fs'
-const CHROME = process.env.CHROME || process.env.HOME + '/.cache/ms-playwright/chromium-1248/chrome-linux64/chrome'
+const CHROME = process.env.CHROME || undefined /* biarkan playwright-core memilih biner terpasang */
 const BASE = process.env.BASE || 'http://127.0.0.1:8099'
 const b = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] })
 const routes = ['dashboard', 'inspeksi', 'unit', 'riwayat', 'pengaturan']
