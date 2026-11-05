@@ -88,6 +88,28 @@ const server = http.createServer((req, res) => {
     res.writeHead(200, { ...cors, 'Content-Type': 'application/json' })
     return res.end(JSON.stringify(hasil))
   }
+  /* GET /__cell?sheet=Data Inspeksi&row=2&col=Skor&val=xx → tulis satu sel
+     berdasarkan NOMOR BARIS (sheet “Data Inspeksi” punya kolom A=ID, bukan kode,
+     jadi hook berbasis kode di atas tidak bisa dipakai). Dipakai uji untuk
+     meniru sel yang dirusak manual di Google Sheets. */
+  if (process.env.TESTHOOK === '1' && req.method === 'GET' && req.url.startsWith('/__cell')) {
+    const u = new URL(req.url, 'http://x')
+    const sheet = env.ss.getSheetByName(u.searchParams.get('sheet'))
+    const baris = Number(u.searchParams.get('row') || 0)
+    const col = u.searchParams.get('col') || ''
+    const val = u.searchParams.get('val') ?? ''
+    let hasil = { ok: false, error: 'sheet/kolom/baris tidak ditemukan' }
+    if (sheet) {
+      const head = sheet.grid[0].map((x) => String(x).trim())
+      const c = head.indexOf(col)
+      if (c >= 0 && baris >= 2 && baris <= sheet.grid.length) {
+        hasil = { ok: true, sheet: u.searchParams.get('sheet'), baris, col, sebelum: sheet.grid[baris - 1][c], val }
+        sheet.grid[baris - 1][c] = val
+      }
+    }
+    res.writeHead(200, { ...cors, 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify(hasil))
+  }
   let body = ''
   req.on('data', (c) => { body += c })
   req.on('end', () => {

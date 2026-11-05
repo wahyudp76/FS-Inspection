@@ -26,9 +26,29 @@ const audit = async () => {
   return (await r.json()).result
 }
 
+const MOCK = EP.replace(/\/exec$/, '')
+
+/** Rusak 3 sel ringkasan di sheet “Data Inspeksi” (meniru sel yang disunting
+ *  manual di Google Sheets). Tanpa ini uji bergantung pada keadaan sheet —
+ *  begitu sheet sudah bersih, banner memang tidak muncul dan uji jadi merah
+ *  padahal produknya benar. */
+const rusakkan = async () => {
+  for (const [row, col, val] of [[2, 'Skor', '11,1'], [3, 'A', '0'], [4, 'Kondisi', 'Zonk']]) {
+    try {
+      const r = await fetch(`${MOCK}/__cell?sheet=${encodeURIComponent('Data Inspeksi')}&row=${row}&col=${col}&val=${encodeURIComponent(val)}`)
+      const j = await r.json()
+      if (!j.ok) return false
+    } catch { return false }
+  }
+  return true
+}
+
 const jalankan = async () => {
+  const bisaRusak = await rusakkan()
+  cek(bisaRusak, 'sel ringkasan sengaja dirusak untuk menguji perbaikan', 'baris 2–4')
+
   const sebelum = await audit()
-  const sisaAwal = Object.values(sebelum.hitung || {}).reduce((a, b) => a + b, 0)
+  const sisaAwal = ['ringkasan', 'skor', 'kondisi', 'komponenHilang'].reduce((n, k) => n + (sebelum.hitung?.[k] || 0), 0)
   console.log(`audit sebelum : ringkasan ${sebelum.hitung?.ringkasan} · skor ${sebelum.hitung?.skor} · kondisi ${sebelum.hitung?.kondisi} · komponen kosong ${sebelum.hitung?.komponenHilang}`)
   cek(sisaAwal > 0, 'sheet memang bermasalah sebelum diuji', `${sisaAwal} temuan`)
 
@@ -72,7 +92,9 @@ const jalankan = async () => {
     'sheet benar-benar diperbaiki di sisi spreadsheet',
     `ringkasan ${sesudah.hitung?.ringkasan} · skor ${sesudah.hitung?.skor} · komponen kosong ${sesudah.hitung?.komponenHilang}`
   )
-  cek(sisa === 0 || (sesudah.hitung?.statusBeda || 0) === sisa, 'sisa temuan hanya “beda status” (informasional)', `sisa ${sisa}`)
+  const sisaNyata = ['ringkasan', 'skor', 'kondisi', 'komponenHilang', 'komponenAsing', 'idGanda', 'kodeAsing', 'tanggalRusak']
+    .reduce((n, k) => n + (sesudah.hitung?.[k] || 0), 0)
+  cek(sisaNyata === 0, 'sisa temuan hanya “beda status” (informasional)', `temuan nyata ${sisaNyata} · beda status ${sesudah.hitung?.statusBeda || 0}`)
 
   /* baris ganda service ikut dibersihkan */
   const svc = await (await fetch(EP, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ action: 'svcread' }) })).json()

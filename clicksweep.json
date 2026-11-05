@@ -1,0 +1,4709 @@
+[
+ {
+  "route": "dashboard",
+  "i": 0,
+  "label": "Semua (274)",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1762273262
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3120,
+   "text": -1762273262
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 1,
+  "label": "Mesin (151)",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1762273262
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3135,
+   "text": 157980943
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 2,
+  "label": "Irrigator (123)",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 157980943
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3011,
+   "text": -1070347387
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 3,
+  "label": "Harian",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1070347387
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3006,
+   "text": -1602119448
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 4,
+  "label": "Mingguan",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1602119448
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3014,
+   "text": -258475024
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 5,
+  "label": "Bulanan",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -258475024
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3011,
+   "text": -1070347387
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 6,
+  "label": "Total Aset: 123 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1070347387
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 7,
+  "label": "Inspeksi Bulan Ini: 0 sesi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 8,
+  "label": "Mulai Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1466,
+   "text": 462306236
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 9,
+  "label": "Mesin",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3096,
+   "text": -297848168
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 10,
+  "label": "Irrigator",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1762273262
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3212,
+   "text": 121967626
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 11,
+  "label": "Analisa 90-100 Mesin, 145 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 12,
+  "label": "Analisa 90-100 Irrigator, 122 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 13,
+  "label": "Analisa 80-89 Mesin, 6 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 14,
+  "label": "Analisa 80-89 Irrigator, 0 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": true,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 15,
+  "label": "Analisa 70-79 Mesin, 0 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": true,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 16,
+  "label": "Analisa 70-79 Irrigator, 0 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": true,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 17,
+  "label": "Analisa 50-69 Mesin, 0 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": true,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 18,
+  "label": "Analisa 50-69 Irrigator, 0 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": true,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 19,
+  "label": "Analisa <50 Mesin, 0 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": true,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 20,
+  "label": "Analisa <50 Irrigator, 1 unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/dashboard",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 3232,
+   "text": -1649998887
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 21,
+  "label": "Semua unit",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1649998887
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 22,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0146",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1176,
+   "text": 1468308014
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 23,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0032",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1177,
+   "text": 674304730
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 24,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEC0004",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -1083619463
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 25,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPC0095",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1130,
+   "text": 1253688331
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 26,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEM0074",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -70938388
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 27,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DED0042",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1099,
+   "text": 1591530375
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 28,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0011",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 1174521449
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 29,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0003",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": -453992956
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 30,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0146",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1176,
+   "text": 1468308014
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 31,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0032",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1177,
+   "text": 674304730
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 32,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEC0004",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -1083619463
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 33,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPC0095",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1130,
+   "text": 1253688331
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 34,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEM0074",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -70938388
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 35,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DED0042",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1099,
+   "text": 1591530375
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 36,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0011",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 1174521449
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 37,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0003",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": -453992956
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 38,
+  "label": "Riwayat",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 39,
+  "label": "100SPC0018MesinWahyu Dhiyan · 12 h",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 74387082
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 40,
+  "label": "100SPC0093MesinInspeksi Awal (Mast",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 41,
+  "label": "100ITI0181IrrigatorInspeksi Awal (",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 42,
+  "label": "100SPC0117MesinInspeksi Awal (Mast",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 155067165
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 43,
+  "label": "100ITI0292IrrigatorInspeksi Awal (",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": 74387082
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "dashboard",
+  "i": 44,
+  "label": "100SPC0189MesinInspeksi Awal (Mast",
+  "before": {
+   "hash": "#/dashboard",
+   "modals": 0,
+   "text": -1174962613
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 0,
+  "label": "Mesin · 151",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 462306236
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1466,
+   "text": 462306236
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 1,
+  "label": "Irrigator · 123",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 462306236
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1312,
+   "text": 724363634
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 2,
+  "label": "Semua divisi",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 724363634
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1370,
+   "text": 729483197
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 3,
+  "label": "Semua jenis",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 724363634
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1371,
+   "text": 466183822
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 4,
+  "label": "100BTI002625OP2Terpasanginspeksi 2",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 724363634
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": 1749315098
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 5,
+  "label": "B semua",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1749315098
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1175,
+   "text": 2060934506
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 6,
+  "label": "C semua",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 2060934506
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 7,
+  "label": "A",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -1105388220
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1158,
+   "text": -923585376
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 8,
+  "label": "B",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -923585376
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": 1915123126
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 9,
+  "label": "C",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1915123126
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 10,
+  "label": "A",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -1105388220
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1158,
+   "text": -697833952
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 11,
+  "label": "B",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -697833952
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": 1915123126
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 12,
+  "label": "C",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1915123126
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 13,
+  "label": "A",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -1105388220
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1158,
+   "text": 1437835680
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 14,
+  "label": "B",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1437835680
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": 1915123126
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 15,
+  "label": "C",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1915123126
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 16,
+  "label": "A",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -1105388220
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1158,
+   "text": 1955575328
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 17,
+  "label": "B",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1955575328
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": 1915123126
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 18,
+  "label": "C",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1915123126
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 19,
+  "label": "A",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -1105388220
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1158,
+   "text": -2039111310
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 20,
+  "label": "B",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -2039111310
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": 1915123126
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 21,
+  "label": "C",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1915123126
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 22,
+  "label": "A",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -1105388220
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1158,
+   "text": -168923936
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 23,
+  "label": "B",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -168923936
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": 1915123126
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 24,
+  "label": "C",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1915123126
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 25,
+  "label": "A",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": -1105388220
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1158,
+   "text": 1518761504
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 26,
+  "label": "B",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1518761504
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": 1915123126
+  },
+  "errs": []
+ },
+ {
+  "route": "inspeksi",
+  "i": 27,
+  "label": "C",
+  "before": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "text": 1915123126
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1172,
+   "text": -1105388220
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 0,
+  "label": "Semua",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 1,
+  "label": "Mesin",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2715,
+   "text": -441013076
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 2,
+  "label": "Irrigator",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -441013076
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2591,
+   "text": -105315210
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 3,
+  "label": "Semua wilayah",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -105315210
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2668,
+   "text": -834387611
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 4,
+  "label": "Semua status",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -105315210
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2660,
+   "text": -833659375
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 5,
+  "label": "Semua jenis",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -105315210
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2681,
+   "text": 1138553998
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 6,
+  "label": "Reset",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -105315210
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 7,
+  "label": "Detail unit ITI0146",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 8,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0146",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1176,
+   "text": 1468308014
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 9,
+  "label": "Detail unit SPE0011",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 10,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0011",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 1174521449
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 11,
+  "label": "Detail unit SPE0003",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 12,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0003",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": -453992956
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 13,
+  "label": "Detail unit SPE0010",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 14,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0010",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 1125895005
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 15,
+  "label": "Detail unit SPE0017",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 16,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0017",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 2094718949
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 17,
+  "label": "Detail unit SPE0018",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 18,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0018",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 650902796
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 19,
+  "label": "Detail unit SPE0026",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 20,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0026",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": -711637885
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 21,
+  "label": "Detail unit ITI0083",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 22,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0083",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1177,
+   "text": -301191040
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 23,
+  "label": "Detail unit BTI0032",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 24,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0032",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1177,
+   "text": 674304730
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 25,
+  "label": "Detail unit ITI0155",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 26,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0155",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1155,
+   "text": 1609179455
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 27,
+  "label": "Detail unit DEC0004",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 28,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEC0004",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -1083619463
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 29,
+  "label": "Detail unit DEC0037",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 30,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEC0037",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1119,
+   "text": -1564952895
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 31,
+  "label": "Detail unit DEM0034",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 32,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEM0034",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1120,
+   "text": 1501223828
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 33,
+  "label": "Detail unit SPC0095",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 34,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPC0095",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1130,
+   "text": 1253688331
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 35,
+  "label": "Detail unit DED0016",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 36,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DED0016",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1121,
+   "text": -1296119693
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 37,
+  "label": "Detail unit DEM0074",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 38,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEM0074",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -70938388
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 39,
+  "label": "Detail unit BTI0027",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 40,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0027",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": -2030184594
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 41,
+  "label": "Detail unit BTI0061",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 42,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0061",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": 984238619
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 43,
+  "label": "Detail unit ITI0020",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 44,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0020",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": 1168723052
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 45,
+  "label": "Detail unit ITI0184",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 46,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0184",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": -1136047289
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 47,
+  "label": "ITI0146",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 48,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0146",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1176,
+   "text": 1468308014
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 49,
+  "label": "SPE0011",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 50,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0011",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 1174521449
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 51,
+  "label": "SPE0003",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 52,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0003",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": -453992956
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 53,
+  "label": "SPE0010",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 54,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0010",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 1125895005
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 55,
+  "label": "SPE0017",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 56,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0017",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 2094718949
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 57,
+  "label": "SPE0018",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 58,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0018",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": 650902796
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 59,
+  "label": "SPE0026",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 60,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPE0026",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1017,
+   "text": -711637885
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 61,
+  "label": "ITI0083",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 62,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0083",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1177,
+   "text": -301191040
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 63,
+  "label": "BTI0032",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 64,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0032",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1177,
+   "text": 674304730
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 65,
+  "label": "ITI0155",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 66,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0155",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1155,
+   "text": 1609179455
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 67,
+  "label": "DEC0004",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 68,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEC0004",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -1083619463
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 69,
+  "label": "DEC0037",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 70,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEC0037",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1119,
+   "text": -1564952895
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 71,
+  "label": "DEM0034",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 72,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEM0034",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1120,
+   "text": 1501223828
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 73,
+  "label": "SPC0095",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 74,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=SPC0095",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1130,
+   "text": 1253688331
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 75,
+  "label": "DED0016",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 76,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DED0016",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1121,
+   "text": -1296119693
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 77,
+  "label": "DEM0074",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 78,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Mesin&kode=DEM0074",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1117,
+   "text": -70938388
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 79,
+  "label": "BTI0027",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 80,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0027",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": -2030184594
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 81,
+  "label": "BTI0061",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 82,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=BTI0061",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": 984238619
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 83,
+  "label": "ITI0020",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 84,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0020",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": 1168723052
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 85,
+  "label": "ITI0184",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 1,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 86,
+  "label": "Inspeksi",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/inspeksi?tipe=Irrigator&kode=ITI0184",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1157,
+   "text": -1136047289
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 87,
+  "label": "Sebelumnya",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": true,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2685,
+   "text": -2002460319
+  },
+  "errs": []
+ },
+ {
+  "route": "unit",
+  "i": 88,
+  "label": "Berikutnya",
+  "before": {
+   "hash": "#/unit",
+   "modals": 0,
+   "text": -2002460319
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/unit",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2684,
+   "text": 1728465367
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 0,
+  "label": "Semua",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -2034803857
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1383,
+   "text": -2034803857
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 1,
+  "label": "Mesin",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -2034803857
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1391,
+   "text": 626732858
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 2,
+  "label": "Irrigator",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 626732858
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1422,
+   "text": -1080999355
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 3,
+  "label": "CSV",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -1080999355
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1422,
+   "text": -1080999355
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 4,
+  "label": "Hari",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -1080999355
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1414,
+   "text": 1896043765
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 5,
+  "label": "Minggu",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1896043765
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1422,
+   "text": -1080999355
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 6,
+  "label": "Bulan",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -1080999355
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1420,
+   "text": 1987524099
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 7,
+  "label": "Buka sheet",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1987524099
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 1420,
+   "text": 1987524099
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 8,
+  "label": "Ubah inspeksi ITI0181",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1987524099
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 1420,
+   "text": 1987524099
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 9,
+  "label": "Hapus inspeksi ITI0181",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1987524099
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 1420,
+   "text": 1987524099
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 10,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1987524099
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -715522138
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 11,
+  "label": "Ubah inspeksi ITI0292",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -715522138
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -715522138
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 12,
+  "label": "Hapus inspeksi ITI0292",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -715522138
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -715522138
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 13,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -715522138
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 139161278
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 14,
+  "label": "Ubah inspeksi ITI0025",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 139161278
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 139161278
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 15,
+  "label": "Hapus inspeksi ITI0025",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 139161278
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 139161278
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 16,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 139161278
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -89505196
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 17,
+  "label": "Ubah inspeksi ITI0110",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -89505196
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -89505196
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 18,
+  "label": "Hapus inspeksi ITI0110",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -89505196
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -89505196
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 19,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -89505196
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -514790772
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 20,
+  "label": "Ubah inspeksi ITI0156",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -514790772
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -514790772
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 21,
+  "label": "Hapus inspeksi ITI0156",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -514790772
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -514790772
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 22,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -514790772
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 196133136
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 23,
+  "label": "Ubah inspeksi ITI0237",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 196133136
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 196133136
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 24,
+  "label": "Hapus inspeksi ITI0237",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 196133136
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 196133136
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 25,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 196133136
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 272956398
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 26,
+  "label": "Ubah inspeksi BTI0030",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 272956398
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 272956398
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 27,
+  "label": "Hapus inspeksi BTI0030",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 272956398
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 272956398
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 28,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 272956398
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 530197792
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 29,
+  "label": "Ubah inspeksi ITI0008",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 530197792
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 530197792
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 30,
+  "label": "Hapus inspeksi ITI0008",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 530197792
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 530197792
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 31,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 530197792
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1135630664
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 32,
+  "label": "Ubah inspeksi ITI0116",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1135630664
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1135630664
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 33,
+  "label": "Hapus inspeksi ITI0116",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1135630664
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1135630664
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 34,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1135630664
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1000876276
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 35,
+  "label": "Ubah inspeksi ITI0182",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1000876276
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1000876276
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 36,
+  "label": "Hapus inspeksi ITI0182",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1000876276
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1000876276
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 37,
+  "label": "Buka rincian",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1000876276
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2126,
+   "text": 1084509424
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 38,
+  "label": "Ubah inspeksi ITI0181",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1084509424
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2126,
+   "text": 1084509424
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 39,
+  "label": "Hapus inspeksi ITI0181",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1084509424
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2126,
+   "text": 1084509424
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 40,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1084509424
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -715522138
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 41,
+  "label": "Ubah inspeksi ITI0292",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -715522138
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -715522138
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 42,
+  "label": "Hapus inspeksi ITI0292",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -715522138
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -715522138
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 43,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -715522138
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 139161278
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 44,
+  "label": "Ubah inspeksi ITI0025",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 139161278
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 139161278
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 45,
+  "label": "Hapus inspeksi ITI0025",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 139161278
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 139161278
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 46,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 139161278
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -89505196
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 47,
+  "label": "Ubah inspeksi ITI0110",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -89505196
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -89505196
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 48,
+  "label": "Hapus inspeksi ITI0110",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -89505196
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -89505196
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 49,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -89505196
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -514790772
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 50,
+  "label": "Ubah inspeksi ITI0156",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -514790772
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -514790772
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 51,
+  "label": "Hapus inspeksi ITI0156",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -514790772
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": -514790772
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 52,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -514790772
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 196133136
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 53,
+  "label": "Ubah inspeksi ITI0237",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 196133136
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 196133136
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 54,
+  "label": "Hapus inspeksi ITI0237",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 196133136
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 196133136
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 55,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 196133136
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 272956398
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 56,
+  "label": "Ubah inspeksi BTI0030",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 272956398
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 272956398
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 57,
+  "label": "Hapus inspeksi BTI0030",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 272956398
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 272956398
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 58,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 272956398
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 530197792
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 59,
+  "label": "Ubah inspeksi ITI0008",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 530197792
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 530197792
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 60,
+  "label": "Hapus inspeksi ITI0008",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 530197792
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 530197792
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 61,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 530197792
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1135630664
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 62,
+  "label": "Ubah inspeksi ITI0116",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1135630664
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1135630664
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 63,
+  "label": "Hapus inspeksi ITI0116",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1135630664
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1135630664
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 64,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1135630664
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1000876276
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 65,
+  "label": "Ubah inspeksi ITI0182",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1000876276
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1000876276
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 66,
+  "label": "Hapus inspeksi ITI0182",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1000876276
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2127,
+   "text": 1000876276
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 67,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1000876276
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2126,
+   "text": 1084509424
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 68,
+  "label": "10",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1084509424
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2126,
+   "text": 1084509424
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 69,
+  "label": "20",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1084509424
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2237,
+   "text": -132590438
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 70,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": -132590438
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2944,
+   "text": 1278546263
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 71,
+  "label": "Ubah inspeksi ITI0292",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1278546263
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2944,
+   "text": 1278546263
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 72,
+  "label": "Hapus inspeksi ITI0292",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1278546263
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2944,
+   "text": 1278546263
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 73,
+  "label": "BUTTON",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 1278546263
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "toasts": [],
+   "mainLen": 2944,
+   "text": 392959295
+  },
+  "errs": []
+ },
+ {
+  "route": "riwayat",
+  "i": 74,
+  "label": "Ubah inspeksi ITI0025",
+  "before": {
+   "hash": "#/riwayat",
+   "modals": 0,
+   "text": 392959295
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/riwayat",
+   "modals": 2,
+   "toasts": [],
+   "mainLen": 2944,
+   "text": 392959295
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 0,
+  "label": "Simpan",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 1981843197
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "GagalURL harus berakhiran /exec dari deployment Apps Script.",
+    ""
+   ],
+   "mainLen": 1715,
+   "text": 1981843197
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 1,
+  "label": "Uji",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 1981843197
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "BerhasilKoneksi ke Apps Script berhasil.",
+    ""
+   ],
+   "mainLen": 1778,
+   "text": 603368836
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 2,
+  "label": "Tulis inspeksiUpdate ZPAS637Data I",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 603368836
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "BerhasilKoneksi ke Apps Script berhasil.",
+    ""
+   ],
+   "mainLen": 1778,
+   "text": 603368836
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 3,
+  "label": "Master asetDraft DashboardMesin · ",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 603368836
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "BerhasilKoneksi ke Apps Script berhasil.",
+    ""
+   ],
+   "mainLen": 1778,
+   "text": 603368836
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 4,
+  "label": "Audit data sheet",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 603368836
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "InformasiAudit selesai: 275 baris diperiksa.",
+    ""
+   ],
+   "mainLen": 2118,
+   "text": 1839425880
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 5,
+  "label": "Ringkasan & warna master",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 1839425880
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "BerhasilRingkasan & warna master diperbarui · Mesin: 151/151",
+    ""
+   ],
+   "mainLen": 2088,
+   "text": 427097542
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 6,
+  "label": "Perbaiki otomatis",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 2117498072
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "BerhasilRingkasan & warna master diperbarui · Mesin: 151/151",
+    "",
+    "BerhasilSinkron selesai (0,5 dtk): ringkasan master ditulis ",
+    ""
+   ],
+   "mainLen": 2105,
+   "text": 2117498072
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 7,
+  "label": "Perbaiki rumus service",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 2117498072
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "BerhasilTidak ada baris rusak · 209 baris diperiksa · pemisa",
+    "",
+    "BerhasilSinkron selesai (0,5 dtk): ringkasan master ditulis ",
+    ""
+   ],
+   "mainLen": 2105,
+   "text": 2117498072
+  },
+  "errs": []
+ },
+ {
+  "route": "pengaturan",
+  "i": 8,
+  "label": "Isi inspeksi awal",
+  "before": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "text": 2117498072
+  },
+  "disabled": false,
+  "after": {
+   "hash": "#/pengaturan",
+   "modals": 0,
+   "toasts": [
+    "Berhasil0 baris inspeksi awal dimasukkan (2026-03-05) · 274 ",
+    "",
+    "BerhasilSinkron selesai (0,5 dtk): ringkasan master ditulis ",
+    ""
+   ],
+   "mainLen": 2094,
+   "text": -321797367
+  },
+  "errs": []
+ }
+]

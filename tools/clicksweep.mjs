@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url)
 const { chromium } = require(process.env.PW_DIR ? process.env.PW_DIR + '/playwright-core' : 'playwright-core')
 import fs from 'node:fs'
 const CHROME = process.env.CHROME || undefined /* biarkan playwright-core memilih biner terpasang */
-const BASE = 'http://127.0.0.1:8099'
+const BASE = process.env.BASE || 'http://127.0.0.1:8099'
 const b = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] })
 const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, acceptDownloads: true })
   const seed = fs.readFileSync(R('seed-cache.json'), 'utf8')
