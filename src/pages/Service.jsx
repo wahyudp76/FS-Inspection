@@ -14,6 +14,7 @@ import {
   fetchServiceData,
   daftarBulan,
   ringkasBulan,
+  petaMingguService,
   URGENSI,
   analisaBulan,
   kohortMeta,
@@ -178,7 +179,13 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   }, [acuan, bulanOpsi])
   const bulanAktif = useMemo(() => analisaBulan(units, log, acuanAktif), [units, log, acuanAktif])
   /* grafik “kondisi per bulan”: status dihitung per akhir bulan acuan */
+  /* Peta minggu service: total / per divisi / per jenis engine */
+  const [petaMode, setPetaMode] = useState('total')
   const bulanRingkas = useMemo(() => ringkasBulan(units, log, acuanAktif), [units, log, acuanAktif])
+  const peta = useMemo(
+    () => petaMingguService(units, log, acuanAktif, petaMode),
+    [units, log, acuanAktif, petaMode]
+  )
   /* audit ringan kualitas data sheet (dipakai badge di header) */
   const kualitas = useMemo(
     () => kualitasService(units, log, { duplikat, duplikatLog }),
@@ -884,12 +891,26 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
         <Card className="xl:col-span-7">
           <CardHeader
             title="Peta Minggu Service"
-            sub={`Service ${bulanAktif.acuan.label} per minggu ke-1 s/d 5 · ${bulanRingkas.sesiBulan} pencatatan`}
+            sub={`Rencana vs realisasi ${bulanAktif.acuan.label} per minggu ke-1 s/d 5 · ${peta.jumlah.rencana} jadwal · ${bulanRingkas.sesiBulan} pencatatan`}
+            right={
+              <Segmented
+                size="sm"
+                value={petaMode}
+                onChange={setPetaMode}
+                options={[
+                  { value: 'total', label: 'Total' },
+                  { value: 'divisi', label: 'Divisi' },
+                  { value: 'jenis', label: 'Jenis' },
+                ]}
+              />
+            }
           />
-          <div className="px-3 pb-3 pt-2">
-            <PetaMingguService log={bulanRingkas.logBulan} />
+          <div className="min-w-0 px-3 pb-3 pt-2">
+            <PetaMingguService peta={peta} />
             <p className="mt-1.5 text-[9.5px] leading-relaxed text-slate-500">
-              Angka = jumlah pencatatan service pada minggu tersebut. Berguna untuk menyusun jadwal regu per minggu.
+              Rencana diambil dari jadwal service tiap engine (tb_service1, atau perkiraan interval 250 HM bila jadwal sheet
+              kosong); realisasi dari pencatatan tb_service2 pada minggu tersebut. Pilih <span className="font-semibold text-slate-700">Divisi</span>{' '}
+              atau <span className="font-semibold text-slate-700">Jenis</span> untuk melihat sebarannya.
             </p>
           </div>
         </Card>

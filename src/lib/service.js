@@ -804,6 +804,19 @@ export const labelRef = (iso) => {
  * - segera     : ≤ 7 hari lagi
  * - aman       : masih > 7 hari lagi
  */
+/**
+ * Jadwal service BERIKUTNYA untuk satu unit setelah service tanggal `terakhir`.
+ * Aturan sama dengan isi sheet: bila baris terakhir di log adalah baris terakhir
+ * yang tercatat di tb_service1, pakai jadwal resmi sheet (`nextIso`); kalau tidak,
+ * perkirakan dari rata-rata jam operasi harian (interval 250 HM).
+ */
+export const jadwalBerikut = (u, terakhir = '') => {
+  if (!terakhir) return ''
+  if (terakhir === u.terakhirIso) return u.nextIso || ''
+  if (u.rerata > 0) return tambahHari(terakhir, Math.ceil(INTERVAL_HM / u.rerata))
+  return ''
+}
+
 export function statusPada(units = [], log = [], refIso = todayIso()) {
   const riwayat = new Map() // kode → baris service terakhir yang ≤ refIso
   for (const r of log) {
@@ -817,10 +830,7 @@ export function statusPada(units = [], log = [], refIso = todayIso()) {
     if (!last) {
       return { ...u, statusAsal: 'belum', warningAsal: null, sisaHariAsal: null, nextAsalIso: '', terakhirAsalIso: '' }
     }
-    /* kalau baris terakhir di log = baris terakhir di sheet, pakai jadwal resmi sheet */
-    let nextIso = ''
-    if (last.tanggal === u.terakhirIso) nextIso = u.nextIso
-    else if (u.rerata > 0) nextIso = tambahHari(last.tanggal, Math.ceil(INTERVAL_HM / u.rerata))
+    const nextIso = jadwalBerikut(u, last.tanggal)
     const warning = nextIso ? selisihHari(nextIso, refIso) : null // positif = sudah lewat
     let statusAsal = 'aman'
     if (!nextIso || !(u.rerata > 0)) statusAsal = 'tanpaJadwal'
@@ -1149,3 +1159,129 @@ export async function tarikSetelahCatat({ kode, hm, tanggal, percobaan = 4 } = {
 
 export const hariIniIso = todayIso
 export const selisihHariIso = selisihHari
+
+/* ================== PETA MINGGU SERVICE (rencana vs realisasi) ==================
+   Menjawab: “minggu ke berapa service dijadwalkan, dan berapa yang benar-benar
+   dikerjakan?” — total, per divisi (posisi), atau per jenis engine.
+
+   Rencana  : jadwal service tiap unit pada minggu itu (tb_service1 / perkiraan
+              interval HM dari service terakhir sebelum minggu tersebut).
+   Realisasi: baris tb_service2 yang tanggalnya jatuh pada minggu itu.
+   ============================================================================== */
+
+const hariDalamBulan = (acuanKey) => {
+  const [y, m] = String(acuanKey).split('-').map(Number)
+  return y && m ? new Date(Date.UTC(y, m, 0)).getUTCDate() : 30
+}
+
+/** Batas akhir minggu ke-w dalam bulan acuan (dipotong akhir bulan). */
+const akhirMinggu = (acuanKey, w) => {
+  const dim = hariDalamBulan(acuanKey)
+  return `${acuanKey}-${pad(Math.min(dim, w * 7))}`
+}
+
+/**
+ * @param {Array} units unit service (punya posisi, jenis, rerata, nextIso, terakhirIso)
+ * @param {Array} log   baris tb_service2
+ * @param {string} acuanKey `YYYY-MM`
+ * @param {'total'|'divisi'|'jenis'} kelompok
+ */
+export function petaMingguService(units = [], log = [], acuanKey = '', kelompok = 'total') {
+  const minggu = [1, 2, 3, 4, 5]
+  /* service per unit (tanggal terurut) supaya “service terakhir sebelum minggu X” murah dicari */
+  const riwayat = new Map()
+  for (const r of log) {
+    if (!r.tanggal || !r.kode) continue
+    if (!riwayat.has(r.kode)) riwayat.set(r.kode, [])
+    riwayat.get(r.kode).push(r.tanggal)
+  }
+  for (const arr of riwayat.values()) arr.sort()
+
+  const terakhirSebelum = (kode, iso) => {
+    const arr = riwayat.get(kode)
+    if (!arr) return ''
+    let hasil = ''
+    for (const t of arr) {
+      if (t > iso) break
+      hasil = t
+    }
+    return hasil
+  }
+
+  const sel = (kode, grup) => ({ kode, grup, rencana: 0, realisasi: 0 })
+  const baris = new Map() // grup → { grup, minggu: [{rencana, realisasi}], total }
+
+  const grupDari = (u) => {
+    if (kelompok === 'divisi') return u.posisi || 'Tanpa divisi'
+    if (kelompok === 'jenis') return u.jenis || String(u.kode).slice(0, 3)
+    return 'Total'
+  }
+  const ambil = (grup) => {
+    if (!baris.has(grup)) {
+      baris.set(grup, {
+        grup,
+        sel: minggu.map((w) => ({ w, ...sel(grup, w) })),
+        total: { rencana: 0, realisasi: 0 },
+      })
+    }
+    return baris.get(grup)
+  }
+  /* pastikan baris “Total” selalu ada di mode total */
+  if (kelompok === 'total') ambil('Total')
+
+  /* ---- rencana: satu jadwal per unit per minggu ---- */
+  for (const u of units) {
+    const grup = grupDari(u)
+    const b = ambil(grup)
+    for (const w of minggu) {
+      const ref = akhirMinggu(acuanKey, w)
+      const terakhir = terakhirSebelum(u.kode, ref)
+      const next = jadwalBerikut(u, terakhir)
+      if (!next || next.slice(0, 7) !== acuanKey) continue
+      if (mingguKe(next) !== w) continue
+      b.sel[w - 1].rencana += 1
+      b.total.rencana += 1
+    }
+  }
+
+  /* ---- realisasi: baris log pada bulan & minggu itu ---- */
+  const ukuranUnit = new Map(units.map((u) => [u.kode, grupDari(u)]))
+  for (const r of log) {
+    if ((r.tanggal || '').slice(0, 7) !== acuanKey) continue
+    const w = Number(r.minggu) || mingguKe(r.tanggal)
+    if (!w || w < 1 || w > 5) continue
+    /* kode yang tidak ada di master tetap dihitung (di grupnya sendiri / Total) */
+    const grup = kelompok === 'total' ? 'Total' : ukuranUnit.get(r.kode) || 'Tanpa divisi'
+    const b = ambil(grup)
+    b.sel[w - 1].realisasi += 1
+    b.total.realisasi += 1
+  }
+
+  const daftar = [...baris.values()]
+  /* urutan: Total dulu, lalu paling sibuk */
+  daftar.sort((a, b) => (a.grup === 'Total' ? -1 : b.grup === 'Total' ? 1 : b.total.realisasi + b.total.rencana - (a.total.realisasi + a.total.rencana) || a.grup.localeCompare(b.grup)))
+
+  const jumlah = daftar.reduce(
+    (n, b) => ({ rencana: n.rencana + b.total.rencana, realisasi: n.realisasi + b.total.realisasi }),
+    { rencana: 0, realisasi: 0 }
+  )
+  const maks = Math.max(1, ...daftar.flatMap((b) => b.sel.map((c) => Math.max(c.rencana, c.realisasi))))
+
+  return {
+    acuanKey,
+    kelompok,
+    minggu,
+    baris: daftar,
+    jumlah,
+    maks,
+    /* rencana yang jatuh di minggu yang sudah lewat tetapi belum dikerjakan */
+    rencanaLewat:
+      kelompok === 'total'
+        ? (() => {
+            const ref = refBulan(acuanKey)
+            const asof = statusPada(units, log, ref)
+            return asof.filter((u) => u.statusAsal === 'terlambat').length
+          })()
+        : null,
+  }
+}

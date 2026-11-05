@@ -5,6 +5,7 @@ import {
 import { cx } from '../lib/analytics'
 import { TipBox, ChartBox } from './charts'
 import { IconCheck } from './icons'
+import { Empty } from './ui'
 
 const rcHeight = (h) => (h === 'fill' ? '100%' : h)
 
@@ -257,63 +258,94 @@ export function TopTerlambatChart({ data = [], height = 250, minH = 250, onPick 
    5. PETA MINGGU SERVICE — kapan service biasa dilakukan
    Matriks jenis engine × minggu (1–5) dari tb_service2.
    ============================================================ */
-export function PetaMingguService({ log = [], height }) {
-  const perJenis = useMemo(() => {
-    const map = new Map()
-    for (const r of log) {
-      if (!r.minggu) continue
-      const jenis = String(r.kode).slice(0, 3)
-      const cur = map.get(jenis) || { jenis, w: [0, 0, 0, 0, 0], total: 0 }
-      const idx = Math.min(5, Math.max(1, Number(r.minggu))) - 1
-      cur.w[idx] += 1
-      cur.total += 1
-      map.set(jenis, cur)
-    }
-    return [...map.values()].sort((a, b) => b.total - a.total)
-  }, [log])
-
-  if (!perJenis.length) return null
-  const maks = Math.max(...perJenis.flatMap((j) => j.w))
+export function PetaMingguService({ peta = null, height }) {
+  if (!peta || !peta.baris.length) {
+    return (
+      <Empty
+        title="Belum ada jadwal maupun service pada bulan ini"
+        desc="Peta akan terisi begitu sheet service memuat jadwal (tb_service1) atau pencatatan (tb_service2) pada bulan acuan."
+      />
+    )
+  }
+  const { baris, minggu, maks, jumlah } = peta
+  const selisih = jumlah.realisasi - jumlah.rencana
+  const patuh = jumlah.rencana ? Math.round((Math.min(jumlah.realisasi, jumlah.rencana) / jumlah.rencana) * 100) : null
 
   return (
     <div style={height ? { maxHeight: height, overflow: 'auto' } : undefined}>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[300px] text-left">
+      {/* ringkasan bulan: rencana vs realisasi */}
+      <div className="mb-2 grid grid-cols-4 items-end gap-x-2 rounded-xl bg-slate-900/[0.03] px-2.5 py-2">
+        {[
+          ['Rencana', jumlah.rencana, 'text-amber-700', 'jadwal service bulan ini'],
+          ['Realisasi', jumlah.realisasi, 'text-teal-700', 'service yang tercatat'],
+          ['Selisih', selisih > 0 ? `+${selisih}` : selisih, selisih < 0 ? 'text-rose-600' : 'text-emerald-700', selisih < 0 ? 'belum dikerjakan' : 'sesuai/lebih'],
+        ].map(([label, val, warna, ket]) => (
+          <div key={label} className="min-w-0">
+            <p className="text-[9px] uppercase tracking-wider text-slate-500">{label}</p>
+            <p className={`font-mono text-[15px] font-bold leading-tight ${warna}`} title={ket}>{val}</p>
+          </div>
+        ))}
+        {patuh != null && (
+          <div className="min-w-0 text-right">
+            <p className="text-[9px] uppercase tracking-wider text-slate-500">Terpenuhi</p>
+            <p className={`font-mono text-[15px] font-bold leading-tight ${patuh >= 80 ? 'text-emerald-700' : patuh >= 50 ? 'text-amber-700' : 'text-rose-600'}`}>{patuh}%</p>
+          </div>
+        )}
+      </div>
+
+      <div className="min-w-0 overflow-x-auto">
+        <table className="w-full min-w-[286px] text-left">
           <thead>
             <tr className="text-[9.5px] uppercase tracking-wider text-slate-500">
-              <th className="py-1 pr-2 font-semibold">Jenis</th>
-              {[1, 2, 3, 4, 5].map((w) => (
+              <th className="py-1 pr-1.5 font-semibold">{peta.kelompok === 'total' ? 'Minggu' : peta.kelompok === 'divisi' ? 'Divisi' : 'Jenis'}</th>
+              {minggu.map((w) => (
                 <th key={w} className="px-1 py-1 text-center font-semibold">M{w}</th>
               ))}
-              <th className="py-1 pl-2 text-right font-semibold">Total</th>
+              <th className="py-1 pl-1.5 text-right font-semibold">Total</th>
             </tr>
           </thead>
           <tbody>
-            {perJenis.map((j) => (
-              <tr key={j.jenis}>
-                <td className="py-1 pr-2 font-mono text-[10.5px] font-semibold text-slate-800">{j.jenis}</td>
-                {j.w.map((n, i) => {
-                  const t = maks ? n / maks : 0
+            {baris.map((b) => (
+              <tr key={b.grup} className={b.grup === 'Total' ? 'border-b border-slate-900/[0.08]' : ''}>
+                <td className={`py-1 pr-1.5 text-[10px] ${b.grup === 'Total' ? 'font-bold text-slate-900' : 'font-mono font-semibold text-slate-700'}`}>
+                  {b.grup === 'Total' ? 'Semua' : b.grup}
+                </td>
+                {b.sel.map((c) => {
+                  const t = maks ? c.realisasi / maks : 0
+                  const belum = c.rencana > c.realisasi
                   return (
-                    <td key={i} className="px-1 py-1 text-center">
+                    <td key={c.w} className="px-0.5 py-0.5 text-center">
                       <span
-                        className="inline-flex h-6 w-full min-w-[26px] items-center justify-center rounded font-mono text-[9.5px]"
+                        className="flex min-w-[26px] flex-col items-center justify-center rounded-md py-0.5 leading-none"
                         style={{
-                          background: n ? `rgba(56,189,248,${0.12 + t * 0.62})` : 'rgba(255,255,255,0.03)',
-                          color: n ? '#e2e8f0' : '#475569',
+                          background: c.realisasi ? `rgba(13,148,136,${0.08 + t * 0.5})` : 'rgba(15,23,42,0.035)',
                         }}
-                        title={`${j.jenis} · minggu ${i + 1}: ${n} service`}
+                        title={`Minggu ${c.w}: ${c.realisasi} realisasi dari ${c.rencana} jadwal`}
                       >
-                        {n || '–'}
+                        <span className={`font-mono text-[10.5px] font-bold ${c.realisasi ? 'text-teal-900' : 'text-slate-400'}`}>
+                          {c.realisasi || '–'}
+                        </span>
+                        <span className={`mt-px font-mono text-[8.5px] ${belum ? 'text-amber-700' : 'text-slate-400'}`}>
+                          {c.rencana ? `${c.rencana}j` : '·'}
+                        </span>
                       </span>
                     </td>
                   )
                 })}
-                <td className="py-1 pl-2 text-right font-mono text-[10px] text-slate-600">{j.total}</td>
+                <td className="py-1 pl-1.5 text-right">
+                  <span className="font-mono text-[10px] font-semibold text-teal-800">{b.total.realisasi}</span>
+                  <span className="font-mono text-[10px] text-slate-400">/{b.total.rencana}</span>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[9px] text-slate-500">
+        <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-teal-600" /> angka besar = realisasi service</span>
+        <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-amber-500" /> “12j” = 12 jadwal rencana minggu itu</span>
+        <span className="text-slate-400">Total ditulis realisasi/rencana</span>
       </div>
     </div>
   )
