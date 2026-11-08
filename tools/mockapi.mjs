@@ -16,9 +16,9 @@ if (process.env.MASTER === '1') {
   /* MASTER_DIR: sumber CSV master saja (mis. salinan dengan SPC0224 sudah
      diperbaiki) sementara data inspeksi tetap dari DATA_DIR. */
   const MASTER_DIR = process.env.MASTER_DIR || DATA_DIR
-  const muat = (sheet, file) => {
-    const rows = parseCSV(fs.readFileSync(path.join(MASTER_DIR, file), 'utf8')).filter((r) => r.some((v) => v !== ''))
-    rows.forEach((line, r) => line.forEach((v, c) => sheet.setCell(r + 1, c + 1, v)))
+  const muat = (sheet, file, dir) => {
+    const rows = parseCSV(fs.readFileSync(path.join(dir || MASTER_DIR, file), 'utf8')).filter((r) => r.some((v) => v !== ''))
+    sheet.grid = rows.map((r) => [...r])
     return sheet
   }
   const mesin = muat(env.ss.insertSheet('Mesin'), 'mesin.csv')
@@ -31,11 +31,24 @@ if (process.env.MASTER === '1') {
     if (!fs.existsSync(p)) return null
     const rows = parseCSV(fs.readFileSync(p, 'utf8')).filter((r) => r.some((v) => v !== ''))
     const sh = env.ss.insertSheet(nama)
-    rows.forEach((line, r) => line.forEach((v, c) => sh.setCell(r + 1, c + 1, v)))
+    sh.grid = rows.map((r) => [...r])
     return sh
   }
   muatSvc('Monitor Kasie FS', 'Monitor_Kasie_FS.csv')
   muatSvc('Data Service Engine', 'Data_Service_Engine.csv')
+  /* muat ulang seluruh sheet dari CSV — dipakai hook /__reset supaya uji yang
+     mengubah sel tidak mewariskan mutasinya ke uji berikutnya */
+  ctx.__muatUlangData = () => {
+    muat(ctx.__mesinSheet, 'mesin.csv')
+    muat(ctx.__irrigatorSheet, 'irrigator.csv')
+    const svc1 = env.ss.getSheetByName('Monitor Kasie FS')
+    const svc2 = env.ss.getSheetByName('Data Service Engine')
+    if (svc1) { svc1.grid = parseCSV(fs.readFileSync(path.join(SVC_DIR, 'Monitor_Kasie_FS.csv'), 'utf8')).filter((r) => r.some((v) => v !== '')) }
+    if (svc2) { svc2.grid = parseCSV(fs.readFileSync(path.join(SVC_DIR, 'Data_Service_Engine.csv'), 'utf8')).filter((r) => r.some((v) => v !== '')) }
+    return { sheet: ['Mesin', 'Irrigator', 'Monitor Kasie FS', 'Data Service Engine'] }
+  }
+  ctx.__mesinSheet = mesin
+  ctx.__irrigatorSheet = irrigator
   ctx.SpreadsheetApp.openById = () => ({
     getSheetByName: (n) => (n === 'Mesin' ? mesin : n === 'Irrigator' ? irrigator : env.ss.getSheetByName(n)),
     getSpreadsheetTimeZone: () => 'Asia/Jakarta',
@@ -68,6 +81,15 @@ const server = http.createServer((req, res) => {
     }
     res.writeHead(200, { ...cors, 'Content-Type': 'application/json' })
     return res.end(JSON.stringify(hasil))
+  }
+  /* GET /__reset → muat ulang sheet dari CSV (dipakai uji yang MENGUBAH sel,
+     mis. livedata/mastertest, agar uji berikutnya tidak melihat sisa mutasi).
+     Sebelumnya sisa mutasi SPC0224 membuat dataquality melaporkan
+     Terpasang 119 / Rusak 5 padahal sheet aslinya 120 / 4. */
+  if (process.env.TESTHOOK === '1' && req.method === 'GET' && req.url.startsWith('/__reset')) {
+    const ulang = ctx.__muatUlangData ? ctx.__muatUlangData() : { ok: false, error: 'hook tidak tersedia' }
+    res.writeHead(200, { ...cors, 'Content-Type': 'application/json' })
+    return res.end(JSON.stringify({ ok: true, ...ulang }))
   }
   if (process.env.TESTHOOK === '1' && req.method === 'GET' && req.url.startsWith('/__set')) {
     const u = new URL(req.url, 'http://x')

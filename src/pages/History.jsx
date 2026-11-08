@@ -119,7 +119,13 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
   const halamanAman = Math.min(page, totalHalaman - 1)
   const mulai = halamanAman * perPage
   const sampai = Math.min(mulai + perPage, filtered.length)
-  const barisHalaman = useMemo(() => filtered.slice(mulai, sampai), [filtered, mulai, sampai])
+  /* v1.9.18 — rekap per baris dihitung sekali di sini (dulu 4–5× per baris di
+     dalam JSX: A/B/C, skor, bar, kondisi). Halaman Riwayat jadi lebih ringan
+     dan angka antar kolom dijamin berasal dari hitungan yang sama. */
+  const barisHalaman = useMemo(
+    () => filtered.slice(mulai, sampai).map((r) => ({ r, rk: rekapRecord(r) })),
+    [filtered, mulai, sampai]
+  )
 
   useEffect(() => { setPage(0); setExpanded(null) }, [tipe, inspector, q, perPage])
 
@@ -248,11 +254,10 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
           <>
           {/* ---------- MOBILE: kartu, semua kolom terbaca tanpa geser ---------- */}
           <div className="mt-3 space-y-2 sm:hidden">
-            {barisHalaman.map((r) => {
+            {barisHalaman.map(({ r, rk }) => {
               const key = r.id || `${r.kode}-${r.timestamp}`
               const isOpen = expanded === key
               const groups = groupFor(r.tipe)
-              const rk = rekapRecord(r)
               const warna = scoreColor(rk.skor, r.statusUnit)
               return (
                 <div key={`m-${key}`} className="rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-3">
@@ -356,7 +361,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                 </tr>
               </thead>
               <tbody>
-                {barisHalaman.map((r) => {
+                {barisHalaman.map(({ r, rk }) => {
                   const key = r.id || `${r.kode}-${r.timestamp}`
                   const isOpen = expanded === key
                   const groups = groupFor(r.tipe)
@@ -375,17 +380,17 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                         <td className="px-2 py-2.5 text-[11px] text-slate-600">{r.tipe}</td>
                         <td className="px-2 py-2.5 text-[11.5px] text-slate-700">{r.inspector || '—'}</td>
                         <td className="px-2 py-2.5 text-center font-mono text-[11px]">
-                          <span className="text-emerald-600">{rekapRecord(r).a}</span><span className="text-slate-400">/</span>
-                          <span className="text-amber-600">{rekapRecord(r).b}</span><span className="text-slate-400">/</span>
-                          <span className="text-rose-600">{rekapRecord(r).c}</span>
+                          <span className="text-emerald-600">{rk.a}</span><span className="text-slate-400">/</span>
+                          <span className="text-amber-600">{rk.b}</span><span className="text-slate-400">/</span>
+                          <span className="text-rose-600">{rk.c}</span>
                         </td>
                         <td className="px-2 py-2.5">
                           <div className="flex items-center gap-2">
-                            <Bar value={rekapRecord(r).skor} color={scoreColor(rekapRecord(r).skor, r.statusUnit)} height={5} />
-                            <span className="w-8 shrink-0 font-mono text-[11px] text-slate-700">{Math.round(rekapRecord(r).skor)}</span>
+                            <Bar value={rk.skor} color={scoreColor(rk.skor, r.statusUnit)} height={5} />
+                            <span className="w-8 shrink-0 font-mono text-[11px] text-slate-700">{Math.round(rk.skor)}</span>
                           </div>
                         </td>
-                        <td className="px-2 py-2.5"><KondisiPill kondisi={rekapRecord(r).kondisi} /></td>
+                        <td className="px-2 py-2.5"><KondisiPill kondisi={rk.kondisi} /></td>
                         <td className="px-4 py-2.5 text-right">
                           <div className="flex justify-end gap-1">
                             <button

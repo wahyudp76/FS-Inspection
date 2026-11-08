@@ -423,7 +423,8 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           <div className="mx-3 mb-3 space-y-1.5 rounded-xl border border-slate-900/[0.10] bg-slate-900/[0.02] p-2.5 sm:mx-4">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="text-[10px] uppercase tracking-wider text-slate-500">
-                Hasil audit data sheet ({kualitas.totalMasalah} temuan) — “Repair All” memperbaiki langsung di spreadsheet
+                Hasil audit data sheet ({kualitas.totalMasalah} temuan
+                {kualitas.totalInfo ? ` + ${kualitas.totalInfo} catatan info` : ''}) — “Repair All” memperbaiki langsung di spreadsheet
               </p>
               <button
                 type="button"
@@ -448,7 +449,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                 <span
                   className={cx(
                     'mt-1 h-1.5 w-1.5 shrink-0 rounded-full',
-                    m.level === 'error' ? 'bg-rose-400' : 'bg-amber-400'
+                    m.level === 'error' ? 'bg-rose-400' : m.level === 'info' ? 'bg-slate-400' : 'bg-amber-400'
                   )}
                 />
                 <span className="min-w-0 flex-1 text-slate-600">

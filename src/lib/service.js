@@ -62,26 +62,42 @@ const pad = (n) => String(n).padStart(2, '0')
 
 const norm = (s) => String(s ?? '').replace(/\s+/g, ' ').trim().toUpperCase()
 
+/**
+ * Bangun {iso,y,m,d} hanya bila tanggalnya benar-benar ada di kalender.
+ * Dulu “31/02/2026” atau “13/13/2026” diterima apa adanya sehingga web
+ * menampilkan tanggal yang tidak pernah ada (dan pengelompokan bulan/minggu
+ * ikut salah). Sekarang tanggal mustahil dianggap tidak terbaca → dilaporkan
+ * sebagai `tanggal-rusak` di kualitas data.
+ */
+function tanggalSah(y, m, d) {
+  if (!(y >= 1900 && y <= 2200)) return null
+  if (!(m >= 1 && m <= 12)) return null
+  if (!(d >= 1 && d <= 31)) return null
+  const uji = new Date(Date.UTC(y, m - 1, d))
+  if (uji.getUTCFullYear() !== y || uji.getUTCMonth() !== m - 1 || uji.getUTCDate() !== d) return null
+  return { iso: `${y}-${pad(m)}-${pad(d)}`, y, m, d }
+}
+
 /** "24 Oktober 2026" / "24/10/2026" / "2026-10-24" → { iso, y, m, d } */
 export function parseTanggal(v) {
   if (v == null || v === '') return null
   const s = String(v).trim()
-  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
-  if (m) return { iso: `${m[1]}-${m[2]}-${m[3]}`, y: +m[1], m: +m[2], d: +m[3] }
+  let m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/)
+  if (m) return tanggalSah(+m[1], +m[2], +m[3])
   m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/)
-  if (m) return { iso: `${m[3]}-${pad(+m[2])}-${pad(+m[1])}`, y: +m[3], m: +m[2], d: +m[1] }
+  if (m) return tanggalSah(+m[3], +m[2], +m[1])
   /* tanggal ketik manual dengan tahun 2 digit di sheet: "17/09/26" (= 17 Sep 2026).
      Sheet memakai format Indonesia (dd/mm), jadi urutannya hari dulu. */
   m = s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{2})(?!\d)/)
   if (m) {
     const yy = +m[3]
     const y = yy >= 70 ? 1900 + yy : 2000 + yy
-    return { iso: `${y}-${pad(+m[2])}-${pad(+m[1])}`, y, m: +m[2], d: +m[1] }
+    return tanggalSah(y, +m[2], +m[1])
   }
   m = s.match(/^(\d{1,2})\s+([A-Za-z]+)\s+(\d{4})/)
   if (m) {
     const idx = BULAN.findIndex((b) => norm(b).startsWith(norm(m[2]).slice(0, 3)))
-    if (idx >= 0) return { iso: `${m[3]}-${pad(idx + 1)}-${pad(+m[1])}`, y: +m[3], m: idx + 1, d: +m[1] }
+    if (idx >= 0) return tanggalSah(+m[3], idx + 1, +m[1])
   }
   return null
 }
@@ -414,7 +430,10 @@ export function parseService2(header = [], rows = []) {
     r.hmDelta = prev != null && r.hm != null ? r.hm - prev : null
     /* lonjakan HM tidak wajar: > 1.000 HM sekali service (≈ 42 hari nonstop) → tandai */
     r.hmAnomali = r.hmDelta != null && (r.hmDelta > BATAS_DELTA_HM || r.hmDelta < 0)
-    if (r.hm != null) prevHm.set(r.kode, r.hm)
+    r.hmNol = r.hm === 0
+    /* pembanding HM hanya diperbarui oleh nilai yang masuk akal; sel “0” hasil
+       salah isi tidak boleh membuat catatan berikutnya terlihat melonjak */
+    if (r.hm != null && r.hm > 0) prevHm.set(r.kode, r.hm)
   }
   /* ---- buang pencatatan GANDA di tb_service2 ----
      Sheet sering memuat baris yang sama dua kali (posisi + kode + tanggal + HM
@@ -423,16 +442,22 @@ export function parseService2(header = [], rows = []) {
      Kunci: posisi|kode|tanggal|HM. Baris tanpa tanggal tidak digabung. */
   const kunciUnik = new Set()
   const bersih = []
+  const contohGanda = []
   let ganda = 0
   for (const r of log) {
     if (!r.tanggal) { bersih.push(r); continue }
     const key = [r.posisi, r.kode, r.tanggal, r.hm == null ? '' : r.hm].join('|')
-    if (kunciUnik.has(key)) { ganda++; continue }
+    if (kunciUnik.has(key)) {
+      ganda++
+      if (contohGanda.length < 4) contohGanda.push(`${r.kode} ${r.tanggal}${r.hm == null ? '' : ` @${r.hm}`}`)
+      continue
+    }
     kunciUnik.add(key)
     bersih.push(r)
   }
   /* jumlah ganda disimpan sebagai properti array agar bisa dilaporkan di UI */
   bersih.duplikat = ganda
+  bersih.duplikatKunci = contohGanda
 
   /* urutan tampil: terbaru dulu */
   return bersih.sort((a, b) => (b.tanggalMs - a.tanggalMs) || (b.no - a.no))
@@ -995,7 +1020,9 @@ export function kualitasService(units = [], log = [], meta = {}) {
       kode: 'log-ganda',
       jumlah: meta.duplikatLog,
       pesan: `${meta.duplikatLog} baris ganda di tb_service2 (posisi+kode+tanggal+HM sama) — diabaikan agar volume service tidak dobel`,
-      contoh: log.filter((r) => r.tanggal).slice(0, 0),
+      /* v1.9.18: dulu contohnya selalu kosong (slice(0,0)) sehingga panel audit
+         hanya menampilkan angka tanpa bukti baris mana yang ganda */
+      contoh: Array.isArray(log.duplikatKunci) ? log.duplikatKunci : [],
     })
   }
 
@@ -1043,7 +1070,46 @@ export function kualitasService(units = [], log = [], meta = {}) {
     })
   }
 
-  return { masalah, totalMasalah: masalah.reduce((a, m) => a + m.jumlah, 0) }
+  /* HM = 0 hampir selalu berarti sel kosong yang terisi angka nol, bukan engine
+     baru: unit seperti ini jadi terlihat “baru” dan jadwalnya meleset. */
+  const hmNol = log.filter((r) => r.hm === 0)
+  if (hmNol.length) {
+    masalah.push({
+      level: 'warn',
+      kode: 'hm-nol',
+      jumlah: hmNol.length,
+      pesan: `${hmNol.length} pencatatan dengan HM = 0 (kemungkinan sel kosong terisi 0) — periksa HM sebenarnya di sheet`,
+      contoh: hmNol.slice(0, 4).map((r) => `${r.kode} ${r.tanggal || r.tanggalRaw || ''}`.trim()),
+    })
+  }
+
+  /* kolom bantu sheet “Rata-Rata Operating Time Harian” masih banyak kosong.
+     Bukan kesalahan web (jadwal dihitung dari laju HM antar catatan), tetapi
+     penyebab utama unit berstatus “tanpa jadwal” saat “Next Service” juga kosong. */
+  const rerataKosong = log.filter((r) => r.rerata == null)
+  if (rerataKosong.length) {
+    const unitTanpaJadwal = units.filter((u) => u.status === 'tanpaJadwal').length
+    masalah.push({
+      level: 'info',
+      kode: 'rerata-kosong',
+      jumlah: rerataKosong.length,
+      pesan:
+        `${rerataKosong.length} dari ${log.length} baris tb_service2 belum mengisi “Rata-Rata Operating Time Harian”` +
+        (unitTanpaJadwal ? ` — ${unitTanpaJadwal} unit belum punya tanggal service berikutnya karena rerata & “Next Service” sama-sama kosong` : ''),
+      /* tunjukkan unit yang benar-benar terdampak (tanpa jadwal), bukan sembarang
+         baris tanpa rerata — supaya contohnya bisa langsung dicari di sheet */
+      contoh: (unitTanpaJadwal
+        ? units.filter((u) => u.status === 'tanpaJadwal').map((u) => u.kode)
+        : [...new Set(rerataKosong.map((r) => r.kode))]
+      ).slice(0, 4),
+    })
+  }
+
+  /* ringkasan: temuan error/warn dihitung sebagai temuan yang perlu diperbaiki,
+     catatan “info” hanya keterangan supaya angka utama tidak membengkak */
+  const totalMasalah = masalah.filter((m) => m.level !== 'info').reduce((a, m) => a + m.jumlah, 0)
+  const totalInfo = masalah.filter((m) => m.level === 'info').reduce((a, m) => a + m.jumlah, 0)
+  return { masalah, totalMasalah, totalInfo }
 }
 
 export const riwayatUnit = (log = [], kode = '') =>

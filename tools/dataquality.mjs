@@ -22,6 +22,24 @@ const DIR = process.env.DATA_DIR || path.join(ROOT, 'data')
 const EP = process.env.EP || 'http://127.0.0.1:8111/exec'
 const OUT = path.join(ROOT, 'audit-shots')
 
+/* Mock Apps Script menyimpan sel di memori. Uji lain (livedata/mastertest/e2echeck)
+   MENGUBAH sel — mis. SPC0224 Status → Rusak — sehingga uji ini bisa melihat
+   “Terpasang 119 / Rusak 5” padahal sheet aslinya 120 / 4. Minta mock memuat
+   ulang CSV lebih dulu; kalau endpoint bukan mock, permintaan ini diabaikan. */
+async function segarkanMock() {
+  const asal = EP.replace(/\/exec.*$/, '')
+  try {
+    const r = await fetch(`${asal}/__reset`)
+    if (r.ok) {
+      const j = await r.json()
+      if (j && j.ok) console.log(`(mock dimuat ulang: ${(j.sheet || []).join(', ')})`)
+    }
+  } catch {
+    /* bukan mock / hook mati → abaikan */
+  }
+}
+await segarkanMock()
+
 /* ---------------- CSV ---------------- */
 function parseCSV(txt) {
   const rows = []
