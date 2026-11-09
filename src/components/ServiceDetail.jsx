@@ -59,6 +59,19 @@ export default function ServiceDetail({ unit, log = [], onClose, onCatat }) {
             </div>
           )}
 
+          {/* v1.9.19: hour meter pernah diganti → tb_service1 (rumus MAX) masih
+              menyimpan angka lama; tampilkan angka baru + asal-usulnya */}
+          {unit.hmReset && (
+            <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-[11px] leading-relaxed text-amber-800">
+              <IconAlert size={13} className="mt-0.5 shrink-0" />
+              <span>
+                Meter HM diganti/di-reset pada <span className="font-semibold">{unit.hmReset.tanggal}</span> — angka baru{' '}
+                <span className="font-mono font-semibold">{fmt(unit.hm)}</span> (sebelumnya{' '}
+                <span className="font-mono">{fmt(unit.hmReset.dari)}</span>). Jadwal dihitung dari angka baru.
+              </span>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {[
               ['Service terakhir', unit.terakhirIso || 'Belum pernah'],

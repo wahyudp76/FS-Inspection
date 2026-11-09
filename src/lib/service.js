@@ -374,7 +374,65 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
     dariMaster++
   }
 
-  return { units: hasil, tambahan: dariLog + dariMaster, dariLog, dariMaster }
+  /* ---- koreksi “meter HM diganti” untuk unit yang SUDAH ada di tb_service1 ----
+     tb_service1 menghitung kolom HM Service Terakhir dengan MAX(), bukan catatan
+     terakhir (terbukti pada data 8 Nov 2026: SPC0207 catatan terakhir 9411 tetapi
+     tb_service1 menulis 88878). Selama HM selalu naik, MAX = catatan terakhir.
+     Setelah hour meter rusak & diganti, angka HM turun dan MAX membuat web terus
+     memakai angka LAMA — jadwal jadi jauh di masa depan padahal unit baru saja
+     diservice. Aturan: bila catatan log TERBARU lebih kecil dari HM di
+     tb_service1 dan tanggalnya tidak lebih tua, catatan log yang dipakai dan
+     jadwalnya dihitung ulang dari angka baru. Nilai 0 dilewati (sel kosong yang
+     terisi 0, bukan bukti reset). */
+  let hmReset = 0
+  for (const u of hasil) {
+    if (u.sumber === 'log') continue
+    const arr = per.get(norm(u.kode))
+    if (!arr || !arr.length) continue
+    const akhir = arr[arr.length - 1]
+    if (akhir.hm == null || akhir.hm <= 0 || !akhir.tanggal) continue
+    if (u.hm == null || akhir.hm >= u.hm) continue
+    if (u.terakhirIso && akhir.tanggal < u.terakhirIso) continue
+
+    const hmLama = u.hm
+    u.hm = akhir.hm
+    u.terakhirIso = akhir.tanggal
+    u.terakhirRaw = akhir.tanggal
+    u.nextHm = akhir.hm + intervalHm
+    u.hmReset = { dari: hmLama, ke: akhir.hm, tanggal: akhir.tanggal, baris: akhir.baris }
+
+    /* rerata HM/hari: pakai kolom sheet bila ada, kalau tidak median laju historis
+       (pasangan yang masih wajar) sebagai perkiraan */
+    let rerata = u.rerata != null && u.rerata > 0 ? u.rerata : null
+    if (rerata == null) {
+      const laju = []
+      for (let i = 1; i < arr.length; i++) {
+        const hari = ((arr[i].tanggalMs || 0) - (arr[i - 1].tanggalMs || 0)) / 86400000
+        const dHm = arr[i].hm != null && arr[i - 1].hm != null ? arr[i].hm - arr[i - 1].hm : null
+        if (hari > 0 && dHm != null && dHm > 0 && dHm <= BATAS_DELTA_HM) laju.push(dHm / hari)
+      }
+      rerata = laju.length ? Math.round(median(laju) * 10) / 10 : null
+    }
+    if (rerata) {
+      u.rerata = rerata
+      const sisaHari = Math.ceil(intervalHm / rerata)
+      u.nextIso = tambahHari(akhir.tanggal, sisaHari)
+      u.nextRaw = u.nextIso
+      u.warning = selisihHari(hariIni, u.nextIso)
+      u.sisaHari = -u.warning
+      u.status = u.warning > 0 ? 'terlambat' : u.warning >= -AMAN_HARI ? 'segera' : 'aman'
+    } else {
+      u.rerata = null
+      u.nextIso = ''
+      u.nextRaw = ''
+      u.warning = null
+      u.sisaHari = null
+      u.status = 'tanpaJadwal'
+    }
+    hmReset++
+  }
+
+  return { units: hasil, tambahan: dariLog + dariMaster, dariLog, dariMaster, hmReset }
 }
 
 export const POSISI_DIKENAL = ['FM3', 'FM4', 'PG2', 'PG3', 'OP2']
@@ -1065,7 +1123,8 @@ export function kualitasService(units = [], log = [], meta = {}) {
       level: 'warn',
       kode: 'hm-janggal',
       jumlah: janggal.length,
-      pesan: `${janggal.length} kenaikan HM tidak wajar (> ${BATAS_DELTA_HM} HM sekali service)`,
+      pesan:
+        `${janggal.length} catatan dengan HM tidak wajar (menurun karena meter diganti, atau melonjak > ${BATAS_DELTA_HM} HM sekali service)`,
       contoh: janggal.slice(0, 4).map((r) => r.kode),
     })
   }
@@ -1173,6 +1232,8 @@ export async function fetchServiceData({ master = [] } = {}) {
     unitEval: evalUnits.length,
     tambahanDariLog: lengkap.dariLog,
     tambahanDariMaster: lengkap.dariMaster,
+    /* jumlah unit yang HM-nya dikoreksi karena meter diganti (angka turun) */
+    hmReset: lengkap.hmReset || 0,
     syncedAt: new Date().toISOString(),
     intervalHm,
   }

@@ -131,6 +131,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
     unitEval: cached?.unitEval ?? (cached?.units?.filter?.((u) => u.sumber !== 'log')?.length || 0),
     dariLog: cached?.tambahanDariLog || 0,
     dariMaster: cached?.tambahanDariMaster || 0,
+    hmReset: cached?.hmReset || 0,
   })
   const [memuat, setMemuat] = useState(!cached)
   const [galat, setGalat] = useState('')
@@ -207,6 +208,10 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       unitEval: Number.isFinite(data.unitEval) ? data.unitEval : (data.units || []).filter((u) => u.sumber !== 'log').length,
       dariLog: (data.tambahanDariLog || 0) + lengkap.dariLog,
       dariMaster: (data.tambahanDariMaster || 0) + lengkap.dariMaster,
+      /* unit yang HM-nya turun karena meter diganti → dipakai angka baru.
+         Dihitung dari penanda per unit, karena tahap koreksi hanya berjalan
+         sekali (data cache sudah terkoreksi sehingga hitungannya 0). */
+      hmReset: lengkap.units.filter((u) => u.hmReset).length,
     })
     setLog(data.log || [])
     setDuplikat(data.duplikat || 0)
@@ -415,6 +420,17 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               {asal.dariLog > 0 && <> · <span className="font-semibold">{fmt(asal.dariLog)}</span> unit dihitung dari catatan tb_service2</>}
               {asal.dariMaster > 0 && <> · <span className="font-semibold">{fmt(asal.dariMaster)}</span> unit master belum pernah service</>}
               . Data diturunkan otomatis agar tidak ada unit yang hilang dari halaman ini.
+            </span>
+          </div>
+        )}
+
+        {asal.hmReset > 0 && (
+          <div className="mx-3 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-amber-500/35 bg-amber-500/[0.10] px-3 py-2 text-[11px] text-amber-800 sm:mx-4">
+            <IconAlert size={12} />
+            <span>
+              <span className="font-semibold">{fmt(asal.hmReset)} unit</span> memakai angka HM setelah{' '}
+              <span className="font-semibold">meter diganti/di-reset</span> — tb_service1 memakai HM terbesar (MAX), jadi
+              jadwalnya dihitung ulang dari catatan service terbaru.
             </span>
           </div>
         )}

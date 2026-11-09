@@ -61,7 +61,10 @@ const jalankan = async () => {
   const hariIni = new Date(Date.now() + 7 * 3600 * 1000).toISOString().slice(0, 10) /* WIB */
 
   const browser = await chromium.launch()
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } })
+  /* WIB: pengguna nyata di Indonesia. Tanpa ini, bila jam mesin uji berada di
+     sekitar tengah malam UTC, tanggal yang ditulis browser (UTC) berbeda dengan
+     “hari ini” versi WIB yang dipakai pemeriksaan → uji gagal palsu. */
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, timezoneId: 'Asia/Jakarta' })
   const err = []
   page.on('pageerror', (e) => err.push(e.message))
 

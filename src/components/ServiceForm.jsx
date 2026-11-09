@@ -27,6 +27,10 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
   const [tanggal, setTanggal] = useState(hariIniIso())
   const [hm, setHm] = useState('')
   const [posisi, setPosisi] = useState('')
+  /* v1.9.19: HM boleh lebih kecil dari HM terakhir. Kasus nyata di lapangan: hour
+     meter rusak lalu diganti baru sehingga angkanya kembali dari nol. Pengguna
+     hanya perlu menyatakan (centang) bahwa ini reset meter, bukan salah ketik. */
+  const [resetMeter, setResetMeter] = useState(false)
   const [sibuk, setSibuk] = useState(false)
   const [galat, setGalat] = useState('')
   const [sukses, setSukses] = useState(null)
@@ -49,6 +53,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
     setDaftarBuka(!t)
     setTanggal(hariIniIso())
     setPosisi('')
+    setResetMeter(false)
     setSibuk(false)
     setGalat('')
     setSukses(null)
@@ -87,6 +92,8 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
     setKode(u.kode)
     setPosisi(u.posisi || '')
     setHm('')
+    /* centang reset meter tidak boleh terbawa ke unit lain */
+    setResetMeter(false)
     setCari('')
     setDaftarBuka(false)
     setGalat('')
@@ -103,7 +110,10 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
   const hmNum = angka(hm)
   const hmLama = unit?.hm ?? null
   const naik = hmNum != null && hmLama != null ? hmNum - hmLama : null
+  /* HM sama atau lebih kecil = “tidak naik”. Dulu ini MEMBLOKIR penyimpanan;
+     sekarang boleh asal pengguna menandai meter HM sudah diganti/di-reset. */
   const tidakNaik = hmNum != null && hmLama != null && hmNum <= hmLama
+  const resetSah = tidakNaik && resetMeter
 
   /* perkiraan jadwal berikutnya memakai rerata HM/hari unit */
   const perkiraan = useMemo(() => {
@@ -127,7 +137,13 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
     if (!kode) return setGalat('Pilih kode mesin yang diservice dulu.')
     if (!tanggal) return setGalat('Tanggal service belum diisi.')
     if (hmNum == null || hmNum <= 0) return setGalat('HM service harus berupa angka lebih dari 0.')
-    if (tidakNaik) return setGalat(`HM service (${fmt(hmNum)}) harus lebih besar dari HM terakhir (${fmt(hmLama)}).`)
+    if (tidakNaik && !resetMeter) {
+      return setGalat(
+        `HM service (${fmt(hmNum)}) tidak lebih besar dari HM terakhir (${fmt(hmLama)}). ` +
+          'Kalau hour meter memang diganti/di-reset sehingga angkanya mulai dari nol, centang ' +
+          '“Meter HM diganti / di-reset” lalu simpan lagi.'
+      )
+    }
     setSibuk(true)
     try {
       const hasil = await onSubmit?.({
@@ -136,11 +152,15 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
         hm: hmNum,
         minggu,
         posisi: posisi || unit?.posisi || '',
+        /* keterangan untuk ringkasan di layar (bukan kolom sheet) */
+        resetMeter: resetSah,
       })
-      setSukses({ ...hasil, kode, hm: hmNum, tanggal })
+      setSukses({ ...hasil, kode, hm: hmNum, tanggal, resetMeter: resetSah })
       notify?.({
         type: 'success',
-        message: `Service ${kode} (HM ${fmt(hmNum)}) tersimpan di sheet “Monitor Kasie FS”.`,
+        message:
+          `Service ${kode} (HM ${fmt(hmNum)}) tersimpan di sheet “Monitor Kasie FS”.` +
+          (resetSah ? ' Ditandai sebagai HM setelah meter diganti.' : ''),
       })
       /* beri waktu pengguna membaca ringkasan hasil, lalu tutup */
       setTimeout(() => onClose?.(), 2200)
@@ -187,6 +207,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
               <p className="mt-1 text-[11.5px] leading-relaxed text-emerald-700/80">
                 HM {fmt(sukses.hm)} · {sukses.tanggal}
                 {sukses.baris ? ` · baris ${sukses.baris} sheet` : ''}
+                {sukses.resetMeter ? ' · meter HM baru (di-reset)' : ''}
               </p>
               {sukses.eval && (
                 <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-700">
@@ -320,7 +341,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                   value={hm}
                   onChange={(e) => setHm(e.target.value)}
                   placeholder={hmLama != null ? `HM terakhir ${fmt(hmLama)}` : 'mis. 1139'}
-                  className={cx('input font-mono', tidakNaik && 'border-rose-400/60')}
+                  className={cx('input font-mono', tidakNaik && (resetMeter ? 'border-amber-400/70' : 'border-rose-400/60'))}
                 />
                 {naik != null && naik > 0 && (
                   <p className="mt-1 text-[10.5px] text-slate-500">
@@ -329,7 +350,37 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                   </p>
                 )}
                 {tidakNaik && (
-                  <p className="mt-1 text-[10.5px] text-rose-600">HM harus lebih besar dari HM service terakhir ({fmt(hmLama)}).</p>
+                  <div
+                    className={cx(
+                      'mt-1.5 rounded-lg border px-2.5 py-2',
+                      resetMeter ? 'border-amber-500/40 bg-amber-500/10' : 'border-rose-500/40 bg-rose-500/10'
+                    )}
+                  >
+                    <p className={cx('text-[10.5px] leading-relaxed', resetMeter ? 'text-amber-800' : 'text-rose-700')}>
+                      HM {fmt(hmNum)} <span className="font-semibold">tidak lebih besar</span> dari HM service terakhir ({fmt(hmLama)}).
+                      {resetMeter
+                        ? ' Tersimpan sebagai HM setelah meter diganti.'
+                        : ' Kalau hour meter sudah diganti/di-reset, centang pilihan di bawah — angkanya tetap boleh disimpan.'}
+                    </p>
+                    <label className="mt-1.5 flex cursor-pointer items-start gap-2 text-[11px] font-medium text-slate-700">
+                      <input
+                        type="checkbox"
+                        checked={resetMeter}
+                        onChange={(e) => {
+                          setResetMeter(e.target.checked)
+                          setGalat('')
+                        }}
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-amber-500"
+                      />
+                      <span>
+                        Meter HM diganti / di-reset
+                        <span className="block font-normal text-[10px] leading-relaxed text-slate-500">
+                          Hour meter rusak lalu dipasang baru sehingga hitungan mulai dari nol. HM tetap disimpan apa adanya dan
+                          jadwal berikutnya dihitung dari angka baru (HM + {INTERVAL_HM}).
+                        </span>
+                      </span>
+                    </label>
+                  </div>
                 )}
               </div>
 
