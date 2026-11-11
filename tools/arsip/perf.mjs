@@ -37,7 +37,7 @@ const ukuranBuild = (dir, label) => {
   return total
 }
 
-const lama = ukuranBuild(path.join(HERE, '..', 'docs'), 'build SEKARANG (docs/)')
+const lama = ukuranBuild(path.join(HERE, '..', '..', 'docs'), 'build SEKARANG (docs/)')
 
 const ambil = async (url, ep) => {
   const b = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] })

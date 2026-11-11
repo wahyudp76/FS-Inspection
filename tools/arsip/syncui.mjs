@@ -32,7 +32,7 @@ const cek = (nama, ok, info = '') => {
   console.log(`${ok ? '✅' : '❌'} ${nama}${info ? ' — ' + info : ''}`)
 }
 
-const assets = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'src', 'data', 'assets.json'), 'utf8'))
+const assets = JSON.parse(fs.readFileSync(path.join(HERE, '..', '..', 'src', 'data', 'assets.json'), 'utf8'))
 
 const browser = await chromium.launch({ executablePath: CHROME, args: ['--no-sandbox'] })
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 }, locale: 'id-ID' })

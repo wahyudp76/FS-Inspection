@@ -269,6 +269,7 @@ bash scripts/publish-pages.sh
 ├── scripts/
 │   ├── build-data.mjs        # tarik tb_mesin & tb_irrigator → assets.json
 │   └── publish-pages.sh      # build docs/ + commit + push
+├── audit/                    # laporan audit per ronde (AUDIT-*.md) + indeks
 ├── docs/                     # hasil build untuk GitHub Pages (branch mode)
 ├── public/                   # ikon, manifest, service worker
 ├── src/
@@ -289,6 +290,8 @@ bash scripts/publish-pages.sh
 │   ├── App.jsx
 │   ├── index.css
 │   └── main.jsx
+├── tools/                    # suite uji otomatis (lihat tools/README.md)
+│   └── arsip/                # skrip audit lama, tidak dipakai rutin
 └── .github/workflows/deploy.yml
 ```
 
@@ -376,7 +379,7 @@ node scripts/make-icons.mjs       # butuh CHROME_PATH bila Chromium tak standar
 - **Pengaturan ▸ Kualitas Data Sheet** kini menampilkan daftar unit yang statusnya
   berbeda antara `Data Inspeksi` dan master.
 - Alat audit baru: `tools/livedata.mjs` (data asli ↔ kode) dan `tools/liveuicheck.mjs`
-  (UI 6 rute × 3 lebar layar). Lihat [`AUDIT-2026-10-27.md`](AUDIT-2026-10-27.md).
+  (UI 6 rute × 3 lebar layar). Lihat [`audit/AUDIT-2026-10-27.md`](audit/AUDIT-2026-10-27.md).
 
 > Setelah menarik versi ini, jalankan **sekali**: tempel `apps-script/Code.gs` →
 > *Deploy ▸ New version* → **Pengaturan ▸ Kualitas Data Sheet ▸ Audit** → **Perbaiki otomatis**

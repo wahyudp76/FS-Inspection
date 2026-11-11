@@ -23,7 +23,7 @@ const require_ = createRequire(import.meta.url)
 const { chromium } = require_('playwright-core')
 
 const HERE = path.dirname(new URL(import.meta.url).pathname)
-const ROOT = path.join(HERE, '..')
+const ROOT = path.join(HERE, '..', '..')
 const DIST = process.env.DIST || 'docs'
 const PORT = Number(process.env.PORT || 8123)
 const EP = process.env.EP || 'http://127.0.0.1:8111/exec'

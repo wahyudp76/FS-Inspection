@@ -18,11 +18,12 @@ docs/.vite
 # berkas uji lokal (ekspor sheet asli & cache contoh)
 tools/seed-cache.json
 
-# ekspor CSV sheet asli (dipakai tools/livedata.mjs & tools/mock-test.mjs).
+# ekspor CSV sheet asli (dipakai tools/livedata.mjs & tools/mockapi.mjs).
 # Tidak di-commit: berisi data produksi. Lihat tools/README.md cara mengambilnya.
 data/
 
-# tangkapan layar hasil audit UI
+# tangkapan layar & hasil uji (dibuat ulang oleh tools/)
 audit-shots/
+clicksweep.json
 perf-last.json
 data2/

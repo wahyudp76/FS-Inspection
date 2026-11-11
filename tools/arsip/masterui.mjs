@@ -22,7 +22,7 @@ const SITE = process.env.SITE || 'http://localhost:8099/'
 const ENDPOINT = process.env.ENDPOINT || 'http://localhost:8113/'
 const CHROME = process.env.CHROME || '/home/user/.cache/ms-playwright/chromium-1117/chrome-linux/chrome'
 
-const assets = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'src', 'data', 'assets.json'), 'utf8'))
+const assets = JSON.parse(fs.readFileSync(path.join(HERE, '..', '..', 'src', 'data', 'assets.json'), 'utf8'))
 const spcSnapshot = assets.mesin.find((u) => u.kode === 'SPC0224')
 
 let gagal = 0

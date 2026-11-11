@@ -13,8 +13,8 @@
 import path from 'node:path'
 import fs from 'node:fs'
 const HERE = path.dirname(new URL(import.meta.url).pathname)
-const DATA = process.env.DATA_DIR || path.join(HERE, '..', 'data')
-const SVC = process.env.SVC_DIR || path.join(HERE, '..', 'data2')
+const DATA = process.env.DATA_DIR || path.join(HERE, '..', '..', 'data')
+const SVC = process.env.SVC_DIR || path.join(HERE, '..', '..', 'data2')
 process.env.DI_CSV = process.env.DI_CSV || path.join(DATA, 'di.csv')
 
 const { makeEnv, loadCode, post, parseCSV } = await import('./mock.gs.mjs')

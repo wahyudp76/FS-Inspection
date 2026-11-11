@@ -43,7 +43,7 @@ membetulkannya sendiri.
    - lalu `A/B/C/Total/Skor/Kondisi` dihitung ulang dari sel komponen (aturan **Rusak ⇒ Kritis**).
 3. Audit lagi → chip berubah **Bersih** bila sudah sinkron. Aman diulang (idempoten).
 
-**Yang ditemukan pada data 25 Okt 2026** (rincian di `AUDIT-2026-10-24.md` §20):
+**Yang ditemukan pada data 25 Okt 2026** (rincian di `audit/AUDIT-2026-10-24.md` §20):
 
 | Temuan | Jumlah |
 |---|---|

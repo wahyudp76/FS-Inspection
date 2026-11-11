@@ -10,7 +10,7 @@
 import path from 'node:path'
 import fs from 'node:fs'
 const HERE = path.dirname(new URL(import.meta.url).pathname)
-const DATA = process.env.DATA_DIR || path.join(HERE, '..', 'data')
+const DATA = process.env.DATA_DIR || path.join(HERE, '..', '..', 'data')
 process.env.DI_CSV = process.env.DI_CSV || path.join(DATA, 'di.csv')
 
 const { makeEnv, loadCode, post, parseCSV } = await import('./mock.gs.mjs')
@@ -26,10 +26,10 @@ const cek = (nama, ok, info = '') => {
 /* bundle master.js untuk Node (import tanpa ekstensi ala Vite) */
 const bundel = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fsi-ml-')), 'master.mjs')
 execFileSync('npx', ['esbuild', 'src/lib/master.js', '--bundle', '--format=esm', '--platform=node', `--outfile=${bundel}`, '--log-level=error'], {
-  cwd: path.join(HERE, '..'),
+  cwd: path.join(HERE, '..', '..'),
 })
 const { gabungMasterLive, bacaMasterLive } = await import(bundel)
-const assets = JSON.parse(fs.readFileSync(path.join(HERE, '..', 'src', 'data', 'assets.json'), 'utf8'))
+const assets = JSON.parse(fs.readFileSync(path.join(HERE, '..', '..', 'src', 'data', 'assets.json'), 'utf8'))
 
 /* ---- siapkan dunia: sheet Mesin & Irrigator, SPC0224 sudah diperbaiki ---- */
 function sheetDariCSV(nama, file, ubah) {
