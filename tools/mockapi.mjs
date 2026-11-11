@@ -45,12 +45,17 @@ if (process.env.MASTER === '1') {
     const svc2 = env.ss.getSheetByName('Data Service Engine')
     if (svc1) { svc1.grid = parseCSV(fs.readFileSync(path.join(SVC_DIR, 'Monitor_Kasie_FS.csv'), 'utf8')).filter((r) => r.some((v) => v !== '')) }
     if (svc2) { svc2.grid = parseCSV(fs.readFileSync(path.join(SVC_DIR, 'Data_Service_Engine.csv'), 'utf8')).filter((r) => r.some((v) => v !== '')) }
-    return { sheet: ['Mesin', 'Irrigator', 'Monitor Kasie FS', 'Data Service Engine'] }
+    const tkr = env.ss.getSheetByName('Riwayat Tukar')
+    if (tkr) tkr.grid = []
+    return { sheet: ['Mesin', 'Irrigator', 'Monitor Kasie FS', 'Data Service Engine', 'Riwayat Tukar'] }
   }
   ctx.__mesinSheet = mesin
   ctx.__irrigatorSheet = irrigator
   ctx.SpreadsheetApp.openById = () => ({
     getSheetByName: (n) => (n === 'Mesin' ? mesin : n === 'Irrigator' ? irrigator : env.ss.getSheetByName(n)),
+    /* sheet baru (mis. "Riwayat Tukar" untuk fitur tukar unit) dibuat di spreadsheet
+       yang sama, sama seperti SpreadsheetApp asli */
+    insertSheet: (n) => env.ss.insertSheet(n),
     getSpreadsheetTimeZone: () => 'Asia/Jakarta',
   })
 }

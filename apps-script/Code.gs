@@ -24,7 +24,13 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.14'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.20'; // naikkan setiap kali kode berubah besar
+/* 1.9.20 — TUKAR UNIT (rotasi engine & irrigator):
+     · action "swapread"  → riwayat tukar dari sheet "Riwayat Tukar" (dibuat otomatis)
+     · action "swapunit"  → tukar unit terpasang dengan unit lain (stock Standby
+       atau unit terpasang di lokasi lain), menulis Status + Wilayah di sheet
+       master Mesin/Irrigator lalu mencatat baris riwayat.
+   1.9.14 — HM boleh turun (meter diganti): catatan service tetap diterima. */
 /* 1.9.1 — warna kolom KONDISI di sheet master dipasang lewat CONDITIONAL
    FORMATTING (bukan hanya setBackground): aturan format bersyarat milik sheet
    selalu menang atas warna sel, jadi sel “Kritis” bisa tetap hijau. Aturan kita
@@ -52,6 +58,19 @@ var SERVICE = {
   evalSheet: 'Data Service Engine',  // tb_service1 → hasil rumus (dibaca balik)
   headers: ['Posisi', 'No', 'Tanggal', 'Month', 'Bulan Service', 'Minggu Service', 'Kode Mesin', 'HM Service'],
   intervalHm: 250
+};
+
+/* ==================== TUKAR UNIT (rotasi aset) ====================
+   Kasus lapangan: sebuah engine/irrigator di lokasi rusak atau harus dipindah,
+   lalu diganti unit lain — bisa dari stock Standby, bisa dari lokasi lain.
+   Sheet master (Mesin/Irrigator) adalah otoritas Status & Wilayah, jadi tukar
+   unit MENULIS dua baris di sana (unit keluar → Standby/Rusak, unit masuk →
+   Terpasang di lokasi tsb) dan mencatat jejaknya di sheet "Riwayat Tukar". */
+var SWAP = {
+  logSheet: 'Riwayat Tukar',
+  headers: ['Waktu', 'Tanggal', 'Tipe', 'Posisi', 'Kode Keluar', 'Status Keluar',
+            'Kode Masuk', 'Posisi Asal Masuk', 'Alasan', 'Petugas', 'Catatan'],
+  statusSah: ['Terpasang', 'Standby', 'Rusak']
 };
 
 /* Tanggal default untuk inspeksi awal hasil tarikan master */
@@ -162,6 +181,12 @@ function doPost(e) {
     }
     if (action === 'backfill') {
       return json_({ ok: true, result: backfillDariMaster((body.payload || {}).tanggal) });
+    }
+    if (action === 'swapread') {
+      return json_({ ok: true, result: swapRead_(), version: SCRIPT_VERSION });
+    }
+    if (action === 'swapunit') {
+      return json_({ ok: true, result: swapUnit_(body.payload || {}), version: SCRIPT_VERSION });
     }
     if (action === 'svcread') {
       return json_({ ok: true, result: serviceRead_(), version: SCRIPT_VERSION });
@@ -2057,6 +2082,195 @@ function repairMaster_(tipe) {
      aturan lama yang membuat sel “Kritis” tampil hijau */
   if (cKond > 0) pasangWarnaKondisi_(sh, cKond);
   return ubah;
+}
+
+/* ==================================================================
+   TUKAR UNIT — rotasi engine / irrigator antar lokasi & stock Standby
+   ================================================================== */
+
+/** Sheet riwayat tukar (dibuat otomatis bila belum ada, header selalu dirapikan). */
+function swapSheet_() {
+  var ss = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
+  var sh = ss.getSheetByName(SWAP.logSheet);
+  if (!sh) {
+    sh = ss.insertSheet(SWAP.logSheet);
+  }
+  /* header hanya dipasang saat sheet masih kosong — riwayat pengguna tidak pernah ditimpa */
+  if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, SWAP.headers.length).setValues([SWAP.headers])
+      .setFontWeight('bold').setBackground('#0b3d5c').setFontColor('#ffffff');
+    sh.setFrozenRows ? sh.setFrozenRows(1) : null;
+  }
+  return sh;
+}
+
+/**
+ * Baca riwayat tukar untuk web.
+ * @returns {{sheet:string, header:string[], rows:Array, jumlah:number, statusSah:string[]}}
+ */
+function swapRead_() {
+  var sh = swapSheet_();
+  var last = sh.getLastRow();
+  var lebar = SWAP.headers.length;
+  var rows = last > 1 ? sh.getRange(2, 1, last - 1, lebar).getValues().map(isoRow_) : [];
+  rows = rows.filter(function (r) {
+    return r.some(function (v) { return String(v == null ? '' : v).trim() !== ''; });
+  });
+  return {
+    sheet: SWAP.logSheet,
+    header: SWAP.headers,
+    rows: rows,
+    jumlah: rows.length,
+    statusSah: SWAP.statusSah
+  };
+}
+
+/**
+ * Tukar unit pada satu posisi.
+ *
+ * payload:
+ *   tipe        'Mesin' | 'Irrigator'
+ *   posisi      lokasi/divisi tujuan (mis. PG2)
+ *   keluar      kode unit yang sekarang terpasang di posisi itu (boleh kosong →
+ *               mode "pasang": hanya memasang unit standby ke posisi)
+ *   masuk       kode unit pengganti (Standby ATAU terpasang di lokasi lain)
+ *   statusKeluar 'Standby' (default) | 'Rusak'
+ *   tanggal     yyyy-MM-dd / dd/mm/yyyy (default hari ini WIB)
+ *   alasan, petugas, catatan  → teks bebas untuk riwayat
+ *
+ * Yang ditulis: Status (+ Wilayah unit masuk) di sheet master, lalu satu baris
+ * riwayat. Semua dalam satu LockService supaya dua tukar bersamaan tidak tabrakan.
+ */
+function swapUnit_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var tipe = String(p.tipe || 'Mesin').trim();
+    var cfg = MASTER[tipe];
+    if (!cfg) throw new Error('Tipe aset tidak dikenal: "' + tipe + '". Pakai Mesin atau Irrigator.');
+
+    var kodeMasuk = String(p.masuk || p.kodeMasuk || '').trim().toUpperCase();
+    var kodeKeluar = String(p.keluar || p.kodeKeluar || '').trim().toUpperCase();
+    if (!kodeMasuk) throw new Error('Pilih unit yang akan dipasang (unit masuk).');
+    if (kodeKeluar && kodeKeluar === kodeMasuk) throw new Error('Unit keluar dan unit masuk tidak boleh sama.');
+
+    var statusKeluar = String(p.statusKeluar || 'Standby').trim();
+    if (statusKeluar.toLowerCase() === 'terpasang') {
+      throw new Error('Status unit keluar tidak boleh "Terpasang" — pilih Standby (kembali ke stock) atau Rusak.');
+    }
+    if (SWAP.statusSah.indexOf(statusKeluar) < 0) {
+      throw new Error('Status unit keluar harus salah satu dari: ' + SWAP.statusSah.join(', ') + '.');
+    }
+
+    var ss = SpreadsheetApp.openById(SOURCE_SPREADSHEET_ID);
+    var sh = ss.getSheetByName(cfg.sheet);
+    if (!sh) throw new Error('Sheet "' + cfg.sheet + '" tidak ditemukan di spreadsheet master.');
+    var lastRow = sh.getLastRow();
+    var lastCol = sh.getLastColumn();
+    if (lastRow < 2) throw new Error('Sheet "' + cfg.sheet + '" belum berisi data unit.');
+
+    var header = sh.getRange(1, 1, 1, lastCol).getValues()[0].map(function (v) { return String(v).trim(); });
+    var cKode = indexOfHeader_(header, cfg.kode);
+    var cWil = indexOfHeader_(header, cfg.wilayah);
+    var cStatus = indexOfHeader_(header, cfg.status);
+    if (cKode < 1) throw new Error('Kolom "' + cfg.kode + '" tidak ada di sheet ' + cfg.sheet + '.');
+    if (cStatus < 1) throw new Error('Kolom "' + cfg.status + '" tidak ada di sheet ' + cfg.sheet + '.');
+    if (cWil < 1) throw new Error('Kolom "' + cfg.wilayah + '" tidak ada di sheet ' + cfg.sheet + '.');
+
+    /* peta kode → baris (kode dinormalisasi: sheet suka menulis spasi/huruf kecil) */
+    var nilai = sh.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    var peta = {};
+    for (var i = 0; i < nilai.length; i++) {
+      var k = String(nilai[i][cKode - 1] == null ? '' : nilai[i][cKode - 1]).trim().toUpperCase();
+      if (!k) continue;
+      peta[k] = {
+        row: i + 2,
+        kode: k,
+        wilayah: String(nilai[i][cWil - 1] == null ? '' : nilai[i][cWil - 1]).trim().toUpperCase(),
+        status: String(nilai[i][cStatus - 1] == null ? '' : nilai[i][cStatus - 1]).trim()
+      };
+    }
+
+    var masuk = peta[kodeMasuk];
+    if (!masuk) throw new Error('Unit "' + kodeMasuk + '" tidak ada di sheet ' + cfg.sheet + '.');
+    var keluar = null;
+    if (kodeKeluar) {
+      keluar = peta[kodeKeluar];
+      if (!keluar) throw new Error('Unit "' + kodeKeluar + '" tidak ada di sheet ' + cfg.sheet + '.');
+    }
+
+    /* posisi tujuan: dari unit keluar (otoritas sheet), kalau tidak ada dari payload */
+    var posisi = String(p.posisi || '').trim().toUpperCase();
+    if (keluar && keluar.wilayah) posisi = keluar.wilayah;
+    if (!posisi) throw new Error('Posisi/lokasi tujuan belum ditentukan.');
+
+    /* unit keluar harus benar-benar terpasang di lokasi itu */
+    if (keluar) {
+      if (keluar.status.toLowerCase() !== 'terpasang') {
+        throw new Error(
+          'Unit ' + keluar.kode + ' berstatus "' + (keluar.status || 'kosong') + '", bukan Terpasang di ' + posisi +
+          '. Muat ulang data (Sinkron) lalu pilih unit yang benar.'
+        );
+      }
+      if (keluar.wilayah && keluar.wilayah !== posisi) {
+        throw new Error('Unit ' + keluar.kode + ' tercatat di ' + keluar.wilayah + ', bukan di ' + posisi + '.');
+      }
+    }
+
+    /* unit masuk tidak boleh sudah terpasang di posisi yang sama */
+    var posisiAsal = '';
+    if (masuk.status.toLowerCase() === 'terpasang') {
+      if (masuk.wilayah === posisi) {
+        throw new Error('Unit ' + masuk.kode + ' sudah Terpasang di ' + posisi + ' — pilih unit lain.');
+      }
+      posisiAsal = masuk.wilayah; /* relokasi: lokasi asal akan kehilangan satu unit */
+    }
+
+    /* ---------- tulis sheet master ---------- */
+    if (keluar) {
+      sh.getRange(keluar.row, cStatus).setValue(statusKeluar);
+      keluar.statusBaru = statusKeluar;
+    }
+    sh.getRange(masuk.row, cStatus).setValue('Terpasang');
+    if (cWil > 0) sh.getRange(masuk.row, cWil).setValue(posisi);
+    masuk.statusBaru = 'Terpasang';
+    masuk.wilayahBaru = posisi;
+
+    /* ---------- catat riwayat ---------- */
+    var tgl = p.tanggal ? parseTanggal_(p.tanggal) : null;
+    if (!tgl && p.tanggal) throw new Error('Tanggal tukar tidak valid: "' + p.tanggal + '".');
+    var isoTgl = Utilities.formatDate(tgl || new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
+    var logSh = swapSheet_();
+    logSh.appendRow([
+      Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd HH:mm:ss'),
+      isoTgl,
+      tipe,
+      posisi,
+      keluar ? keluar.kode : '',
+      keluar ? statusKeluar : '',
+      masuk.kode,
+      posisiAsal,
+      String(p.alasan || '').trim(),
+      String(p.petugas || '').trim(),
+      String(p.catatan || '').trim()
+    ]);
+    SpreadsheetApp.flush();
+
+    return {
+      ok: true,
+      tipe: tipe,
+      posisi: posisi,
+      tanggal: isoTgl,
+      keluar: keluar ? { kode: keluar.kode, status: statusKeluar, wilayah: keluar.wilayah } : null,
+      masuk: { kode: masuk.kode, status: 'Terpasang', wilayah: posisi, posisiAsal: posisiAsal },
+      posisiKosong: posisiAsal,
+      barisLog: logSh.getLastRow(),
+      sheet: cfg.sheet,
+      logSheet: SWAP.logSheet
+    };
+  } finally {
+    try { lock.releaseLock(); } catch (e) {}
+  }
 }
 
 /**
