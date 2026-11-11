@@ -4,7 +4,7 @@ import { cx, relativeTime } from '../lib/analytics'
 import {
   IconGauge, IconClipboard, IconList, IconHistory, IconSettings, IconMenu, IconX,
   IconCloud, IconCloudOff, IconExternal, IconRefresh, IconPlus, IconChevron, IconWrench,
-  IconAlert, IconCheck, IconSwap,
+  IconAlert, IconCheck,
 } from './icons'
 import { TARGET_SHEET } from '../lib/config'
 import logoUrl from '../assets/logo-color-192.png'
@@ -15,7 +15,6 @@ const NAV = [
   { id: 'unit', label: 'Data Unit', icon: IconList, desc: 'Master aset' },
   { id: 'riwayat', label: 'Riwayat', icon: IconHistory, desc: 'Hasil inspeksi' },
   { id: 'service', label: 'Service Engine', icon: IconWrench, desc: 'Perawatan & jadwal' },
-  { id: 'tukar', label: 'Tukar Unit', icon: IconSwap, desc: 'Rotasi engine & irrigator' },
   { id: 'pengaturan', label: 'Pengaturan', icon: IconSettings, desc: 'Koneksi sheet' },
 ]
 

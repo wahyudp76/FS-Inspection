@@ -9,7 +9,6 @@ const Units = lazy(() => import('./pages/Units'))
 const History = lazy(() => import('./pages/History'))
 const Service = lazy(() => import('./pages/Service'))
 const Settings = lazy(() => import('./pages/Settings'))
-const Swap = lazy(() => import('./pages/Swap'))
 import assetsData from './data/assets.json'
 import { readLocalHistory, sortRecords, readMasterCache, masterCacheAge, repairAll } from './lib/api'
 import { readServiceCache } from './lib/service'
@@ -312,15 +311,6 @@ export default function App() {
             master={data.mesin}
             onRepairAll={doRepairAll}
             repairing={repairing}
-          />
-        )
-      case 'tukar':
-        return (
-          <Swap
-            data={data}
-            notify={notify}
-            offline={!getEndpoint()}
-            onSelesai={() => doSync({ silent: true })}
           />
         )
       case 'pengaturan':

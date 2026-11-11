@@ -115,14 +115,6 @@ export const GROUP_ICON = {
   lain: IconSpark,
 }
 
-/* tukar unit (panah dua arah) */
-export const IconSwap = (p) => (
-  <S {...p}>
-    <path d="M4 8h13l-3-3" />
-    <path d="M20 16H7l3 3" />
-  </S>
-)
-
 export const IconWrench = (p) => (
   <S {...p}><path d="M14.7 6.3a3.6 3.6 0 0 0 4.8 4.8l-8.2 8.2a2.6 2.6 0 0 1-3.7-3.7l8.1-8.1-1-1.2Z" /><path d="M14.7 6.3 17 4a3.6 3.6 0 0 1 3 6l-2.5 1.1" /></S>
 )
