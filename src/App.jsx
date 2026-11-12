@@ -12,7 +12,7 @@ const Settings = lazy(() => import('./pages/Settings'))
 import assetsData from './data/assets.json'
 import { readLocalHistory, sortRecords, readMasterCache, masterCacheAge, repairAll } from './lib/api'
 import { readServiceCache } from './lib/service'
-import { getEndpoint, getAutoRefresh, REFRESH_MS } from './lib/config'
+import { getEndpoint } from './lib/config'
 import { getDemo, setDemo, buildDemoRecords } from './lib/demo'
 import { Toast } from './components/ui'
 import { releaseScrollLock } from './lib/scrollLock'
@@ -88,7 +88,7 @@ export default function App() {
   }, [])
 
   /* satu sinkronisasi pada satu waktu: mencegah permintaan ganda saat tombol
-     ditekan bersamaan dengan auto-refresh / event focus */
+     ditekan dua kali berurutan */
   const inFlight = useRef(null)
 
   /**
@@ -187,32 +187,17 @@ export default function App() {
     }
   }, [repairing])
 
+  /* ---- SATU-SATUNYA tarikan otomatis: saat halaman dimuat / dimuat ulang ----
+     v1.9.22: penarikan berkala (tiap 5 menit) dan penarikan saat tab kembali
+     aktif DIHAPUS atas permintaan pengguna. Data hanya ditarik ketika:
+       1. halaman dibuka / di-reload (efek di bawah), dan
+       2. tombol “Sinkron” di header ditekan (sinkron penuh, termasuk tulis
+          ringkasan master).
+     Tarikan saat muat bersifat baca-saja (`silent`) supaya membuka web tidak
+     pernah mengubah sheet. */
   useEffect(() => {
+    if (!getEndpoint()) return
     doSync({ silent: true })
-  }, [doSync])
-
-  /* ---- muat ulang otomatis: tiap 5 menit + saat tab kembali aktif ---- */
-  useEffect(() => {
-    if (!getAutoRefresh() || !getEndpoint()) return
-    let last = Date.now()
-
-    const refresh = (force = false) => {
-      if (document.visibilityState !== 'visible') return
-      if (!force && Date.now() - last < 5000) return // hindari panggilan dobel saat focus + visibilitychange
-      last = Date.now()
-      doSync({ silent: true })
-    }
-
-    const timer = setInterval(() => refresh(), REFRESH_MS)
-    const onVisible = () => { if (document.visibilityState === 'visible') refresh() }
-    document.addEventListener('visibilitychange', onVisible)
-    window.addEventListener('focus', onVisible)
-
-    return () => {
-      clearInterval(timer)
-      document.removeEventListener('visibilitychange', onVisible)
-      window.removeEventListener('focus', onVisible)
-    }
   }, [doSync])
 
   const handleSubmitted = useCallback((rec) => {

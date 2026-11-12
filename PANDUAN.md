@@ -105,8 +105,9 @@ tahap, jumlah baris/unit yang ditarik, pesan galat, dan sisa antrean lokal.
 Tombol lama (**Tarik dari Sheet** di Riwayat & Service, **Tarik master & riwayat**,
 **Sinkron ke sheet Mesin & Irrigator**, **Kirim antrean lokal**) sudah dihapus; halaman
 Dashboard, Data Unit, Riwayat, dan Service semuanya ikut memakai hasil satu tombol ini.
-Sinkron juga tetap berjalan otomatis setiap 5 menit / saat tab kembali aktif bila opsi
-**Muat ulang data terbaru** di Pengaturan dicentang.
+Tarikan data **tidak** berjalan otomatis: data sheet ditarik saat halaman dibuka/di-reload
+(baca-saja) dan saat tombol **Sinkron** ditekan (penuh). Tidak ada timer 5 menit dan tidak
+ada tarikan saat tab kembali aktif.
 
 ## Status unit mengikuti spreadsheet (v1.8.2)
 
@@ -120,7 +121,7 @@ inspeksi. Artinya:
 
 - status, komponen, skor, A/B/C, dan kondisi yang tampil = isi spreadsheet saat itu,
 - perubahan di sheet langsung terlihat tanpa build ulang, cukup tekan **Sinkron**
-  (atau tunggu tarikan otomatis 5 menit / buka kembali tabnya),
+  (atau muat ulang halaman — tarikan saat muat hanya membaca, tidak menulis),
 - chip di dashboard menunjukkan **`live`** (dari sheet) atau **`snapshot`** (cadangan offline)
   beserta tanggal tarikan terakhir,
 - unit baru di sheet otomatis muncul; unit yang dihapus dari sheet tetap tampil beserta
@@ -465,10 +466,10 @@ Mematikan/menyalakan cara 1: **Pengaturan ▸ Sinkronisasi Otomatis ▸ "Sinkron
 | | Arah | Kapan |
 |---|---|---|
 | **Trigger harian** (`installTriggers`) | `Data Inspeksi` → sheet **Mesin/Irrigator** | tiap hari ±01.00 WIB, jalan di server Google (web tidak perlu dibuka) |
-| **Auto-refresh web** | sheet `Data Inspeksi` → **dashboard** | setiap **5 menit** + saat tab kembali aktif (bisa dimatikan di Pengaturan) |
+| **Tarikan web** | sheet → **dashboard/web** | saat halaman dibuka/di-reload (baca-saja) dan saat tombol **Sinkron** ditekan (penuh) — **tidak** ada timer |
 
-Jadi trigger **tidak** memperbarui tampilan web — web selalu menarik data sendiri dari sheet
-`Data Inspeksi` (saat dibuka, setiap 5 menit, saat tab aktif kembali, atau lewat tombol **Sinkron**).
+Jadi trigger **tidak** memperbarui tampilan web — web menarik data sendiri saat halaman
+dibuka/di-reload atau lewat tombol **Sinkron**.
 
 > Syarat: endpoint `/exec` sudah diisi **dan** deployment memakai **versi terbaru**
 > (`Deploy ▸ Manage deployments ▸ ✏️ ▸ Version: New version`). Kalau inspeksi

@@ -160,8 +160,10 @@ Sinkronisasi bisa dijalankan dengan empat cara:
 4. **Terjadwal (server)** — `installTriggers()` menjalankan `syncLatestToMaster` tiap hari ±01.00 WIB,
    langsung di Google, tanpa perlu ada yang membuka dashboard.
 
-Selain itu dashboard punya **auto-refresh**: menarik ulang isi sheet `Data Inspeksi` setiap
-5 menit dan saat tab kembali aktif (Pengaturan ▸ Sinkronisasi Otomatis).
+Tarikan data ke web **tidak berjalan otomatis**: isi sheet ditarik saat halaman
+dibuka/di-reload (baca-saja) dan saat tombol **Sinkron** ditekan (penuh: kirim antrean →
+tulis ringkasan master → tarik semua sheet). Tidak ada timer dan tidak ada tarikan saat
+tab kembali aktif.
 
 ### Urutan pemasangan (sekali saja)
 

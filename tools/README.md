@@ -47,7 +47,7 @@ Urutan aman: jalankan `dataquality` lebih dulu (ia memuat ulang mock lewat
 | `apicheck.mjs` | `node tools/apicheck.mjs` | protokol API: `unchanged` hemat, ukuran payload, revisi isi |
 | `livedata.mjs` | `node tools/livedata.mjs` | jalur “Repair” mengubah sel sheet seperti yang dijanjikan UI |
 | `e2echeck.mjs` | `node tools/e2echeck.mjs` | tulis inspeksi web → sheet, clientId anti-dobel, pembersihan baris uji |
-| `refreshtest.mjs` | `node tools/refreshtest.mjs` | tarikan otomatis hemat vs Sinkron manual penuh |
+| `refreshtest.mjs` | `node tools/refreshtest.mjs` | sinkron hanya saat muat halaman & tombol Sinkron; menganggur/tab aktif tidak menarik data |
 | `synctest.mjs` | `node tools/synctest.mjs` | Sinkron mengikuti suntingan sheet di semua skenario |
 | `mastertest.mjs` | `node tools/mastertest.mjs` | master live menang atas snapshot, status otoritatif sheet |
 | `hmreset.mjs` | `BASE=… EP=… node tools/hmreset.mjs` | HM lebih kecil (meter diganti) boleh dicatat & jadwal pakai angka baru |

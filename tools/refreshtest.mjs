@@ -1,5 +1,22 @@
 /**
- * UJI TARIKAN OTOMATIS (auto-refresh) vs SINKRON MANUAL
+ * UJI KEBIJAKAN SINKRON: HANYA SAAT MUAT HALAMAN & TOMBOL SINKRON
+ *
+ * v1.9.22: penarikan berkala (tiap 5 menit) dan penarikan saat tab kembali
+ * aktif DIHAPUS. Data sheet hanya ditarik ketika:
+ *   1. halaman dimuat / dimuat ulang  → baca-saja (tidak menulis sheet),
+ *   2. tombol **Sinkron** ditekan      → penuh: kirim antrean, tulis ringkasan
+ *      master, lalu tarik semua sheet (rev dikosongkan).
+ *
+ * Uji ini memastikan:
+ *   1. saat muat: semua sheet ditarik (history, master, svcread) tanpa menulis;
+ *   2. saat menganggur, saat tab kembali aktif/focus, dan setelah menunggu
+ *      beberapa saat TIDAK ada permintaan baru (tidak ada auto-sync);
+ *   3. tombol Sinkron meminta data penuh + menulis ringkasan master;
+ *   4. tampilan tetap berisi data yang sama.
+ *
+ * Riwayat singkat: uji ini dulu membuktikan tarikan otomatis mengirim `rev`
+ * sehingga balasannya ±80 byte (bukan 115 kB). Optimasi `rev` tetap dipakai
+ * pada tarikan saat muat halaman.
  *
  * Temuan audit ronde 5: `syncAll()` selalu meminta data PENUH
  * (`force: true`) — termasuk saat tarikan otomatis tiap 5 menit. Padahal
@@ -86,39 +103,55 @@ const jalankan = async () => {
   const awal = await cache()
   cek(awal.riwayat > 0 && awal.master > 0, 'data awal terbaca', `${awal.riwayat} inspeksi · ${awal.master} unit`)
 
-  /* ---- 1. tarik ulang otomatis (jalur yang sama dengan timer 5 menit) ----
-     Timer tidak bisa dipicu langsung dari luar; muat ulang halaman memakai
-     jalur auto-sync saat mount (`tulisMaster:false` → tarikan otomatis). */
+  /* ---- 1. tarikan saat MUAT HALAMAN (reload) ---- */
   await page.reload({ waitUntil: 'networkidle' })
   await page.waitForTimeout(6000)
 
   log = await ambilLog()
-  const tarikOtomatis = log.filter((l) => l.action === 'history' || l.action === 'master')
-  const pakaiRev = tarikOtomatis.filter((l) => l.rev)
-  const byteOtomatis = tarikOtomatis.reduce((n, l) => n + l.bytes, 0)
-
+  const saatMuat = log.filter((l) => ['history', 'master', 'svcread'].includes(l.action))
+  const aksiTulis = log.filter((l) => ['syncmaster', 'submit', 'repair', 'repairall', 'svcrepair', 'swapunit'].includes(l.action))
   cek(
-    tarikOtomatis.length >= 2,
-    'tarikan otomatis memanggil history & master',
-    tarikOtomatis.map((l) => `${l.action}(${l.rev ? 'rev' : 'penuh'}, ${l.bytes} B)`).join(' · ')
+    saatMuat.length >= 2,
+    'muat halaman menarik sheet (history & master)',
+    saatMuat.map((l) => `${l.action}(${l.rev ? 'rev' : 'penuh'}, ${l.bytes} B)`).join(' · ')
   )
-  cek(pakaiRev.length === tarikOtomatis.length, 'tarikan otomatis mengirim rev terakhir', `${pakaiRev.length}/${tarikOtomatis.length}`)
-  cek(byteOtomatis < 2000, 'balasan “tidak berubah” sangat kecil', `${byteOtomatis} byte (dulu ±155 kB)`)
+  cek(aksiTulis.length === 0, 'muat halaman tidak menulis apa pun ke sheet', aksiTulis.map((l) => l.action).join(', ') || 'tidak ada aksi tulis')
 
   const sesudahTarik = await cache()
   cek(
     sesudahTarik.riwayat === awal.riwayat && sesudahTarik.master === awal.master,
-    'cache tidak rusak oleh balasan unchanged',
+    'cache tetap utuh setelah tarikan saat muat',
     `${sesudahTarik.riwayat} inspeksi · ${sesudahTarik.master} unit`
+  )
+
+  /* ---- 2. TIDAK ada auto-sync: menganggur, tab aktif lagi, jendela fokus ---- */
+  log = await ambilLog()
+  await page.waitForTimeout(12000) // menganggur
+  await page.evaluate(() => {
+    /* meniru pengguna berpindah tab: sembunyikan lalu tampilkan lagi */
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' })
+    document.dispatchEvent(new Event('visibilitychange'))
+    Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' })
+    document.dispatchEvent(new Event('visibilitychange'))
+    window.dispatchEvent(new Event('focus'))
+  })
+  await page.waitForTimeout(6000)
+  const saatDiam = await ambilLog()
+  cek(
+    saatDiam.length === 0,
+    'tidak ada tarikan otomatis saat menganggur / tab kembali aktif',
+    saatDiam.length ? saatDiam.map((l) => l.action).join(', ') : '0 permintaan'
   )
 
   /* ---- 2. tombol Sinkron = data penuh ---- */
   await sinkron(page)
   log = await ambilLog()
   const sinkronLog = log.filter((l) => l.action === 'history' || l.action === 'master')
+  const tulisMaster = log.filter((l) => l.action === 'syncmaster')
+  cek(tulisMaster.length >= 1, 'Sinkron menulis ringkasan master ke sheet', `${tulisMaster.length} panggilan syncmaster`)
   cek(
     sinkronLog.length >= 2 && sinkronLog.every((l) => l.rev === ''),
-    'Sinkron manual selalu minta data penuh',
+    'Sinkron selalu minta data penuh',
     sinkronLog.map((l) => `${l.action}(${l.rev ? 'rev' : 'penuh'}, ${l.bytes} B)`).join(' · ')
   )
   cek(
@@ -133,7 +166,7 @@ const jalankan = async () => {
 
   await page.close()
   await browser.close()
-  console.log(gagal.length ? `\n❌ ${gagal.length} pemeriksaan gagal` : '\n✅ tarikan otomatis hemat, Sinkron manual penuh')
+  console.log(gagal.length ? `\n❌ ${gagal.length} pemeriksaan gagal` : '\n✅ sinkron hanya saat muat halaman & tombol Sinkron (tanpa auto-sync)')
   process.exit(gagal.length ? 1 : 0)
 }
 

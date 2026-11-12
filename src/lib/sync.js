@@ -74,9 +74,9 @@ const kosong = () => ({
  * @param {Object} [opts]
  * @param {Function} [opts.onTahap] dipanggil `(id, 'mulai'|'selesai')` tiap tahap
  * @param {boolean} [opts.tulisMaster] true = tulis ulang ringkasan ke sheet master
- *   (dipakai Sinkron manual; tarikan otomatis tiap 5 menit tidak menulis apa pun)
+ *   (dipakai Sinkron manual; tarikan saat halaman dimuat tidak menulis apa pun)
  * @param {boolean} [opts.paksa] true = minta data penuh (rev dikosongkan). Tarikan
- *   otomatis cukup mengirim `rev` terakhir: bila sheet tidak berubah, Apps Script
+ *   tarikan saat muat halaman cukup mengirim `rev` terakhir: bila sheet tidak berubah, Apps Script
  *   menjawab ±80 byte, bukan 115 kB riwayat + 40 kB master.
  * @returns {Promise<Object>} laporan lengkap (lihat `kosong()`)
  */
@@ -117,7 +117,7 @@ export async function syncAll({ onTahap, tulisMaster = false, paksa = tulisMaste
   }
   onTahap?.('kirim', 'selesai')
 
-  /* 2. web → sheet: ringkasan master (manual saja, supaya tidak menulis tiap 5 menit) */
+  /* 2. web → sheet: ringkasan master (hanya Sinkron manual, bukan tarikan saat muat) */
   if (tulisMaster) {
     onTahap?.('tulis', 'mulai')
     try {

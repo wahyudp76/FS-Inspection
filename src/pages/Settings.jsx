@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Card, CardHeader, Toast } from '../components/ui'
-import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, getAutoRefresh, setAutoRefresh, REFRESH_MS, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
+import { getEndpoint, setEndpoint, isConfigured, getAutoSyncMaster, setAutoSyncMaster, TARGET_SHEET, SOURCE_SHEET } from '../lib/config'
 import { ping, pendingCount, backfillMaster, auditData, repairData, serviceRepair, syncMaster } from '../lib/api'
 import { IconSheet, IconExternal, IconCheck, IconAlert, IconRefresh, IconCloud, IconShield, IconSpark, IconEngine, IconWrench, IconChevron } from '../components/icons'
 import { TAHAP_SYNC } from '../lib/sync'
@@ -66,7 +66,6 @@ export default function Settings({ onRepairAll, repairing = false, onSync, recor
   const [status, setStatus] = useState(null)
   const [tglAwal, setTglAwal] = useState('2026-03-05')
   const [autoMaster, setAutoMaster] = useState(() => getAutoSyncMaster())
-  const [autoRefresh, setAutoRefreshState] = useState(() => getAutoRefresh())
   const [busyAwal, setBusyAwal] = useState(false)
   const [audit, setAudit] = useState(null)
   const [busyAudit, setBusyAudit] = useState(false)
@@ -308,8 +307,8 @@ export default function Settings({ onRepairAll, repairing = false, onSync, recor
               ))}
             </ul>
             <p className="mt-2 text-[10.5px] leading-relaxed text-slate-500">
-              Tidak ada tombol tarik/kirim terpisah di halaman lain. Sinkron manual juga menulis ringkasan master; tarikan
-              otomatis hanya membaca.
+              Tidak ada tombol tarik/kirim terpisah di halaman lain. Tombol Sinkron juga menulis ringkasan master; tarikan
+              saat halaman dimuat hanya membaca (tidak mengubah sheet).
             </p>
           </Lipat>
         </div>
@@ -325,12 +324,15 @@ export default function Settings({ onRepairAll, repairing = false, onSync, recor
             judul="Tulis ringkasan master setiap selesai inspeksi"
             ket="Nilai A/B/C masuk ke kolom komponen sheet Mesin & Irrigator, plus tanggal, skor, kondisi, dan temuan."
           />
-          <Sakelar
-            checked={autoRefresh}
-            onChange={(v) => { setAutoRefreshState(v); setAutoRefresh(v) }}
-            judul={`Muat ulang data tiap ${Math.round(REFRESH_MS / 60000)} menit`}
-            ket="Juga saat tab kembali aktif — hasil inspeksi petugas lain langsung terlihat tanpa menekan Sinkron."
-          />
+          {/* v1.9.22: penarikan berkala dihapus. Data hanya ditarik saat halaman
+             dimuat/di-reload dan saat tombol Sinkron ditekan. */}
+          <div className="flex items-start gap-2 rounded-xl border border-slate-900/[0.09] bg-slate-900/[0.02] px-3 py-2.5">
+            <IconCloud size={14} className="mt-0.5 shrink-0 text-brand" />
+            <p className="text-[11px] leading-relaxed text-slate-600">
+              <span className="font-semibold text-slate-800">Tidak ada penarikan otomatis.</span> Data sheet ditarik saat halaman
+              dibuka/di-reload, dan saat tombol <span className="font-semibold text-slate-800">Sinkron</span> di header ditekan.
+            </p>
+          </div>
           <Sakelar
             accent="accent-amber-500"
             checked={demo}
