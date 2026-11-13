@@ -1206,6 +1206,22 @@ function writeServiceCache(data) {
  * Browser tidak bisa membaca CSV gviz langsung (CORS), jadi endpoint yang membaca
  * kedua sheet sekaligus lalu mengirim header + barisnya.
  */
+/* Satu permintaan `svcread` dipakai bersama oleh semua pemanggil yang
+   berbarengan (tarikan halaman, halaman Service, tarikSetelahCatat).
+   `svcread` belum punya `rev`/ETag sehingga tiap panggilan = ±53 kB; tanpa
+   penjaga ini halaman Service memanggilnya 2–3 kali sekaligus (v1.9.23). */
+let svcInFlight = null
+
+function bacaSvcRaw() {
+  if (svcInFlight) return svcInFlight
+  svcInFlight = postApi({ action: 'svcread' }, 45000).finally(() => {
+    /* dilepas setelah selesai supaya pengguna berikutnya (mis. tombol Sinkron
+       atau tarikSetelahCatat) benar-benar membaca ulang sheet */
+    svcInFlight = null
+  })
+  return svcInFlight
+}
+
 export async function fetchServiceData({ master = [] } = {}) {
   if (!getEndpoint()) {
     const err = new Error(
@@ -1214,7 +1230,7 @@ export async function fetchServiceData({ master = [] } = {}) {
     err.kode = 'TANPA_ENDPOINT'
     throw err
   }
-  const json = await postApi({ action: 'svcread' }, 45000)
+  const json = await bacaSvcRaw()
   const r = json.result || {}
   const intervalHm = r.intervalHm || INTERVAL_HM
   const { units: evalUnits, duplikat, baris } = parseService1(r.evalHeader || [], r.evalRows || [])

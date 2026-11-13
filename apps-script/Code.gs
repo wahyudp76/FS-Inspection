@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.21'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.9.22'; // naikkan setiap kali kode berubah besar
 /* 1.9.21 — fitur Tukar Unit (1.9.20) DIBATALKAN atas permintaan pemilik sheet:
      aksi "swapread"/"swapunit" dan sheet "Riwayat Tukar" tidak dipakai lagi.
    1.9.14 — HM boleh turun (meter diganti): catatan service tetap diterima. */

@@ -90,6 +90,10 @@ export default function App() {
   /* satu sinkronisasi pada satu waktu: mencegah permintaan ganda saat tombol
      ditekan dua kali berurutan */
   const inFlight = useRef(null)
+  /* rute terkini dibaca dari ref karena `doSync` sengaja tidak dibuat ulang
+     setiap kali rute berubah */
+  const routeRef = useRef(route)
+  useEffect(() => { routeRef.current = route }, [route])
 
   /**
    * SATU-SATUNYA jalur sinkron (dipicu tombol **Sinkron** di header).
@@ -112,8 +116,14 @@ export default function App() {
     inFlight.current = (async () => {
       try {
         /* Sinkron manual = dua arah: kirim antrean → tulis ringkasan master →
-           tarik semua sheet. Tarikan otomatis (silent) tidak menulis apa pun. */
-        const lap = await syncAll({ tulisMaster: !silent })
+           tarik SEMUA sheet. Tarikan saat halaman dimuat (silent) tidak
+           menulis apa pun dan hanya meminta data service bila halaman yang
+           dibuka memang memakainya (halaman Service) — `svcread` belum punya
+           `rev` sehingga balasannya selalu ±53 kB. */
+        const lap = await syncAll({
+          tulisMaster: !silent,
+          service: !silent || routeRef.current === 'service',
+        })
 
         /* web → sheet: antrean inspeksi yang tertunda */
         if (lap.kirim.terkirim && !silent) {

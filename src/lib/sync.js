@@ -75,12 +75,17 @@ const kosong = () => ({
  * @param {Function} [opts.onTahap] dipanggil `(id, 'mulai'|'selesai')` tiap tahap
  * @param {boolean} [opts.tulisMaster] true = tulis ulang ringkasan ke sheet master
  *   (dipakai Sinkron manual; tarikan saat halaman dimuat tidak menulis apa pun)
+ * @param {boolean} [opts.service] true = ikut menarik tb_service1/tb_service2.
+ *   Tarikan saat halaman dimuat hanya meminta bagian ini bila memang akan
+ *   ditampilkan (halaman Service); tombol Sinkron selalu `true`.
+ *   `svcread` belum punya mekanisme `rev`, jadi balasannya selalu ±53 kB —
+ *   meminta di halaman lain hanya membuang kuota dan waktu tunggu.
  * @param {boolean} [opts.paksa] true = minta data penuh (rev dikosongkan). Tarikan
  *   tarikan saat muat halaman cukup mengirim `rev` terakhir: bila sheet tidak berubah, Apps Script
  *   menjawab ±80 byte, bukan 115 kB riwayat + 40 kB master.
  * @returns {Promise<Object>} laporan lengkap (lihat `kosong()`)
  */
-export async function syncAll({ onTahap, tulisMaster = false, paksa = tulisMaster } = {}) {
+export async function syncAll({ onTahap, tulisMaster = false, paksa = tulisMaster, service = true } = {}) {
   const laporan = kosong()
   const t0 = Date.now()
   const lapor = (tahap, ok, error = '') => {
@@ -134,7 +139,7 @@ export async function syncAll({ onTahap, tulisMaster = false, paksa = tulisMaste
   /* 3–5. sheet → web */
   onTahap?.('master', 'mulai')
   onTahap?.('riwayat', 'mulai')
-  onTahap?.('service', 'mulai')
+  if (service) onTahap?.('service', 'mulai')
 
   const tarikMaster = async () => {
     try {
@@ -187,7 +192,14 @@ export async function syncAll({ onTahap, tulisMaster = false, paksa = tulisMaste
     onTahap?.('service', 'selesai')
   }
 
-  await Promise.all([tarikMaster(), tarikRiwayat(), tarikService()])
+  /* `service` tidak diminta → tahapnya ditandai `dilewati` supaya panel
+     Sinkronisasi di Pengaturan tidak menampilkan “service gagal” */
+  const tarikServiceDiminta = async () => {
+    if (service) return tarikService()
+    laporan.service = { ok: true, data: null, unit: 0, log: 0, error: '', dilewati: true }
+  }
+
+  await Promise.all([tarikMaster(), tarikRiwayat(), tarikServiceDiminta()])
 
   laporan.ms = Date.now() - t0
   laporan.selesai = new Date().toISOString()
