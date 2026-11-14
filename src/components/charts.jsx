@@ -141,17 +141,17 @@ export function useWidth() {
 const rcHeight = (h) => (h === 'fill' ? '100%' : h)
 
 /**
- * Huruf label sumbu grafik di HP.
+ * Huruf label sumbu grafik di HP & tablet.
  * Recharts memakai ukuran tetap (8,5–10,5 px) yang terlalu kecil di layar 320–412 px.
  * Hook ini mengembalikan pembesar minimum supaya label terbaca (≥ 11 px) tanpa
  * mengubah tampilan desktop/tablet: `fs(10)` → 10 di desktop, 11 di HP.
  */
 export function useTickFs() {
   const [kecil, setKecil] = React.useState(
-    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 1023px)').matches
   )
   React.useEffect(() => {
-    const mq = window.matchMedia('(max-width: 639px)')
+    const mq = window.matchMedia('(max-width: 1023px)')
     const on = (e) => setKecil(e.matches)
     mq.addEventListener('change', on)
     return () => mq.removeEventListener('change', on)

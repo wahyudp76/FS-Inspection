@@ -131,14 +131,14 @@ function auditDom({ MIN_TAP, MIN_TAP_KECIL, MIN_FONT }) {
   }
 
   /* --- huruf terlalu kecil --- */
-  const teksEls = [...document.querySelectorAll('p, span, a, button, td, th, li, h1, h2, h3, h4, label, div')]
+  const teksEls = [...document.querySelectorAll('p, span, a, button, td, th, li, h1, h2, h3, h4, label, div, tspan')]
   const sudah = new Set()
   for (const el of teksEls) {
     if (!terlihat(el)) continue
     const isi = (el.textContent || '').trim()
     if (!isi || isi.length > 200) continue
-    /* hanya elemen yang langsung memuat teks */
-    const langsung = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())
+    /* hanya elemen yang langsung memuat teks (tspan grafik juga diperiksa) */
+    const langsung = el.tagName === 'tspan' || [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())
     if (!langsung) continue
     const px = parseFloat(getComputedStyle(el).fontSize)
     if (px && px < MIN_FONT) {
