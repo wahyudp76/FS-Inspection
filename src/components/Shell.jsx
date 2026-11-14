@@ -261,7 +261,9 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
           </div>
         </header>
 
-        <main className="relative mx-auto w-full max-w-[1500px] px-4 py-5 sm:px-6 sm:py-6">
+        {/* pb-24 di HP: ruang untuk tombol melayang “ke atas” (48 px) supaya tidak
+            menutupi tombol terakhir saat halaman sudah di dasar (v1.9.24) */}
+        <main className="relative mx-auto w-full max-w-[1500px] px-4 py-5 pb-24 sm:px-6 sm:py-6 sm:pb-20">
           {/* aksesori: siluet tetes logo sebagai watermark di pojok */}
           <svg
             aria-hidden="true"

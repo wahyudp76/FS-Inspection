@@ -83,6 +83,34 @@ function auditDom({ MIN_TAP, MIN_TAP_KECIL, MIN_FONT }) {
     }
   }
 
+  /* --- isi terpotong wadah (chip/tombol yang terpotong tepi kartu) --- */
+  out.terpotong = []
+  for (const el of semua) {
+    if (!terlihat(el)) continue
+    if (el.closest('svg')) continue
+    /* hiasan tanpa teks (blob, pendar) memang sengaja keluar kartu */
+    const teksIsi = (el.textContent || '').trim()
+    const interaktif = ['BUTTON', 'A', 'INPUT', 'SELECT', 'LABEL'].includes(el.tagName)
+    if (!teksIsi && !interaktif) continue
+    const elipsis = /truncate|line-clamp/.test(el.className?.toString?.() || '') || getComputedStyle(el).textOverflow === 'ellipsis'
+    if (elipsis) continue
+    const r = el.getBoundingClientRect()
+    let p = el.parentElement
+    while (p) {
+      const cs = getComputedStyle(p)
+      /* wadah yang bisa digulir mendatar = sah, isinya memang bisa digeser */
+      if (/(auto|scroll)/.test(cs.overflowX)) break
+      if (/(hidden|clip)/.test(cs.overflowX)) {
+        const pr = p.getBoundingClientRect()
+        if (r.right > pr.right + 4 || r.left < pr.left - 4) {
+          out.terpotong.push({ teks: label(el), tag: el.tagName.toLowerCase(), kanan: Math.round(r.right), batas: Math.round(pr.right) })
+        }
+        break
+      }
+      p = p.parentElement
+    }
+  }
+
   /* --- target sentuh --- */
   const tapEls = [...document.querySelectorAll('button, a[href], input:not([type=hidden]), select, textarea, [role="button"], [tabindex]:not([tabindex="-1"])')]
   for (const el of tapEls) {
@@ -186,7 +214,33 @@ for (const d of DEVICES) {
     else if (hasil.tap.length) catat('ringan', rute, d.label, `${hasil.tap.length} target sentuh < 44 px`, hasil.tap.slice(0, 6))
     if (hasil.font.length) catat('sedang', rute, d.label, `${hasil.font.length} teks < ${MIN_FONT} px`, hasil.font.slice(0, 6))
     if (hasil.tumpang.length) catat('berat', rute, d.label, 'tombol melayang menutupi tombol lain', hasil.tumpang.slice(0, 3))
+    if (hasil.terpotong?.length) catat('sedang', rute, d.label, `${hasil.terpotong.length} elemen terpotong tepi wadah`, hasil.terpotong.slice(0, 5))
 
+    /* --- saat sudah di dasar halaman: tombol melayang tidak boleh menutupi tombol --- */
+    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    await page.waitForTimeout(700)
+    const bawah = await page.evaluate(() => {
+      const fab = [...document.querySelectorAll('[class*="fixed"]')].find((el) => {
+        const cs = getComputedStyle(el)
+        const r = el.getBoundingClientRect()
+        return cs.position === 'fixed' && r.width > 20 && r.width < 80 && r.height < 80
+      })
+      if (!fab) return []
+      const a = fab.getBoundingClientRect()
+      const tabrakan = []
+      for (const el of document.querySelectorAll('button, a[href], [role="button"], input, select, textarea')) {
+        if (fab.contains(el)) continue
+        const b = el.getBoundingClientRect()
+        if (b.width < 2 || b.height < 2 || b.bottom < 0 || b.top > window.innerHeight) continue
+        const lebar = Math.min(a.right, b.right) - Math.max(a.left, b.left)
+        const tinggi = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)
+        if (lebar > 4 && tinggi > 4) tabrakan.push((el.getAttribute('aria-label') || el.textContent || '').trim().slice(0, 30))
+      }
+      return tabrakan
+    })
+    if (bawah.length) catat('sedang', rute, d.label, `tombol “ke atas” menutupi ${bawah.length} tombol di dasar halaman`, bawah.slice(0, 4))
+    await page.evaluate(() => window.scrollTo(0, 0))
+    await page.waitForTimeout(250)
     ringkas.push({ rute, perangkat: d.id, dokH: hasil.docH, overflow: hasil.overflowX, tapKecil: hasil.tap.length, fontKecil: hasil.font.length })
     /* tangkapan layar untuk bukti visual */
     mkdirSync('audit-shots/mobile', { recursive: true })

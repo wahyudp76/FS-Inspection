@@ -1,4 +1,5 @@
 export function GradeStack({ data = [], height = 220, minH = 220 }) {
+  const fs = useTickFs()
   /* Skala 100% (bukan jumlah mentah): komponen “A” bisa ribuan kali lipat B/C,
      sehingga batang B & C nyaris tak terlihat bila memakai angka mentah. */
   const rows = data.map((d) => {
@@ -37,13 +38,13 @@ export function GradeStack({ data = [], height = 220, minH = 220 }) {
       <ResponsiveContainer width="100%" height={rcHeight(height)}>
         <BarChart data={rows} margin={{ top: 8, right: 6, left: 0, bottom: 0 }} barCategoryGap="30%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10.5 }} />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(10.5) }} />
           <YAxis
             domain={[0, 100]}
             width={38}
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#64748b', fontSize: 10 }}
+            tick={{ fill: '#64748b', fontSize: fs(10) }}
             tickFormatter={(v) => `${v}%`}
           />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<TipGrade />} />
@@ -139,6 +140,25 @@ export function useWidth() {
 /** Tinggi efektif untuk ResponsiveContainer. */
 const rcHeight = (h) => (h === 'fill' ? '100%' : h)
 
+/**
+ * Huruf label sumbu grafik di HP.
+ * Recharts memakai ukuran tetap (8,5–10,5 px) yang terlalu kecil di layar 320–412 px.
+ * Hook ini mengembalikan pembesar minimum supaya label terbaca (≥ 11 px) tanpa
+ * mengubah tampilan desktop/tablet: `fs(10)` → 10 di desktop, 11 di HP.
+ */
+export function useTickFs() {
+  const [kecil, setKecil] = React.useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches
+  )
+  React.useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const on = (e) => setKecil(e.matches)
+    mq.addEventListener('change', on)
+    return () => mq.removeEventListener('change', on)
+  }, [])
+  return React.useCallback((dasar) => (kecil ? Math.max(dasar, 11) : dasar), [kecil])
+}
+
 export function TipBox({ active, payload, label, suffix = '', formatter }) {
   if (!active || !payload?.length) return null
   return (
@@ -161,6 +181,7 @@ export function TipBox({ active, payload, label, suffix = '', formatter }) {
 
 /* --------------------------- Donut --------------------------- */
 export function Donut({ data, height = 210, minH = 210, innerRadius = '52%', outerRadius = '76%', centerLabel, centerValue, onSlice, showLegend = true }) {
+  const fs = useTickFs()
   const total = data.reduce((s, d) => s + d.value, 0)
   return (
     /* Tinggi "fill" → donat ikut membesar (radius memakai persentase) sehingga
@@ -217,6 +238,7 @@ export function DonutLegend({ data, onSlice }) {
 
 /* --------------------- Wilayah stacked bar --------------------- */
 export function WilayahChart({ data, height = 230, minH = 230, onBar }) {
+  const fs = useTickFs()
   return (
     <ChartBox height={height} minH={minH}>
     <ResponsiveContainer width="100%" height={rcHeight(height)}>
@@ -237,26 +259,27 @@ export function WilayahChart({ data, height = 230, minH = 230, onBar }) {
 
 /* ------------------ Komponen bermasalah (horizontal) ------------------ */
 export function IssuesBar({ data, height = 300, minH = 300, onItem }) {
+  const fs = useTickFs()
   return (
     <ChartBox height={height} minH={minH}>
     <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <BarChart data={data} layout="vertical" margin={{ top: 4, right: 26, left: 4, bottom: 0 }} barCategoryGap="22%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
-        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
+        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(10) }} allowDecimals={false} />
         <YAxis
           type="category"
           dataKey="name"
           width={138}
           axisLine={false}
           tickLine={false}
-          tick={{ fill: '#3f4d5a', fontSize: 10 }}
+          tick={{ fill: '#3f4d5a', fontSize: fs(10) }}
           tickFormatter={(v) => (v.length > 20 ? `${v.slice(0, 19)}…` : v)}
         />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
         <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 11 }} />
         <Bar dataKey="b" name="Perlu Perhatian (B)" stackId="s" fill="#f59e0b" onClick={(d) => onItem?.(d)} />
         <Bar dataKey="c" name="Rusak (C)" stackId="s" fill="#f43f5e" radius={[0, 4, 4, 0]} onClick={(d) => onItem?.(d)}>
-          <LabelList dataKey="issue" position="right" style={{ fill: '#5b6b7c', fontSize: 10, fontWeight: 600 }} />
+          <LabelList dataKey="issue" position="right" style={{ fill: '#5b6b7c', fontSize: fs(10), fontWeight: 600 }} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>
@@ -266,6 +289,7 @@ export function IssuesBar({ data, height = 300, minH = 300, onItem }) {
 
 /* --------------------------- Radar grup --------------------------- */
 export function GroupRadar({ data, height = 260, minH = 260 }) {
+  const fs = useTickFs()
   /* Label grup memanjang (“Instrument & Monitoring”) gampang terpotong di HP.
      Lebar kartu diukur: layar sempit → radius dikecilkan & margin dilebarkan. */
   const [ref, w] = useWidth()
@@ -280,7 +304,10 @@ export function GroupRadar({ data, height = 260, minH = 260 }) {
             margin={sempit ? { top: 10, right: 12, bottom: 6, left: 12 } : { top: 12, right: 20, bottom: 8, left: 20 }}
           >
             <PolarGrid stroke="rgba(148,163,184,0.16)" />
-            <PolarAngleAxis dataKey="grup" tick={{ fill: '#5b6b7c', fontSize: sempit ? 8.5 : 9.5 }} />
+            {/* Di HP label sumbu radar terlalu kecil (8,5 px) dan gampang
+                bertumpuk; namanya sudah tampil lengkap di legenda bawah
+                grafik → sembunyikan label sumbu, bukan diperkecil. */}
+            <PolarAngleAxis dataKey="grup" tick={sempit ? false : { fill: '#5b6b7c', fontSize: fs(9.5) }} />
             <PolarRadiusAxis domain={[0, 100]} tick={false} axisLine={false} />
             <Tooltip content={<TipBox formatter={(v) => `${v}%`} />} />
             <Radar name="Skor kondisi" dataKey="nilai" stroke="#0d9488" fill="#0d9488" fillOpacity={0.28} strokeWidth={2} />
@@ -293,6 +320,7 @@ export function GroupRadar({ data, height = 260, minH = 260 }) {
 
 /* ------------------------ Trend inspeksi ------------------------ */
 export function TrendChart({ data, height = 250, minH = 250, showSkor = true }) {
+  const fs = useTickFs()
   return (
     <ChartBox height={height} minH={minH}>
     <ResponsiveContainer width="100%" height={rcHeight(height)}>
@@ -304,10 +332,10 @@ export function TrendChart({ data, height = 250, minH = 250, showSkor = true }) 
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10.5 }} />
+        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(10.5) }} />
         <YAxis yAxisId="l" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 11 }} allowDecimals={false} />
         {showSkor && (
-          <YAxis yAxisId="r" orientation="right" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: 10 }} />
+          <YAxis yAxisId="r" orientation="right" domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fill: '#475569', fontSize: fs(10) }} />
         )}
         <Tooltip content={<TipBox />} />
         <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 11, paddingTop: 4 }} />
@@ -321,15 +349,16 @@ export function TrendChart({ data, height = 250, minH = 250, showSkor = true }) 
 
 /* ------------------ Distribusi skor (histogram) ------------------ */
 export function ScoreHistogram({ data, height = 180, minH = 180, onBucket }) {
+  const fs = useTickFs()
   return (
     <ChartBox height={height} minH={minH}>
     <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <BarChart data={data} margin={{ top: 18, right: 6, left: -14, bottom: 0 }} barCategoryGap="20%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
+        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: fs(10) }} />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
         <Bar dataKey="count" name="Unit" radius={[5, 5, 0, 0]} onClick={(d) => onBucket?.(d?.label)} maxBarSize={38}>
-          <LabelList dataKey="count" position="top" style={{ fill: '#3f4d5a', fontSize: 10.5, fontWeight: 700 }} />
+          <LabelList dataKey="count" position="top" style={{ fill: '#3f4d5a', fontSize: fs(10.5), fontWeight: 700 }} />
           {data.map((d) => <Cell key={d.label} fill={d.color} />)}
         </Bar>
       </BarChart>
@@ -344,6 +373,7 @@ export function ScoreHistogram({ data, height = 180, minH = 180, onBucket }) {
  * untuk membuka pop-up daftar unit + analisis rentang tersebut.
  */
 export function ScoreHistogramSplit({ data, height = 200, minH = 200, onBar }) {
+  const fs = useTickFs()
   const klik = (tipe) => (d) => {
     const label = d?.label ?? d?.payload?.label
     const range = data.find((x) => x.label === label)
@@ -354,20 +384,20 @@ export function ScoreHistogramSplit({ data, height = 200, minH = 200, onBar }) {
     <ResponsiveContainer width="100%" height={rcHeight(height)}>
       <BarChart data={data} margin={{ top: 18, right: 6, left: -16, bottom: 0 }} barCategoryGap="24%" barGap={2}>
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
-        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
+        <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: fs(10) }} />
+        <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(10) }} allowDecimals={false} />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.05)' }} content={<TipBox suffix=" unit" />} />
         <Legend
           iconType="circle"
           iconSize={7}
-          wrapperStyle={{ fontSize: 10.5, paddingTop: 2 }}
+          wrapperStyle={{ fontSize: fs(10.5), paddingTop: 2 }}
           formatter={(v) => <span style={{ color: '#5b6b7c' }}>{v}</span>}
         />
         <Bar dataKey="mesin" name="Mesin (engine)" fill="#0d9488" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Mesin')} cursor="pointer">
-          <LabelList dataKey="mesin" position="top" style={{ fill: '#0f766e', fontSize: 9.5, fontWeight: 700 }} />
+          <LabelList dataKey="mesin" position="top" style={{ fill: '#0f766e', fontSize: fs(9.5), fontWeight: 700 }} />
         </Bar>
         <Bar dataKey="irrigator" name="Irrigator" fill="#0891b2" radius={[4, 4, 0, 0]} maxBarSize={26} onClick={klik('Irrigator')} cursor="pointer">
-          <LabelList dataKey="irrigator" position="top" style={{ fill: '#0e7490', fontSize: 9.5, fontWeight: 700 }} />
+          <LabelList dataKey="irrigator" position="top" style={{ fill: '#0e7490', fontSize: fs(9.5), fontWeight: 700 }} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

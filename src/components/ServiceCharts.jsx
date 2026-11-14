@@ -3,7 +3,7 @@ import {
   ResponsiveContainer, ComposedChart, BarChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Cell, LabelList,
 } from 'recharts'
 import { cx } from '../lib/analytics'
-import { TipBox, ChartBox } from './charts'
+import { TipBox, ChartBox, useTickFs } from './charts'
 import { IconCheck } from './icons'
 import { Empty } from './ui'
 
@@ -17,6 +17,7 @@ const fmt = (n) => (n == null ? '—' : new Intl.NumberFormat('id-ID').format(n)
    garis: % tepat waktu, garis putus: jumlah unit berbeda yang diservice.
    ============================================================ */
 export function TrenServiceChart({ data = [], height = 270, minH = 270 }) {
+  const fs = useTickFs()
   const [mode, setMode] = useState('tepat')
 
   const ringkas = useMemo(() => {
@@ -54,19 +55,19 @@ export function TrenServiceChart({ data = [], height = 270, minH = 270 }) {
       <ResponsiveContainer width="100%" height="100%">
         <ComposedChart data={data} margin={{ top: 10, right: 6, left: -22, bottom: 0 }} barCategoryGap="24%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.10)" vertical={false} />
-          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 10 }} />
-          <YAxis yAxisId="l" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 10 }} allowDecimals={false} />
+          <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: fs(10) }} />
+          <YAxis yAxisId="l" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(10) }} allowDecimals={false} />
           <YAxis
             yAxisId="r"
             orientation="right"
             domain={[0, 100]}
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#475569', fontSize: 9.5 }}
+            tick={{ fill: '#475569', fontSize: fs(9.5) }}
             unit="%"
           />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox />} />
-          <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: 10, paddingTop: 2 }} />
+          <Legend iconType="circle" iconSize={6} wrapperStyle={{ fontSize: fs(10), paddingTop: 2 }} />
 
           {mode === 'tepat' ? (
             <>
@@ -98,6 +99,7 @@ export function TrenServiceChart({ data = [], height = 270, minH = 270 }) {
    Batang 100% bertumpuk per posisi + ringkasan angka & tombol saring.
    ============================================================ */
 export function DivisiCakupanChart({ data = [], onPick, height = 190, minH = 190 }) {
+  const fs = useTickFs()
   const urut = useMemo(() => [...data].sort((a, b) => b.belum - a.belum || b.total - a.total), [data])
   const total = urut.reduce((a, d) => a + d.total, 0)
   const belum = urut.reduce((a, d) => a + d.belum, 0)
@@ -131,7 +133,7 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190, minH = 190
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={barData} layout="vertical" margin={{ top: 4, right: 34, left: 4, bottom: 0 }} barCategoryGap="26%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
-          <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} allowDecimals={false} />
+          <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(9.5) }} allowDecimals={false} />
           <YAxis type="category" dataKey="posisi" width={44} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 11, fontWeight: 600 }} />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" unit" />} />
           <Bar dataKey="Aman" stackId="a" fill="#22c55e" />
@@ -139,7 +141,7 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190, minH = 190
           <Bar dataKey="Lewat jadwal" stackId="a" fill="#f43f5e" />
           <Bar dataKey="Data HM kurang" stackId="a" fill="#7c3aed" />
           <Bar dataKey="Belum service" stackId="a" fill="#475569" radius={[0, 3, 3, 0]}>
-            <LabelList dataKey="total" position="right" style={{ fill: '#5b6b7c', fontSize: 9.5 }} />
+            <LabelList dataKey="total" position="right" style={{ fill: '#5b6b7c', fontSize: fs(9.5) }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -177,6 +179,7 @@ export function DivisiCakupanChart({ data = [], onPick, height = 190, minH = 190
    3. SEBARAN URGENSI — sisa hari menuju warning date
    ============================================================ */
 export function UrgensiChart({ data = [], onClickEmber, height = 200, minH = 200 }) {
+  const fs = useTickFs()
   const total = data.reduce((a, d) => a + d.jumlah, 0)
   if (!total) return <p className="px-3 py-6 text-center text-[11.5px] text-slate-500">Belum ada jadwal untuk dihitung.</p>
 
@@ -186,14 +189,14 @@ export function UrgensiChart({ data = [], onClickEmber, height = 200, minH = 200
     <ResponsiveContainer width="100%" height={rcHeight(height)}>
         <BarChart data={data} layout="vertical" margin={{ top: 2, right: 30, left: 2, bottom: 0 }} barCategoryGap="22%">
           <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
-          <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} allowDecimals={false} />
-          <YAxis type="category" dataKey="label" width={104} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 9.5 }} />
+          <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(9.5) }} allowDecimals={false} />
+          <YAxis type="category" dataKey="label" width={104} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: fs(9.5) }} />
           <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox suffix=" engine" />} />
           <Bar dataKey="jumlah" name="Engine" radius={[0, 3, 3, 0]} onClick={(d) => onClickEmber?.(d?.payload?.id || d?.id)} className="cursor-pointer">
             {data.map((d) => (
               <Cell key={d.id} fill={d.color} />
             ))}
-            <LabelList dataKey="jumlah" position="right" style={{ fill: '#3f4d5a', fontSize: 10 }} />
+            <LabelList dataKey="jumlah" position="right" style={{ fill: '#3f4d5a', fontSize: fs(10) }} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
@@ -209,6 +212,7 @@ export function UrgensiChart({ data = [], onClickEmber, height = 200, minH = 200
    4. TOP 10 ENGINE PALING TERLAMBAT
    ============================================================ */
 export function TopTerlambatChart({ data = [], height = 250, minH = 250, onPick }) {
+  const fs = useTickFs()
   if (!data.length) {
     return (
       <div className="flex flex-col items-center justify-center gap-1.5 px-4 py-10 text-center">
@@ -225,14 +229,14 @@ export function TopTerlambatChart({ data = [], height = 250, minH = 250, onPick 
     <ResponsiveContainer width="100%" height={rcHeight(height) === '100%' ? '100%' : rcHeight(height)}>
       <BarChart data={barData} layout="vertical" margin={{ top: 2, right: 32, left: 2, bottom: 0 }} barCategoryGap="24%">
         <CartesianGrid strokeDasharray="3 6" stroke="rgba(148,163,184,0.08)" horizontal={false} />
-        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 9.5 }} unit=" hr" />
-        <YAxis type="category" dataKey="label" width={66} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: 9.5, fontFamily: 'monospace' }} />
+        <XAxis type="number" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: fs(9.5) }} unit=" hr" />
+        <YAxis type="category" dataKey="label" width={66} axisLine={false} tickLine={false} tick={{ fill: '#5b6b7c', fontSize: fs(9.5), fontFamily: 'monospace' }} />
         <Tooltip cursor={{ fill: 'rgba(255,255,255,0.04)' }} content={<TipBox formatter={(v) => `${v} hari terlambat`} />} />
         <Bar dataKey="telat" name="Terlambat" radius={[0, 3, 3, 0]} onClick={(d) => onPick?.(d?.payload?.kode || d?.kode)} className="cursor-pointer">
           {barData.map((d, i) => (
             <Cell key={d.kode} fill={d.telat > 30 ? '#9f1239' : d.telat > 14 ? '#f43f5e' : '#fb7185'} opacity={0.55 + (i / barData.length) * 0.45} />
           ))}
-          <LabelList dataKey="telat" position="right" style={{ fill: '#3f4d5a', fontSize: 9.5 }} />
+          <LabelList dataKey="telat" position="right" style={{ fill: '#3f4d5a', fontSize: fs(9.5) }} />
         </Bar>
       </BarChart>
     </ResponsiveContainer>

@@ -478,7 +478,8 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
             )}
           </p>
 
-          <div className="ml-auto flex flex-wrap items-center gap-2">
+          {/* di HP paginasi turun ke baris sendiri supaya tidak terpotong tepi kartu */}
+          <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto">
             <span className="text-[10.5px] text-slate-500">Baris</span>
             <Segmented
               value={String(perPage)}
@@ -491,7 +492,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
               ]}
             />
 
-            <div className="ml-1 flex items-center gap-1">
+            <div className="flex w-full flex-wrap items-center gap-1 sm:ml-1 sm:w-auto">
               <button
                 className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                 disabled={halamanAman === 0}
