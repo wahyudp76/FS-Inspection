@@ -190,18 +190,76 @@ body::before {
 
 /* ==================================================================
    Perbaikan ukuran sentuh (mobile) — WCAG 2.5.8 target minimum 24 px,
-   kita pakai 36–44 px agar nyaman di HP.
+   Android Material 48 dp; kita pakai 44 px CSS agar nyaman di HP.
+   Diukur tools/mobilecheck.mjs (v1.9.24).
    ================================================================== */
 @media (max-width: 639px), (pointer: coarse) {
-  .btn { min-height: 40px; }
+  .btn { min-height: 44px; }
   .input,
-  select.input { min-height: 42px; }
-  .tap { min-height: 36px; }
+  select.input,
+  select { min-height: 44px; font-size: 14px; } /* 14 px: cegah zoom otomatis iOS */
+  .tap { min-height: 44px; min-width: 44px; }
   .btn-ghost.\!py-1,
-  .btn-ghost.\!px-2 { min-height: 38px; }
-  .tap-sm { min-height: 32px; padding-top: 0.25rem; padding-bottom: 0.25rem; }
-  input[type='checkbox'] { min-height: 24px; min-width: 24px; }
+  .btn-ghost.\!px-2 { min-height: 44px; }
+  .tap-sm { min-height: 44px; padding-top: 0.25rem; padding-bottom: 0.25rem; }
+  /* kolom teks: 44 px supaya mudah disentuh (bukan 37 px) */
+  input:not([type='hidden']):not([type='checkbox']):not([type='radio']),
+  textarea { min-height: 44px; }
+  /* 16 px: mencegah iOS memperbesar halaman sendiri saat kolom disentuh */
+  input:not([type='hidden']):not([type='checkbox']):not([type='radio']),
+  select,
+  textarea { font-size: 16px !important; }
+  /* kotak centang: 24 px (WCAG 2.5.8); baris labelnya tetap jadi area sentuh */
+  input[type='checkbox'],
+  input[type='radio'] { min-height: 24px; min-width: 24px; }
+
+  /* semua kendali sentuh: minimal 44 px tinggi & tanpa jeda 300 ms */
+  button:not(.no-tap),
+  [role='button']:not(.no-tap),
+  a[href]:not(.no-tap) {
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* tombol ikon (punya aria-label) jangan lebih sempit dari 44 px */
+  header button,
+  header a[href],
+  button[aria-label]:not(.no-tap),
+  button[aria-pressed]:not(.no-tap) { min-width: 44px; }
 }
+
+/* Huruf kecil dinaikkan di layar HP/tablet supaya terbaca (aslinya 8–10,5 px).
+   `!important` dipakai karena banyak pemakaian memakai awalan `!` (mis. chip). */
+@media (max-width: 1023px) {
+  .text-\[8px\],
+  .text-\[8\.5px\],
+  .text-\[9px\],
+  .text-\[9\.5px\],
+  .text-\[10px\],
+  .text-\[10\.5px\],
+  .\!text-\[8\.5px\],
+  .\!text-\[9px\],
+  .\!text-\[9\.5px\],
+  .\!text-\[10px\],
+  .\!text-\[10\.5px\] {
+    font-size: 11.5px !important;
+    line-height: 1.35 !important;
+  }
+  .text-\[11px\],
+  .\!text-\[11px\] { font-size: 12px !important; }
+  .text-\[11\.5px\] { font-size: 12.5px !important; }
+  .text-\[12px\],
+  .\!text-\[12px\] { font-size: 12.5px !important; }
+  .text-\[12\.5px\] { font-size: 13px !important; }
+  /* label kecil di dalam grafik tetap rapat supaya tidak bertumpuk */
+  .recharts-wrapper .text-\[8\.5px\],
+  .recharts-wrapper .text-\[9\.5px\] { font-size: 10px !important; }
+}
+
+/* Area aman Android (gesture bar / poni) supaya tombol tidak tertutup. */
+.safe-bottom { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
+.fixed.bottom-5,
+.fixed.bottom-6 { bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px)); }
 
 /* hormati preferensi pengguna yang meminta animasi dikurangi */
 @media (prefers-reduced-motion: reduce) {

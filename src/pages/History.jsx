@@ -493,7 +493,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
 
             <div className="ml-1 flex items-center gap-1">
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                 disabled={halamanAman === 0}
                 onClick={() => setPage(0)}
                 title="Halaman pertama"
@@ -501,7 +501,7 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                 «
               </button>
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                 disabled={halamanAman === 0}
                 onClick={() => setPage(halamanAman - 1)}
               >
@@ -511,14 +511,14 @@ export default function History({ records, data, navigate, onSync, onUpdated, on
                 {halamanAman + 1} / {totalHalaman}
               </span>
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                 disabled={halamanAman >= totalHalaman - 1}
                 onClick={() => setPage(halamanAman + 1)}
               >
                 Berikutnya
               </button>
               <button
-                className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                 disabled={halamanAman >= totalHalaman - 1}
                 onClick={() => setPage(totalHalaman - 1)}
                 title="Halaman terakhir"

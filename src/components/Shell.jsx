@@ -59,7 +59,7 @@ function BackToTop() {
       aria-label="Kembali ke atas"
       title="Kembali ke atas"
       className={cx(
-        'no-print fixed bottom-5 right-4 z-[60] grid h-11 w-11 place-items-center rounded-full border sm:bottom-6 sm:right-6',
+        'no-print fixed bottom-5 right-4 z-[60] grid h-12 w-12 place-items-center rounded-full border sm:bottom-6 sm:right-6',
         'border-brand/45 bg-white text-brand shadow-[0_8px_22px_-10px_rgba(13,60,60,0.30)] backdrop-blur',
         'transition-all duration-200 hover:border-brand hover:bg-brand/15 hover:text-slate-900',
         show ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'
@@ -101,7 +101,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
           <p className="text-[13.5px] font-bold leading-tight tracking-tight text-slate-900">
             FS <span className="grad-text">Inspection</span>
           </p>
-          <p className="truncate text-[10px] uppercase tracking-[0.14em] text-slate-500">Engine &amp; Irrigator</p>
+          <p className="truncate text-[10px] uppercase tracking-[0.06em] text-slate-500">Engine &amp; Irrigator</p>
         </div>
         <button className="ml-auto grid h-10 w-10 place-items-center rounded-lg text-slate-600 hover:bg-slate-900/[0.05] hover:text-slate-900 lg:hidden" onClick={() => setOpen(false)} aria-label="Tutup menu">
           <IconX />
@@ -130,7 +130,7 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
         </nav>
       </div>
 
-      <div className="mt-auto space-y-3 p-3">
+      <div className="safe-bottom mt-auto space-y-3 p-3">
         <div className="card-accent relative overflow-hidden rounded-xl border bg-white p-3">
           <span className="blob -right-6 -top-8 h-20 w-20 bg-cyan-300/45" aria-hidden="true" />
           <div className="flex items-center justify-between">
@@ -222,10 +222,10 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               alt="FS Inspection"
               width={26}
               height={26}
-              className="h-[26px] w-[26px] shrink-0 object-contain drop-shadow-[0_2px_4px_rgba(13,60,60,0.18)] lg:hidden"
+              className="h-[26px] w-[26px] shrink-0 object-contain drop-shadow-[0_2px_4px_rgba(13,60,60,0.18)] max-[374px]:hidden lg:hidden"
             />
             <div className="min-w-0 flex-1">
-              <h1 className="flex items-center gap-2 truncate text-[15px] font-semibold tracking-tight text-slate-900">
+              <h1 className="flex items-center gap-2 truncate text-[14px] font-semibold tracking-tight text-slate-900 sm:text-[15px]">
                 {current.label}
                 {demo && <span className="rounded-md border border-amber-500/40 bg-amber-500/15 px-1.5 py-0.5 text-[9.5px] font-bold uppercase tracking-wider text-amber-700">Demo</span>}
               </h1>
@@ -252,7 +252,9 @@ export default function Shell({ children, route, navigate, sync, onSync, offline
               <IconRefresh size={14} className={sync?.syncing ? 'animate-spin' : ''} />
               <span className="hidden md:inline">{sync?.syncing ? 'Menyinkronkan…' : 'Sinkron'}</span>
             </button>
-            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost !px-2.5 !py-1.5 max-sm:!h-11 max-sm:!w-11 max-sm:!px-0" title="Buka Google Sheets" aria-label="Buka Google Sheets">
+            {/* di HP disembunyikan: tautan sheet sudah tersedia di laci menu,
+                dan lebarnya membuat judul halaman terpotong (v1.9.24) */}
+            <a href={TARGET_SHEET.url} target="_blank" rel="noreferrer" className="btn-ghost hidden !px-2.5 !py-1.5 sm:inline-flex max-sm:!h-11 max-sm:!w-11 max-sm:!px-0" title="Buka Google Sheets" aria-label="Buka Google Sheets">
               <IconExternal size={14} />
               <span className="hidden md:inline">Buka Sheet</span>
             </a>

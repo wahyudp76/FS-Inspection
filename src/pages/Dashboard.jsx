@@ -366,7 +366,7 @@ export default function Dashboard({ data, records, navigate, onRepairAll, repair
             <Tunda className="h-full w-full"><GroupRadar data={radar} height="fill" /></Tunda>
           </div>
           <div className="border-t border-slate-900/[0.09] px-4 py-3">
-            <div className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+            <div className="grid grid-cols-1 gap-x-3 gap-y-1.5 sm:grid-cols-2">
               {radar.map((r) => (
                 <div key={r.id} className="flex items-center gap-2">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: r.nilai >= 90 ? '#22c55e' : r.nilai >= 70 ? '#f59e0b' : '#f43f5e' }} />

@@ -368,7 +368,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                 <input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder={tipe === 'Mesin' ? 'Cari kode / spec… (mis. SPC0018)' : 'Cari kode / nozzle… (mis. ITI0083)'}
+                  placeholder={tipe === 'Mesin' ? 'Cari kode / spesifikasi…' : 'Cari kode / nozzle…'}
                   className="input !py-2.5 !pl-9 !text-[12.5px]"
                 />
               </div>
@@ -480,7 +480,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                 </span>
                 <div className="flex w-full flex-wrap items-center justify-between gap-1 sm:ml-auto sm:w-auto sm:justify-end">
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                     disabled={halamanAman === 0}
                     onClick={() => setPage(0)}
                     title="Halaman pertama"
@@ -488,7 +488,7 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                     «
                   </button>
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                     disabled={halamanAman === 0}
                     onClick={() => setPage(halamanAman - 1)}
                   >
@@ -498,14 +498,14 @@ export default function Inspect({ data, records, onSubmitted, navigate, initial,
                     {halamanAman + 1} / {totalHalaman}
                   </span>
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                     disabled={halamanAman >= totalHalaman - 1}
                     onClick={() => setPage(halamanAman + 1)}
                   >
                     Berikutnya
                   </button>
                   <button
-                    className="btn-ghost !px-2 !py-1 !text-[11px] max-sm:!min-h-10 max-sm:!min-w-10"
+                    className="btn-ghost !px-2 !py-1 !text-[11px] !min-h-11 !min-w-11"
                     disabled={halamanAman >= totalHalaman - 1}
                     onClick={() => setPage(totalHalaman - 1)}
                     title="Halaman terakhir"
