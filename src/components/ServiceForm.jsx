@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cx } from '../lib/analytics'
 import { useScrollLock } from '../lib/scrollLock'
-import { INTERVAL_HM, mingguKe, namaBulan, hariIniIso } from '../lib/service'
+import { INTERVAL_HM, BATAS_DELTA_METER, mingguKe, namaBulan, hariIniIso } from '../lib/service'
 import { serviceStatusMeta } from '../lib/config'
 import { IconWrench, IconSearch, IconX, IconCheck, IconAlert, IconChevronDown } from './icons'
 
@@ -110,10 +110,13 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
   const hmNum = angka(hm)
   const hmLama = unit?.hm ?? null
   const naik = hmNum != null && hmLama != null ? hmNum - hmLama : null
-  /* HM sama atau lebih kecil = “tidak naik”. Dulu ini MEMBLOKIR penyimpanan;
-     sekarang boleh asal pengguna menandai meter HM sudah diganti/di-reset. */
+  /* HM sama/lebih kecil = “tidak naik”, ATAU HM melompat jauh ke atas = meter
+     lain yang HM-nya meneruskan angka lama (meter baru / hasil repair). Dulu
+     lompatan naik ini MEMBLOKIR penyimpanan; sekarang cukup ditandai. */
   const tidakNaik = hmNum != null && hmLama != null && hmNum <= hmLama
-  const resetSah = tidakNaik && resetMeter
+  const melompat = hmNum != null && hmLama != null && hmNum - hmLama > BATAS_DELTA_METER
+  const perluTanda = tidakNaik || melompat
+  const resetSah = perluTanda && resetMeter
 
   /* perkiraan jadwal berikutnya memakai rerata HM/hari unit */
   const perkiraan = useMemo(() => {
@@ -137,11 +140,13 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
     if (!kode) return setGalat('Pilih kode mesin yang diservice dulu.')
     if (!tanggal) return setGalat('Tanggal service belum diisi.')
     if (hmNum == null || hmNum <= 0) return setGalat('HM service harus berupa angka lebih dari 0.')
-    if (tidakNaik && !resetMeter) {
+    if (perluTanda && !resetMeter) {
       return setGalat(
-        `HM service (${fmt(hmNum)}) tidak lebih besar dari HM terakhir (${fmt(hmLama)}). ` +
-          'Kalau hour meter memang diganti/di-reset sehingga angkanya mulai dari nol, centang ' +
-          '“Meter HM diganti / di-reset” lalu simpan lagi.'
+        (tidakNaik
+          ? `HM service (${fmt(hmNum)}) tidak lebih besar dari HM terakhir (${fmt(hmLama)}). `
+          : `HM service (${fmt(hmNum)}) melonjak ${fmt(naik)} HM dari HM terakhir (${fmt(hmLama)}). `) +
+          'Kalau hour meter memang diganti (meter baru atau meter hasil repair yang HM-nya meneruskan ' +
+          'angka lama), centang “Meter HM diganti” lalu simpan lagi.'
       )
     }
     setSibuk(true)
@@ -160,7 +165,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
         type: 'success',
         message:
           `Service ${kode} (HM ${fmt(hmNum)}) tersimpan di sheet “Monitor Kasie FS”.` +
-          (resetSah ? ' Ditandai sebagai HM setelah meter diganti.' : ''),
+          (resetSah ? ' Ditandai sebagai catatan meter yang berbeda (meter diganti).' : ''),
       })
       /* beri waktu pengguna membaca ringkasan hasil, lalu tutup */
       setTimeout(() => onClose?.(), 2200)
@@ -349,7 +354,7 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                     {perkiraan?.nextIso ? ` · perkiraan jadwal berikutnya ${perkiraan.nextIso} (${perkiraan.hariLagi} hari)` : ''}
                   </p>
                 )}
-                {tidakNaik && (
+                {perluTanda && (
                   <div
                     className={cx(
                       'mt-1.5 rounded-lg border px-2.5 py-2',
@@ -357,10 +362,14 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                     )}
                   >
                     <p className={cx('text-[10.5px] leading-relaxed', resetMeter ? 'text-amber-800' : 'text-rose-700')}>
-                      HM {fmt(hmNum)} <span className="font-semibold">tidak lebih besar</span> dari HM service terakhir ({fmt(hmLama)}).
+                      {tidakNaik ? (
+                        <>HM {fmt(hmNum)} <span className="font-semibold">tidak lebih besar</span> dari HM service terakhir ({fmt(hmLama)}).</>
+                      ) : (
+                        <>HM {fmt(hmNum)} <span className="font-semibold">melonjak {fmt(naik)} HM</span> dari service terakhir ({fmt(hmLama)}) — biasanya tanda meter diganti dengan meter lain yang HM-nya meneruskan angka lama (termasuk meter hasil repair).</>
+                      )}
                       {resetMeter
-                        ? ' Tersimpan sebagai HM setelah meter diganti.'
-                        : ' Kalau hour meter sudah diganti/di-reset, centang pilihan di bawah — angkanya tetap boleh disimpan.'}
+                        ? ' Tersimpan sebagai catatan meter yang berbeda (meter diganti).'
+                        : ' Kalau hour meter memang sudah diganti, centang pilihan di bawah — angkanya tetap boleh disimpan.'}
                     </p>
                     <label className="mt-1.5 flex cursor-pointer items-start gap-2 text-[11px] font-medium text-slate-700">
                       <input
@@ -373,10 +382,11 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                         className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-amber-500"
                       />
                       <span>
-                        Meter HM diganti / di-reset
+                        Meter HM diganti (baru / hasil repair)
                         <span className="block font-normal text-[10px] leading-relaxed text-slate-500">
-                          Hour meter rusak lalu dipasang baru sehingga hitungan mulai dari nol. HM tetap disimpan apa adanya dan
-                          jadwal berikutnya dihitung dari angka baru (HM + {INTERVAL_HM}).
+                          Hour meter dipasang meter lain: bisa meter baru (mulai dari nol) atau meter hasil repair yang
+                          HM-nya meneruskan angka lama. HM disimpan apa adanya dan jadwal berikutnya dihitung dari
+                          angka meter itu (HM + {INTERVAL_HM}).
                         </span>
                       </span>
                     </label>

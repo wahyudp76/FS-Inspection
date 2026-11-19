@@ -24,8 +24,13 @@ const BULAN_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Se
 export const INTERVAL_HM = 250 // jarak service (HM) sesuai rumus sheet: F + 250
 export const AMAN_HARI = 7 // ≤ 7 hari lagi = jatuh tempo
 export const BATAS_DELTA_HM = 1000 // lonjakan HM per service di atas ini dianggap janggal
-export const BATAS_HM_WAJAR = 60000 // HM di atas ini selalu dicurigai (mesin tua tetap wajar)
-export const RASIO_HM_WAJAR = 8 // dicurigai salah ketik bila > 8x median unit itu sendiri
+/* HM meter adalah angka yang MENEMPEL pada meter, bukan pada unit: meter yang
+   sudah direpair bisa dipasang di unit lain dan HM-nya melanjutkan angka lama.
+   Jadi lompatan HM (naik besar, atau turun) adalah KEJADIAN SAH — bukan salah
+   ketik. Yang benar-benar mustahil hanya angka yang melebihi kanonik HM per
+   jenis meter. Batas di bawah = kelipatan kanonik, bukan angka mati. */
+export const BATAS_KANONIK_HM = 6 // > 6x HM khas meter sejenis → perlu dicek (typo ATAU meter repair)
+export const BATAS_DELTA_METER = 50000 // beda HM dalam “kategori satu meter” saat meter diganti
 /* toleransi ketepatan: interval 250 HM ± 10% masih dianggap "tepat waktu" */
 export const TEPAT_MIN = 225
 export const TEPAT_MAX = 275
@@ -147,6 +152,78 @@ const colIndex = (header, names) => {
 }
 
 /** tb_service1 → daftar unit + status evaluasi */
+/** Kelompok HM yang menempel pada satu meter (beda < BATAS_DELTA_METER) —
+ *  dipakai menentukan kanonik per meter dan per jenis unit. */
+export function kelompokHm(nilai = []) {
+  const urut = nilai.filter((v) => v != null && v > 0).sort((a, b) => a - b)
+  const grup = []
+  for (const v of urut) {
+    const akhir = grup[grup.length - 1]
+    if (akhir && v - akhir[akhir.length - 1] <= BATAS_DELTA_METER) akhir.push(v)
+    else grup.push([v])
+  }
+  return grup
+}
+
+/** Kelompok HM dengan anggota terbanyak; bila seri pakai median terbesar. */
+export function grupTerbanyak(nilai = []) {
+  const grup = kelompokHm(nilai)
+  let pilih = []
+  for (const g of grup) {
+    if (g.length > pilih.length) pilih = g
+    else if (g.length === pilih.length && g.length && medianAngka(g) > medianAngka(pilih)) pilih = g
+  }
+  return pilih
+}
+
+const medianAngka = (arr) => {
+  if (!arr.length) return null
+  const a = [...arr].sort((x, y) => x - y)
+  const t = a.length >> 1
+  return a.length % 2 ? a[t] : (a[t - 1] + a[t]) / 2
+}
+
+/** Peta nilai HM → { ukuran, median } klaster meternya. Dipakai menilai apakah
+ *  satu angka berdiri sendiri (menyendiri) atau bagian dari meter yang dipakai
+ *  berulang. */
+export function klasterHm(nilai = []) {
+  const peta = new Map()
+  for (const g of kelompokHm(nilai)) {
+    const ukuran = g.length
+    for (const v of g) peta.set(v, { ukuran, median: medianAngka(g) })
+  }
+  return peta
+}
+
+/** Deskripsi meter sebuah unit berdasarkan catatannya.
+ *  meter   : HM terakhir (angka kontinu pada meter yang sedang terpasang)
+ *  kanonik : HM khas meter-mirip; dipakai menilai “mustahil” & acuan jadwal
+ *  jumlahMeter : berapa meter berbeda (kategori HM) — 2+ berarti pernah diganti */
+export function profilMeter(arr = [], kanonikJenis = null) {
+  const semua = arr.map((r) => r.hm).filter((h) => h != null && h > 0)
+  const grup = kelompokHm(semua)
+  /* kelompok TERBANYAK (bukan nilai terbesar): satu catatan salah ketik 623.031
+     tidak boleh dianggap “meter utama” hanya karena angkanya paling besar. */
+  const kanonik = medianAngka(grupTerbanyak(semua))
+  const meterTerakhir = (() => {
+    for (let i = arr.length - 1; i >= 0; i--) if (arr[i].hm != null && arr[i].hm > 0) return arr[i].hm
+    return null
+  })()
+  const peta = klasterHm(semua)
+  /* kanonik unit hanya dipercaya bila angkanya muncul >= 2 kali; kalau semua
+     catatan unit ini berbeda-beda, pakai kanonik jenis meter */
+  const kanonikUnitSah = kanonik != null && (peta.get(kanonik)?.ukuran || 0) >= 2 ? kanonik : null
+  const dasar = Math.max(kanonikUnitSah || 0, kanonikJenis || 0) || null
+  const perluCek = (h) => {
+    if (h == null || h <= 0 || !dasar || dasar <= 0) return false
+    if (h <= dasar * BATAS_KANONIK_HM) return false
+    /* angka besar yang dipakai BERULANG = meter yang benar-benar terpasang
+       (meter repair dengan HM meneruskan) → sah, bukan salah ketik */
+    return (peta.get(h)?.ukuran || 0) <= 1
+  }
+  return { meter: meterTerakhir, kanonik, jumlahMeter: grup.length, perluCek, perluCekTerakhir: perluCek(meterTerakhir) }
+}
+
 export function parseService1(header = [], rows = []) {
   if (!rows.length) return { units: [], header }
   const ix = {
@@ -283,6 +360,19 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
     return s.length % 2 ? s[t] : (s[t - 1] + s[t]) / 2
   }
 
+  /* kanonik HM per jenis meter (diambil dari SELURUH log, bukan hanya unit lokal) */
+  const hmJenis = new Map()
+  for (const [kode, arr] of per) {
+    const jenis = (kode || '').slice(0, 3)
+    if (!hmJenis.has(jenis)) hmJenis.set(jenis, [])
+    for (const r of arr) if (r.hm != null && r.hm > 0) hmJenis.get(jenis).push(r.hm)
+  }
+  const kanonikJenis = new Map()
+  for (const [jenis, nilai] of hmJenis) {
+    kanonikJenis.set(jenis, median(grupTerbanyak(nilai)))
+  }
+  const profilUnit = (kode, arr) => profilMeter(arr, kanonikJenis.get((kode || '').slice(0, 3)))
+
   let dariLog = 0
   for (const [k, arr] of per) {
     if (sudah.has(k)) continue
@@ -300,14 +390,11 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
        laju HM antar catatan unit tersebut */
     const rerataSheet = [...arr].reverse().map((r) => r.rerata).find((n) => n != null && n > 0) ?? null
     const rerata = rerataSheet ?? (laju.length ? Math.round(median(laju) * 10) / 10 : null)
-    /* HM akhir yang tidak wajar (> BATAS_HM_WAJAR, mis. 623.031) atau 0 tidak
-       dipakai sebagai acuan jadwal — pakai catatan wajar terakhir. Bila tidak
-       ada, unit tetap tampil dengan status “belum” agar tidak menyesatkan. */
-    const semuaHm = arr.map((r) => r.hm).filter((h) => h != null && h > 0)
-    const hmWajarSaja = semuaHm.filter((h) => h <= BATAS_HM_WAJAR)
-    const medianUnit = median(hmWajarSaja.length ? hmWajarSaja : semuaHm)
-    const wajar = (h) => h != null && h > 0 && (h <= BATAS_HM_WAJAR || (medianUnit && h <= medianUnit * RASIO_HM_WAJAR))
-    const hmWajarTerakhir = [...arr].reverse().find((r) => wajar(r.hm)) || null
+    /* Acuan HM = angka meter yang sedang terpasang, APA ADANYA. Meter repair
+       bisa ber-HM besar dan itu sah; meter baru mulai dari kecil juga sah.
+       Bila angka terakhir perlu dicek, unit hanya DITANDAI (tidak diubah). */
+    const prof = profilUnit(k, arr)
+    const hmWajarTerakhir = [...arr].reverse().find((r) => r.hm != null && r.hm > 0) || null
     const hm = hmWajarTerakhir ? hmWajarTerakhir.hm : null
     const nextHm = hm != null ? hm + intervalHm : null
     /* tanggal service berikutnya: pakai isian sheet lebih dulu */
@@ -401,25 +488,32 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
        itu jadi “HM terakhir” selamanya. Bila catatan log terbaru unit tersebut
        jauh lebih kecil DAN nilai besar itu > 8× HM normal unit, pakai catatan
        log sebagai acuan supaya jadwal tidak meleset ratusan hari. */
-    /* batasnya memakai HM unit itu sendiri: unit ber-HM 90.000 memang wajar
-       bila catatannya konsisten, tetapi satu angka 71.610 pada unit yang
-       normalnya 1.500 tetap ditandai mustahil. */
+    /* tb_service1 memakai MAX(HM): setelah meter diganti dengan meter ber-HM
+       lebih kecil, kolom itu masih memuat angka meter LAMA. Acuan dipindah ke
+       catatan terbaru hanya bila (a) angka sheet melebihi kanonik jenis meter
+       berkali-kali (salah ketik), atau (b) catatan terbaru adalah meter lain
+       yang lebih kecil (meter repair ber-HM rendah). Kebalikannya — meter repair
+       ber-HM BESAR — dibiarkan: itu memang angka meter yang sekarang. */
     if (u.sumber !== 'log' && u.hm != null) {
       const arr0 = per.get(norm(u.kode))
-      const semua0 = (arr0 || []).map((r) => r.hm).filter((h) => h != null && h > 0)
-      const wajar0 = semua0.filter((h) => h <= BATAS_HM_WAJAR)
-      const dasar0 = median(wajar0.length ? wajar0 : semua0)
-      /* catatan wajar terakhir (lewati sel 0 dan angka mustahil lain) */
-      const akhir0 = [...(arr0 || [])]
-        .reverse()
-        .find((r) => r.hm != null && r.hm > 0 && r.hm <= BATAS_HM_WAJAR && r.hm <= dasar0 * RASIO_HM_WAJAR)
-      if (dasar0 && u.hm > dasar0 * RASIO_HM_WAJAR && akhir0 && akhir0.hm < u.hm) {
+      const prof0 = profilUnit(norm(u.kode), arr0 || [])
+      const akhir0 = [...(arr0 || [])].reverse().find((r) => r.hm != null && r.hm > 0)
+      /* hanya kasus meter diganti ke meter ber-HM LEBIH KECIL: kolom MAX di
+         tb_service1 masih memuat angka meter lama. Lompatan ke angka besar
+         dibiarkan (itu angka meter yang sekarang). */
+      const meterLebihKecil = akhir0 != null && akhir0.hm < u.hm && u.hm - akhir0.hm > BATAS_DELTA_METER
+      if (meterLebihKecil && akhir0 && akhir0.hm < u.hm) {
         const lama = u.hm
         u.hm = akhir0.hm
         u.terakhirIso = akhir0.tanggal || u.terakhirIso
         u.terakhirRaw = akhir0.tanggal || u.terakhirRaw
         u.nextHm = akhir0.hm + intervalHm
-        u.hmDikoreksi = { dari: lama, ke: akhir0.hm, tanggal: akhir0.tanggal, alasan: 'HM mustahil di tb_service1' }
+        u.hmDikoreksi = {
+          dari: lama,
+          ke: akhir0.hm,
+          tanggal: akhir0.tanggal,
+          alasan: 'tb_service1 memakai HM meter lama (MAX) — meter sudah diganti dengan meter ber-HM lebih rendah',
+        }
         /* tanggal service berikutnya: pakai tanggal catatan wajar + laju HM/hari
            (kolom rerata sheet bila ada, kalau tidak median laju historis) */
         let laju0 = u.rerata != null && u.rerata > 0 ? u.rerata : null
@@ -446,14 +540,6 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
     if (!arr || !arr.length) continue
     const akhir = arr[arr.length - 1]
     if (akhir.hm == null || akhir.hm <= 0 || !akhir.tanggal) continue
-    /* HM tidak wajar (mis. 623.031 hasil salah ketik) jangan dipakai sebagai
-       acuan “meter diganti” — kalau tidak, jadwal unit melompat jauh ke depan. */
-    {
-      const semua = arr.map((r) => r.hm).filter((h) => h != null && h > 0)
-      const wajarSaja = semua.filter((h) => h <= BATAS_HM_WAJAR)
-      const dasar = median(wajarSaja.length ? wajarSaja : semua) || 0
-      if (akhir.hm > BATAS_HM_WAJAR && akhir.hm > dasar * RASIO_HM_WAJAR) continue
-    }
     if (u.hm == null || akhir.hm >= u.hm) continue
     if (u.terakhirIso && akhir.tanggal < u.terakhirIso) continue
 
@@ -560,31 +646,60 @@ export function parseService2(header = [], rows = []) {
     const t = a.length >> 1
     return a.length % 2 ? a[t] : (a[t - 1] + a[t]) / 2
   }
-  /* dasar penilaian memakai nilai yang masih di bawah batas mutlak; bila unit
-     hanya punya nilai besar (mesin benar-benar tua), pakai median apa adanya
-     supaya tidak semua catatannya dituduh salah ketik. */
-  const medianUnit = new Map(
-    [...hmPerUnit].map(([k, v]) => {
-      const wajar = v.filter((h) => h <= BATAS_HM_WAJAR)
-      return [k, medianDari(wajar.length ? wajar : v)]
-    })
-  )
+  /* Kanonik per JENIS meter (SPC/DEM/DED/…): HM khas meter-mirip. Dipakai menilai
+     “mustahil” supaya unit yang meter repair-nya ber-HM 60.000 tidak dituduh
+     salah hanya karena unit lain di jenis yang sama baru 6.000. */
+  const hmPerJenis = new Map()
+  for (const [kode, arr] of hmPerUnit) {
+    const jenis = (kode || '').slice(0, 3)
+    if (!hmPerJenis.has(jenis)) hmPerJenis.set(jenis, [])
+    hmPerJenis.get(jenis).push(...arr)
+  }
+  const kanonikJenis = new Map()
+  for (const [jenis, arr] of hmPerJenis) {
+    const grup = grupTerbanyak(arr)
+    kanonikJenis.set(jenis, medianDari(grup))
+  }
+  /* catatan per unit, urut kronologis (dipakai untuk profil meter) */
+  const perUnit = new Map()
+  for (const r of asc) {
+    if (!perUnit.has(r.kode)) perUnit.set(r.kode, [])
+    perUnit.get(r.kode).push(r)
+  }
+  const profilPerUnit = new Map()
+  for (const [kode, arr] of perUnit) {
+    profilPerUnit.set(kode, profilMeter(arr, kanonikJenis.get((kode || '').slice(0, 3))))
+  }
 
   const prevHm = new Map()
+  const meterSaatIni = new Map()
   for (const r of asc) {
     const prev = prevHm.get(r.kode)
     r.hmDelta = prev != null && r.hm != null ? r.hm - prev : null
-    /* lonjakan HM tidak wajar: > 1.000 HM sekali service (≈ 42 hari nonstop) → tandai */
-    r.hmAnomali = r.hmDelta != null && (r.hmDelta > BATAS_DELTA_HM || r.hmDelta < 0)
-    /* HM di luar batas wajar = salah ketik digit (bukan meter diganti).
-       Tanpa penanda ini, angka seperti 623.031 lolos karena hanya dinilai
-       dari selisih terhadap catatan sebelumnya. */
-    const med = medianUnit.get(r.kode)
-    r.hmMustahil =
-      r.hm != null && r.hm > BATAS_HM_WAJAR && (!med || med <= 0 || r.hm > med * RASIO_HM_WAJAR)
+    /* Salah ketik = angka melebihi kanonik jenis meter berkali-kali (mis. 623.031
+       pada jenis SPC). Lompatan naik/turun yang masih di kisaran HM meter wajar
+       BUKAN salah ketik: meter hasil repair bisa dipasang dan HM-nya melanjutkan. */
+    const prof = profilPerUnit.get(r.kode) || {}
+    /* “perlu dicek” = angka jauh di atas HM khas meter sejenis DAN menyendiri
+       (tidak pernah muncul lagi) → bisa salah ketik digit, bisa juga meter hasil
+       repair. Bukan vonis, hanya penanda untuk dicek ke mekanik/sheet. */
+    r.hmPerluCek = r.hm != null && typeof prof.perluCek === 'function' && prof.perluCek(r.hm)
+    /* Perpindahan meter: selisih HM melewati BATAS_DELTA_METER (atau turun) →
+       meter berbeda (baru / hasil repair yang HM-nya meneruskan angka lama).
+       Kejadian SAH: tetap ditampilkan, tapi dikecualikan dari penilaian interval
+       dan tidak dipakai menghitung laju HM/hari. */
+    r.hmGantiMeter = false
+    if (r.hm != null && r.hm > 0) {
+      const meterLama = meterSaatIni.get(r.kode)
+      r.hmGantiMeter = meterLama != null && (r.hm - meterLama > BATAS_DELTA_METER || r.hm < meterLama)
+      meterSaatIni.set(r.kode, r.hm)
+    }
+    /* “Janggal” = interval service yang tidak bisa dinilai, HANYA dari besaran
+       selisih: HM turun (meter baru / reset) atau lonjakan > BATAS_DELTA_HM
+       (meter hasil repair yang HM-nya meneruskan, atau salah ketik). Penanda
+       “perlu dicek” adalah lapisan tambahan di atasnya. */
+    r.hmAnomali = r.hmDelta != null && (r.hmDelta < 0 || r.hmDelta > BATAS_DELTA_HM)
     r.hmNol = r.hm === 0
-    /* pembanding HM hanya diperbarui oleh nilai yang masuk akal; sel “0” hasil
-       salah isi tidak boleh membuat catatan berikutnya terlihat melonjak */
     if (r.hm != null && r.hm > 0) prevHm.set(r.kode, r.hm)
   }
   /* ---- buang pencatatan GANDA di tb_service2 ----
@@ -715,6 +830,7 @@ export function ringkasService(units = [], log = [], meta = {}) {
     })
 
   const hmJanggal = log.filter((r) => r.hmAnomali).length
+  const hmGantiMeterTotal = log.filter((r) => r.hmGantiMeter).length
 
   /* ---- ketepatan interval keseluruhan ---- */
   const dinilaiLog = log.filter((r) => !r.hmAnomali && r.hmDelta != null)
@@ -781,6 +897,7 @@ export function ringkasService(units = [], log = [], meta = {}) {
     totalPencatatan: log.length,
     serviceBulanIni,
     hmJanggal,
+    hmGantiMeter: hmGantiMeterTotal,
     duplikat: meta.duplikat || 0,
     daftar: { terlambat, segera, belum, tanpaJadwal, aman },
     cakupan: units.length ? Math.round((sudahService / units.length) * 100) : 0,
@@ -1042,6 +1159,8 @@ export function ketepatanDari(rows = []) {
     telat: dinilaiLog.filter((r) => ketepatanHm(r.hmDelta) === 'telat').length,
     awal: dinilaiLog.filter((r) => ketepatanHm(r.hmDelta) === 'awal').length,
     dikecualikan: rows.filter((r) => r.hmAnomali).length,
+    /* di antaranya karena meter diganti (bisa meter baru atau meter repair) */
+    gantiMeter: rows.filter((r) => r.hmGantiMeter).length,
   }
   k.pct = k.dinilai ? Math.round((k.tepat / k.dinilai) * 100) : 0
   k.sebaran = EMBER_DELTA.map((e) => ({
@@ -1211,29 +1330,45 @@ export function kualitasService(units = [], log = [], meta = {}) {
     })
   }
 
-  const janggal = log.filter((r) => r.hmAnomali)
+  /* kategori dipisah agar tidak dobel hitung: “ganti meter” memuat semua
+     perpindahan meter; “perlu dicek” adalah penanda tambahan (bisa menempel
+     pada catatan yang juga perpindahan meter). */
+  const gantiMeter = log.filter((r) => r.hmGantiMeter)
+  if (gantiMeter.length) {
+    masalah.push({
+      level: 'info',
+      kode: 'hm-ganti-meter',
+      jumlah: gantiMeter.length,
+      pesan:
+        `${gantiMeter.length} pencatatan melanjutkan HM meter lain — meter diganti, bisa meter baru (HM kecil) atau meter hasil repair yang HM-nya meneruskan angka lama (HM besar). Kejadian sah: selisih HM-nya tidak dinilai sebagai interval service.`,
+      contoh: gantiMeter.slice(0, 4).map((r) => `${r.kode} ${r.tanggal || r.tanggalRaw || ''} @${new Intl.NumberFormat('id-ID').format(r.hm)}`),
+    })
+  }
+
+  const janggal = log.filter((r) => r.hmAnomali && !r.hmGantiMeter)
   if (janggal.length) {
     masalah.push({
       level: 'warn',
       kode: 'hm-janggal',
       jumlah: janggal.length,
       pesan:
-        `${janggal.length} catatan dengan HM tidak wajar (menurun karena meter diganti, atau melonjak > ${BATAS_DELTA_HM} HM sekali service)`,
+        `${janggal.length} catatan HM turun karena meter di-reset / meter lain dipasang, atau melonjak > ${BATAS_DELTA_HM} HM dalam satu service — dicek manual, tidak dipakai menilai ketepatan interval`,
       contoh: janggal.slice(0, 4).map((r) => r.kode),
     })
   }
 
-  /* HM di luar batas wajar: puluhan ribu jam untuk satu unit = salah ketik
-     digit. Ini penyebab utama lonjakan & penurunan “aneh” pada grafik HM. */
-  const hmMustahil = log.filter((r) => r.hmMustahil)
-  if (hmMustahil.length) {
+  /* Angka jauh di atas HM khas meter sejenis DAN menyendiri: bisa salah ketik
+     digit, bisa juga meter hasil repair — jadi statusnya “perlu dicek”, bukan
+     vonis salah. Angka ini tidak dipakai sebagai acuan jadwal sampai dicek. */
+  const perluCek = log.filter((r) => r.hmPerluCek)
+  if (perluCek.length) {
     masalah.push({
-      level: 'error',
-      kode: 'hm-mustahil',
-      jumlah: hmMustahil.length,
+      level: 'warn',
+      kode: 'hm-perlu-cek',
+      jumlah: perluCek.length,
       pesan:
-        `HM mustahil: ${hmMustahil.length} catatan nilainya lebih dari ${new Intl.NumberFormat('id-ID').format(BATAS_HM_WAJAR)} jam DAN ${RASIO_HM_WAJAR}× lipat HM normal unit itu — kemungkinan salah ketik digit. Angka ini tidak dipakai sebagai acuan jadwal; perbaiki di sheet.`,
-      contoh: hmMustahil.slice(0, 6).map((r) => `${r.kode} ${r.tanggal || r.tanggalRaw || ''} @${new Intl.NumberFormat('id-ID').format(r.hm)}`),
+        `${perluCek.length} catatan HM jauh di atas HM khas meter sejenis (lebih dari ${BATAS_KANONIK_HM}×) dan tidak muncul lagi di catatan lain — bisa salah ketik digit, bisa juga meter hasil repair yang HM-nya meneruskan angka lama. Angkanya tetap dipakai apa adanya; cukup pastikan ke mekanik/sheet agar tidak salah baca.`,
+      contoh: perluCek.slice(0, 6).map((r) => `${r.kode} ${r.tanggal || r.tanggalRaw || ''} @${new Intl.NumberFormat('id-ID').format(r.hm)}`),
     })
   }
 

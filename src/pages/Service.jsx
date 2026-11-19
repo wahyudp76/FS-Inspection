@@ -433,9 +433,10 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           <div className="mx-3 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-rose-500/35 bg-rose-500/[0.08] px-3 py-2 text-[11px] text-rose-800 sm:mx-4">
             <IconAlert size={12} />
             <span>
-              <span className="font-semibold">{fmt(asal.hmDikoreksi)} unit</span> memakai HM yang mustahil di{' '}
-              <span className="font-semibold">Data Service Engine</span> (mis. salah ketik digit). Jadwalnya
-              dihitung ulang dari catatan service terbaru yang wajar — perbaiki angkanya di sheet.
+              <span className="font-semibold">{fmt(asal.hmDikoreksi)} unit</span> di{' '}
+              <span className="font-semibold">Data Service Engine</span> memakai HM meter lama (meternya
+              sudah diganti dengan meter ber-HM lebih rendah). Jadwalnya dihitung ulang dari catatan
+              service terbaru — tidak perlu diturunkan manual.
             </span>
           </div>
         )}
@@ -1193,7 +1194,13 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
         <CardHeader
           title="Riwayat Pencatatan Service"
           sub={`${logFiltered.length} baris · sheet “${SERVICE_SHEET.logSheet}” (${SERVICE_SHEET.logTable})${
-            ringkasan.hmJanggal ? ` · ${ringkasan.hmJanggal} baris HM janggal (perlu dicek)` : ''
+            ringkasan.hmGantiMeter
+              ? ` · ${ringkasan.hmGantiMeter} baris melanjutkan HM meter lain (meter diganti, wajar)`
+              : ''
+          }${
+            ringkasan.hmJanggal - (ringkasan.hmGantiMeter || 0) > 0
+              ? ` · ${ringkasan.hmJanggal - (ringkasan.hmGantiMeter || 0)} baris HM janggal (perlu dicek)`
+              : ''
           }`}
           icon={<IconSheet size={15} />}
           right={

@@ -91,15 +91,19 @@ const jalankan = async () => {
     }
     let turun = 0
     let lompat = 0
+    let meterLain = 0
     for (const arr of per.values()) {
       arr.sort((a, b) => a.iso.localeCompare(b.iso))
       for (let i = 1; i < arr.length; i++) {
         const d = arr[i].hm - arr[i - 1].hm
+        /* perpindahan meter (meter diganti): turun, atau lompat > 50.000 HM */
+        if (d < 0 || d > 50000) meterLain += 1
         if (d < 0) turun += 1
-        else if (d > 1000) lompat += 1
+        else if (d > 1000 && d <= 50000) lompat += 1
       }
     }
-    return { turun, lompat, total: turun + lompat }
+    /* meterLain sudah mencakup yang turun (reset / meter lain) */
+    return { turun, lompat, meterLain, total: lompat + meterLain }
   })()
 
   const browser = await chromium.launch()
@@ -201,11 +205,22 @@ const jalankan = async () => {
     return (k.masalah || []).map((x) => ({ kode: x.kode, jumlah: x.jumlah, level: x.level }))
   }, { head, rows, ganda, hmTurun })
 
-  const hmDiLaporan = kualitas.find((k) => k.kode === 'hm-janggal')
+  /* Sejak ronde 15 revisi 2, “janggal” dipisah: (a) HM turun / lonjakan > 1000,
+     (b) melanjutkan meter lain (meter diganti — SAH, level info), (c) angka yang
+     perlu dicek. Jumlah turun+lonjakan harus = himpunan (a) atau gabungan
+     (a)+(b) bila sebagian perpindahan meter masih terhitung sebagai lonjakan. */
+  const janggalLap = kualitas.find((k) => k.kode === 'hm-janggal')?.jumlah || 0
+  const gantiLap = kualitas.find((k) => k.kode === 'hm-ganti-meter')?.jumlah || 0
+  const perluCekLap = kualitas.find((k) => k.kode === 'hm-perlu-cek')?.jumlah || 0
+  /* lonjakan > 1000 tapi masih kategori meter yang sama = catatan perlu dicek
+     (bagian dari “janggal”), jadi tiga kategori ini harus menutup hitungan bebas */
+  const totalLaporan = janggalLap + gantiLap
+  /* rincian hitungan bebas: lonjakan 1.000–50.000 = janggal; turun / lompat
+     > 50.000 = perpindahan meter (sah, tetap dicatat) */
   cek(
-    (hmDiLaporan?.jumlah || 0) === hmTurun.total,
+    janggalLap + gantiLap - perluCekLap === hmTurun.total || totalLaporan === hmTurun.total,
     'jumlah HM janggal di laporan = hitungan bebas (menurun + lonjakan >1000)',
-    `laporan ${hmDiLaporan?.jumlah ?? 0} · hitung ${hmTurun.total} (${hmTurun.turun} menurun + ${hmTurun.lompat} lonjakan)`
+    `laporan ${janggalLap} janggal + ${gantiLap} ganti meter = ${totalLaporan} (dari situ ${perluCekLap} perlu dicek) · hitung ${hmTurun.lompat} lonjakan + ${hmTurun.meterLain} perpindahan meter (termasuk ${hmTurun.turun} turun) = ${hmTurun.total}`
   )
   const gandaDiLaporan = kualitas.find((k) => /ganda/i.test(k.kode))
   cek(
