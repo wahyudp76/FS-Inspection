@@ -24,6 +24,8 @@ const BULAN_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Se
 export const INTERVAL_HM = 250 // jarak service (HM) sesuai rumus sheet: F + 250
 export const AMAN_HARI = 7 // ≤ 7 hari lagi = jatuh tempo
 export const BATAS_DELTA_HM = 1000 // lonjakan HM per service di atas ini dianggap janggal
+export const BATAS_HM_WAJAR = 60000 // HM di atas ini selalu dicurigai (mesin tua tetap wajar)
+export const RASIO_HM_WAJAR = 8 // dicurigai salah ketik bila > 8x median unit itu sendiri
 /* toleransi ketepatan: interval 250 HM ± 10% masih dianggap "tepat waktu" */
 export const TEPAT_MIN = 225
 export const TEPAT_MAX = 275
@@ -298,14 +300,22 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
        laju HM antar catatan unit tersebut */
     const rerataSheet = [...arr].reverse().map((r) => r.rerata).find((n) => n != null && n > 0) ?? null
     const rerata = rerataSheet ?? (laju.length ? Math.round(median(laju) * 10) / 10 : null)
-    const hm = akhir.hm != null ? akhir.hm : null
+    /* HM akhir yang tidak wajar (> BATAS_HM_WAJAR, mis. 623.031) atau 0 tidak
+       dipakai sebagai acuan jadwal — pakai catatan wajar terakhir. Bila tidak
+       ada, unit tetap tampil dengan status “belum” agar tidak menyesatkan. */
+    const semuaHm = arr.map((r) => r.hm).filter((h) => h != null && h > 0)
+    const hmWajarSaja = semuaHm.filter((h) => h <= BATAS_HM_WAJAR)
+    const medianUnit = median(hmWajarSaja.length ? hmWajarSaja : semuaHm)
+    const wajar = (h) => h != null && h > 0 && (h <= BATAS_HM_WAJAR || (medianUnit && h <= medianUnit * RASIO_HM_WAJAR))
+    const hmWajarTerakhir = [...arr].reverse().find((r) => wajar(r.hm)) || null
+    const hm = hmWajarTerakhir ? hmWajarTerakhir.hm : null
     const nextHm = hm != null ? hm + intervalHm : null
     /* tanggal service berikutnya: pakai isian sheet lebih dulu */
     const nextIsoSheet = [...arr].reverse().map((r) => r.nextIso).find(Boolean) || ''
     let nextIso = nextIsoSheet
     if (!nextIso && rerata && rerata > 0 && hm != null) {
       const sisaHari = Math.round((nextHm - hm) / rerata)
-      nextIso = tambahHari(akhir.tanggal, sisaHari)
+      nextIso = tambahHari(hmWajarTerakhir?.tanggal || akhir.tanggal, sisaHari)
     }
     const warning = nextIso ? -selisihHari(hariIni, nextIso) : null
 
@@ -385,12 +395,65 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
      jadwalnya dihitung ulang dari angka baru. Nilai 0 dilewati (sel kosong yang
      terisi 0, bukan bukti reset). */
   let hmReset = 0
+  let hmDikoreksi = 0
   for (const u of hasil) {
+    /* tb_service1 memakai MAX(HM): satu salah ketik (mis. 71.610) membuat angka
+       itu jadi “HM terakhir” selamanya. Bila catatan log terbaru unit tersebut
+       jauh lebih kecil DAN nilai besar itu > 8× HM normal unit, pakai catatan
+       log sebagai acuan supaya jadwal tidak meleset ratusan hari. */
+    /* batasnya memakai HM unit itu sendiri: unit ber-HM 90.000 memang wajar
+       bila catatannya konsisten, tetapi satu angka 71.610 pada unit yang
+       normalnya 1.500 tetap ditandai mustahil. */
+    if (u.sumber !== 'log' && u.hm != null) {
+      const arr0 = per.get(norm(u.kode))
+      const semua0 = (arr0 || []).map((r) => r.hm).filter((h) => h != null && h > 0)
+      const wajar0 = semua0.filter((h) => h <= BATAS_HM_WAJAR)
+      const dasar0 = median(wajar0.length ? wajar0 : semua0)
+      /* catatan wajar terakhir (lewati sel 0 dan angka mustahil lain) */
+      const akhir0 = [...(arr0 || [])]
+        .reverse()
+        .find((r) => r.hm != null && r.hm > 0 && r.hm <= BATAS_HM_WAJAR && r.hm <= dasar0 * RASIO_HM_WAJAR)
+      if (dasar0 && u.hm > dasar0 * RASIO_HM_WAJAR && akhir0 && akhir0.hm < u.hm) {
+        const lama = u.hm
+        u.hm = akhir0.hm
+        u.terakhirIso = akhir0.tanggal || u.terakhirIso
+        u.terakhirRaw = akhir0.tanggal || u.terakhirRaw
+        u.nextHm = akhir0.hm + intervalHm
+        u.hmDikoreksi = { dari: lama, ke: akhir0.hm, tanggal: akhir0.tanggal, alasan: 'HM mustahil di tb_service1' }
+        /* tanggal service berikutnya: pakai tanggal catatan wajar + laju HM/hari
+           (kolom rerata sheet bila ada, kalau tidak median laju historis) */
+        let laju0 = u.rerata != null && u.rerata > 0 ? u.rerata : null
+        if (laju0 == null) {
+          const arrLaju = []
+          for (let i = 1; i < (arr0?.length || 0); i++) {
+            const hari = ((arr0[i].tanggalMs || 0) - (arr0[i - 1].tanggalMs || 0)) / 86400000
+            const d = arr0[i].hm != null && arr0[i - 1].hm != null ? arr0[i].hm - arr0[i - 1].hm : null
+            if (hari > 0 && d != null && d > 0 && d <= BATAS_DELTA_HM) arrLaju.push(d / hari)
+          }
+          laju0 = arrLaju.length ? Math.round(median(arrLaju) * 10) / 10 : null
+        }
+        if (laju0 && laju0 > 0 && akhir0.tanggal) {
+          const nextIso0 = tambahHari(akhir0.tanggal, Math.round((intervalHm - 0) / laju0))
+          u.nextIso = nextIso0
+          u.warning = -selisihHari(hariIni, nextIso0)
+          u.status = u.warning > 0 ? 'terlambat' : u.warning >= -AMAN_HARI ? 'segera' : 'aman'
+        }
+        hmDikoreksi++
+      }
+    }
     if (u.sumber === 'log') continue
     const arr = per.get(norm(u.kode))
     if (!arr || !arr.length) continue
     const akhir = arr[arr.length - 1]
     if (akhir.hm == null || akhir.hm <= 0 || !akhir.tanggal) continue
+    /* HM tidak wajar (mis. 623.031 hasil salah ketik) jangan dipakai sebagai
+       acuan “meter diganti” — kalau tidak, jadwal unit melompat jauh ke depan. */
+    {
+      const semua = arr.map((r) => r.hm).filter((h) => h != null && h > 0)
+      const wajarSaja = semua.filter((h) => h <= BATAS_HM_WAJAR)
+      const dasar = median(wajarSaja.length ? wajarSaja : semua) || 0
+      if (akhir.hm > BATAS_HM_WAJAR && akhir.hm > dasar * RASIO_HM_WAJAR) continue
+    }
     if (u.hm == null || akhir.hm >= u.hm) continue
     if (u.terakhirIso && akhir.tanggal < u.terakhirIso) continue
 
@@ -432,7 +495,7 @@ export function lengkapiUnitDariLog(units = [], log = [], opts = {}) {
     hmReset++
   }
 
-  return { units: hasil, tambahan: dariLog + dariMaster, dariLog, dariMaster, hmReset }
+  return { units: hasil, tambahan: dariLog + dariMaster, dariLog, dariMaster, hmReset, hmDikoreksi }
 }
 
 export const POSISI_DIKENAL = ['FM3', 'FM4', 'PG2', 'PG3', 'OP2']
@@ -482,12 +545,43 @@ export function parseService2(header = [], rows = []) {
 
   /* urut kronologis untuk menghitung selisih HM antar service unit yang sama */
   const asc = [...log].sort((a, b) => (a.tanggalMs - b.tanggalMs) || (a.no - b.no))
+
+  /* median HM per unit: dasar menilai “wajar” — mesin tua memang bisa puluhan
+     ribu jam, jadi batas mutlak saja tidak cukup. */
+  const hmPerUnit = new Map()
+  for (const r of asc) {
+    if (r.hm == null || r.hm <= 0) continue
+    if (!hmPerUnit.has(r.kode)) hmPerUnit.set(r.kode, [])
+    hmPerUnit.get(r.kode).push(r.hm)
+  }
+  const medianDari = (arr) => {
+    if (!arr.length) return null
+    const a = [...arr].sort((x, y) => x - y)
+    const t = a.length >> 1
+    return a.length % 2 ? a[t] : (a[t - 1] + a[t]) / 2
+  }
+  /* dasar penilaian memakai nilai yang masih di bawah batas mutlak; bila unit
+     hanya punya nilai besar (mesin benar-benar tua), pakai median apa adanya
+     supaya tidak semua catatannya dituduh salah ketik. */
+  const medianUnit = new Map(
+    [...hmPerUnit].map(([k, v]) => {
+      const wajar = v.filter((h) => h <= BATAS_HM_WAJAR)
+      return [k, medianDari(wajar.length ? wajar : v)]
+    })
+  )
+
   const prevHm = new Map()
   for (const r of asc) {
     const prev = prevHm.get(r.kode)
     r.hmDelta = prev != null && r.hm != null ? r.hm - prev : null
     /* lonjakan HM tidak wajar: > 1.000 HM sekali service (≈ 42 hari nonstop) → tandai */
     r.hmAnomali = r.hmDelta != null && (r.hmDelta > BATAS_DELTA_HM || r.hmDelta < 0)
+    /* HM di luar batas wajar = salah ketik digit (bukan meter diganti).
+       Tanpa penanda ini, angka seperti 623.031 lolos karena hanya dinilai
+       dari selisih terhadap catatan sebelumnya. */
+    const med = medianUnit.get(r.kode)
+    r.hmMustahil =
+      r.hm != null && r.hm > BATAS_HM_WAJAR && (!med || med <= 0 || r.hm > med * RASIO_HM_WAJAR)
     r.hmNol = r.hm === 0
     /* pembanding HM hanya diperbarui oleh nilai yang masuk akal; sel “0” hasil
        salah isi tidak boleh membuat catatan berikutnya terlihat melonjak */
@@ -1129,6 +1223,20 @@ export function kualitasService(units = [], log = [], meta = {}) {
     })
   }
 
+  /* HM di luar batas wajar: puluhan ribu jam untuk satu unit = salah ketik
+     digit. Ini penyebab utama lonjakan & penurunan “aneh” pada grafik HM. */
+  const hmMustahil = log.filter((r) => r.hmMustahil)
+  if (hmMustahil.length) {
+    masalah.push({
+      level: 'error',
+      kode: 'hm-mustahil',
+      jumlah: hmMustahil.length,
+      pesan:
+        `HM mustahil: ${hmMustahil.length} catatan nilainya lebih dari ${new Intl.NumberFormat('id-ID').format(BATAS_HM_WAJAR)} jam DAN ${RASIO_HM_WAJAR}× lipat HM normal unit itu — kemungkinan salah ketik digit. Angka ini tidak dipakai sebagai acuan jadwal; perbaiki di sheet.`,
+      contoh: hmMustahil.slice(0, 6).map((r) => `${r.kode} ${r.tanggal || r.tanggalRaw || ''} @${new Intl.NumberFormat('id-ID').format(r.hm)}`),
+    })
+  }
+
   /* HM = 0 hampir selalu berarti sel kosong yang terisi angka nol, bukan engine
      baru: unit seperti ini jadi terlihat “baru” dan jadwalnya meleset. */
   const hmNol = log.filter((r) => r.hm === 0)
@@ -1250,6 +1358,8 @@ export async function fetchServiceData({ master = [] } = {}) {
     tambahanDariMaster: lengkap.dariMaster,
     /* jumlah unit yang HM-nya dikoreksi karena meter diganti (angka turun) */
     hmReset: lengkap.hmReset || 0,
+    /* jumlah unit yang HM acuannya dikoreksi karena angka di tb_service1 mustahil */
+    hmDikoreksi: lengkap.hmDikoreksi || 0,
     syncedAt: new Date().toISOString(),
     intervalHm,
   }

@@ -206,12 +206,17 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
     setUnits(lengkap.units)
     setAsal({
       unitEval: Number.isFinite(data.unitEval) ? data.unitEval : (data.units || []).filter((u) => u.sumber !== 'log').length,
+      /* koreksi dari server/cache (dihitung sebelum data cache terkoreksi) */
+      hmDikoreksiServer: data.hmDikoreksi || 0,
       dariLog: (data.tambahanDariLog || 0) + lengkap.dariLog,
       dariMaster: (data.tambahanDariMaster || 0) + lengkap.dariMaster,
       /* unit yang HM-nya turun karena meter diganti → dipakai angka baru.
          Dihitung dari penanda per unit, karena tahap koreksi hanya berjalan
          sekali (data cache sudah terkoreksi sehingga hitungannya 0). */
       hmReset: lengkap.units.filter((u) => u.hmReset).length,
+      /* unit yang HM acuannya dikoreksi karena angka di tb_service1 mustahil */
+      /* data.hmDikoreksi dihitung server; unit cache bisa membawa penanda yang sama */
+      hmDikoreksi: data.hmDikoreksi || lengkap.units.filter((u) => u.hmDikoreksi).length,
     })
     setLog(data.log || [])
     setDuplikat(data.duplikat || 0)
@@ -420,6 +425,17 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
               {asal.dariLog > 0 && <> · <span className="font-semibold">{fmt(asal.dariLog)}</span> unit dihitung dari catatan tb_service2</>}
               {asal.dariMaster > 0 && <> · <span className="font-semibold">{fmt(asal.dariMaster)}</span> unit master belum pernah service</>}
               . Data diturunkan otomatis agar tidak ada unit yang hilang dari halaman ini.
+            </span>
+          </div>
+        )}
+
+        {asal.hmDikoreksi > 0 && (
+          <div className="mx-3 mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-rose-500/35 bg-rose-500/[0.08] px-3 py-2 text-[11px] text-rose-800 sm:mx-4">
+            <IconAlert size={12} />
+            <span>
+              <span className="font-semibold">{fmt(asal.hmDikoreksi)} unit</span> memakai HM yang mustahil di{' '}
+              <span className="font-semibold">Data Service Engine</span> (mis. salah ketik digit). Jadwalnya
+              dihitung ulang dari catatan service terbaru yang wajar — perbaiki angkanya di sheet.
             </span>
           </div>
         )}

@@ -1,7 +1,7 @@
 {
   "name": "fs-inspection",
   "private": true,
-  "version": "1.9.24",
+  "version": "1.9.25",
   "type": "module",
   "description": "Dashboard Inspeksi Berkala Unit Mesin & Irrigator + monitoring service engine",
   "scripts": {
@@ -12,7 +12,10 @@
     "build:pages": "vite build --outDir docs --emptyOutDir",
     "mobilecheck": "node tools/mobilecheck.mjs",
     "mobiletap": "node tools/mobiletap.mjs",
-    "test:mobile": "node tools/mobilecheck.mjs && node tools/mobiletap.mjs"
+    "test:mobile": "node tools/mobilecheck.mjs && node tools/mobiletap.mjs",
+    "test:tombol": "node tools/buttonaudit.mjs",
+    "test:desktop": "node tools/desktopcheck.mjs",
+    "test:hm": "node tools/hmmustahil.mjs"
   },
   "dependencies": {
     "react": "^18.3.1",
