@@ -186,13 +186,14 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   }, [units])
 
   const ringkasanAktif = useMemo(() => {
-    if (!tunda.jumlah) return ringkasan
+    const tundaJumlah = tunda.jumlah
+    if (!tundaJumlah) return { ...ringkasan, daftar: { ...ringkasan.daftar, ditunda: [] }, tundaJumlah: 0 }
     const lewat = ringkasan.daftar.terlambat.filter((u) => !tunda.peta.has(u.kode))
     const ditunda = ringkasan.daftar.terlambat.filter((u) => tunda.peta.has(u.kode))
     return {
       ...ringkasan,
       daftar: { ...ringkasan.daftar, terlambat: lewat, ditunda },
-      tundaJumlah: ditunda.length,
+      tundaJumlah,
     }
   }, [ringkasan, tunda])
 
