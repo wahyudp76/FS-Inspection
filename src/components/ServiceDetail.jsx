@@ -1,15 +1,15 @@
-import React, { useEffect, useMemo } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cx } from '../lib/analytics'
 import { useScrollLock } from '../lib/scrollLock'
 import { serviceStatusMeta } from '../lib/config'
-import { riwayatUnit, INTERVAL_HM } from '../lib/service'
-import { IconWrench, IconX, IconHistory, IconAlert } from './icons'
+import { riwayatUnit, INTERVAL_HM, TUNDA_HARI_BAWAAN } from '../lib/service'
+import { IconWrench, IconX, IconHistory, IconAlert, IconClock } from './icons'
 
 const fmt = (n) => (n == null ? '—' : new Intl.NumberFormat('id-ID').format(n))
 
 /** Detail satu engine: jadwal, HM, dan seluruh riwayat service-nya dari tb_service2. */
-export default function ServiceDetail({ unit, log = [], onClose, onCatat }) {
+export default function ServiceDetail({ unit, log = [], onClose, onCatat, onTunda, tundaInfo = null, tundaDaftar = [] }) {
   useScrollLock(!!unit)
 
   useEffect(() => {
@@ -20,6 +20,28 @@ export default function ServiceDetail({ unit, log = [], onClose, onCatat }) {
   }, [unit, onClose])
 
   const riwayat = useMemo(() => (unit ? riwayatUnit(log, unit.kode) : []), [unit, log])
+  /* ------- delay reminder: tunda pengingat 7 hari (dapat diubah) ------- */
+  const ALASAN_CEPAT = [
+    { short: 'Standby', teks: 'Standby — unit jarang kerja, HM belum masuk' },
+    { short: 'Giliran siram', teks: 'Menunggu giliran siram di lokasi' },
+    { short: 'Tunggu mekanik', teks: 'Mesin menunggu jadwal mekanik' },
+  ]
+  const [tundaBuka, setTundaBuka] = useState(false)
+  const [hariTunda, setHariTunda] = useState(TUNDA_HARI_BAWAAN)
+  const [alasanTunda, setAlasanTunda] = useState(ALASAN_CEPAT[0].teks)
+  const [sibukTunda, setSibukTunda] = useState(false)
+  const [galatTunda, setGalatTunda] = useState('')
+  const riwayatTunda = useMemo(
+    () => (unit ? (tundaDaftar || []).filter((t) => String(t.kode).toUpperCase() === String(unit.kode).toUpperCase()) : []),
+    [unit, tundaDaftar]
+  )
+  useEffect(() => {
+    setTundaBuka(false)
+    setHariTunda(TUNDA_HARI_BAWAAN)
+    setAlasanTunda(ALASAN_CEPAT[0].teks)
+    setGalatTunda('')
+  }, [unit])
+
   if (!unit) return null
 
   const m = serviceStatusMeta(unit.status)
@@ -106,6 +128,23 @@ export default function ServiceDetail({ unit, log = [], onClose, onCatat }) {
             <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               <IconHistory size={12} /> Riwayat service (tb_service2)
             </p>
+            {riwayatTunda.length > 0 && (
+              <div className="mt-3 rounded-xl border border-sky-500/30 bg-sky-500/[0.06] px-2.5 py-2">
+                <p className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-wider text-sky-800">
+                  <IconClock size={11} /> Riwayat penundaan pengingat
+                </p>
+                <ul className="mt-1 space-y-0.5">
+                  {riwayatTunda.slice(0, 4).map((t, i) => (
+                    <li key={`${t.sampaiIso}-${i}`} className="text-[10.5px] leading-relaxed text-sky-900/90">
+                      <span className="font-mono">{t.dicatatIso || '—'}</span> → tunda s.d.{' '}
+                      <span className="font-mono font-semibold">{t.sampaiIso}</span>
+                      {t.alasan ? ` · ${t.alasan}` : ''}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {riwayat.length ? (
               <div className="mt-2 space-y-1.5">
                 {riwayat.map((r, i) => (
@@ -134,11 +173,135 @@ export default function ServiceDetail({ unit, log = [], onClose, onCatat }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 border-t border-slate-900/[0.10] px-4 py-3">
-          <button onClick={() => onClose?.()} className="btn-ghost flex-1 justify-center !py-2.5">Tutup</button>
-          <button onClick={() => onCatat?.(unit)} className="btn-primary flex-1 justify-center !py-2.5">
-            <IconWrench size={14} /> Catat Service
-          </button>
+        <div className="shrink-0 border-t border-slate-900/[0.10] bg-white px-4 py-3">
+          {tundaBuka && (
+            <div className="max-h-[62vh] overflow-y-auto rounded-xl border border-sky-500/40 bg-sky-500/[0.06] p-2.5 sm:max-h-[52vh]">
+              <p className="flex items-center gap-1.5 text-[11.5px] font-semibold text-sky-900">
+                <IconClock size={13} /> Tunda pengingat — HM dicek lagi nanti
+              </p>
+              <p className="mt-0.5 text-[10.5px] leading-relaxed text-sky-800/90">
+                {tundaInfo
+                  ? `Pengingat sekarang ditunda sampai ${tundaInfo.tundaSampaiIso}. Ubah bila perlu.`
+                  : `Unit ini lewat jadwal (${unit.nextIso}) tetapi HM-nya belum tentu masuk karena unit jarang kerja. Pilih berapa hari pengingatnya ditunda; setelah itu unit muncul lagi untuk dicek HM-nya.`}
+              </p>
+              <div className="mt-1.5 flex flex-wrap gap-1">
+                {[3, 7, 14, 30].map((h) => (
+                  <button
+                    key={h}
+                    onClick={() => setHariTunda(h)}
+                    aria-pressed={hariTunda === h}
+                    className={cx(
+                      'rounded-lg border px-2 py-1 text-[11px] font-semibold transition max-sm:min-h-9',
+                      hariTunda === h ? 'border-sky-500/60 bg-sky-500/20 text-sky-900' : 'border-slate-900/10 bg-white text-slate-600'
+                    )}
+                  >
+                    {h} hari
+                  </button>
+                ))}
+                <label className="ml-auto flex items-center gap-1 text-[10.5px] text-slate-600">
+                  lain:
+                  <input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={hariTunda}
+                    onChange={(e) => setHariTunda(Math.max(1, Math.min(120, Number(e.target.value) || 1)))}
+                    className="w-14 rounded-lg border border-slate-900/10 px-1.5 py-1 text-center font-mono text-[11px]"
+                    aria-label="Jumlah hari penundaan"
+                  />
+                  hari
+                </label>
+              </div>
+              <label className="mt-1.5 block text-[10px] font-semibold uppercase tracking-wider text-slate-500">Alasan (wajib)</label>
+              <div className="mt-1 flex flex-wrap gap-1">
+                {ALASAN_CEPAT.map((a) => (
+                  <button
+                    key={a.short}
+                    onClick={() => setAlasanTunda(a.teks)}
+                    aria-pressed={alasanTunda === a.teks}
+                    className={cx(
+                      'rounded-lg border px-2 py-1 text-[10.5px] font-medium transition max-sm:min-h-8',
+                      alasanTunda === a.teks ? 'border-sky-500/60 bg-sky-500/15 text-sky-900' : 'border-slate-900/10 bg-white text-slate-600'
+                    )}
+                  >
+                    {a.short}
+                  </button>
+                ))}
+              </div>
+              <input
+                value={alasanTunda}
+                onChange={(e) => setAlasanTunda(e.target.value)}
+                className="input mt-1 !text-[11.5px]"
+                placeholder="Tulis alasan penundaan…"
+                aria-label="Alasan penundaan"
+              />
+              {galatTunda && <p className="mt-1 rounded-lg bg-rose-500/10 px-2 py-1 text-[10.5px] text-rose-700">{galatTunda}</p>}
+              <div className="mt-2 flex gap-1.5">
+                <button onClick={() => setTundaBuka(false)} className="btn-ghost flex-1 justify-center !py-2 !text-[11.5px]">
+                  Batal
+                </button>
+                <button
+                  disabled={sibukTunda}
+                  onClick={async () => {
+                    setGalatTunda('')
+                    if (!String(alasanTunda).trim()) return setGalatTunda('Alasan penundaan wajib diisi.')
+                    setSibukTunda(true)
+                    try {
+                      await onTunda?.(unit, { hari: hariTunda, alasan: String(alasanTunda).trim() })
+                      setTundaBuka(false)
+                    } catch (e) {
+                      setGalatTunda(e?.message || 'Gagal menyimpan penundaan.')
+                    } finally {
+                      setSibukTunda(false)
+                    }
+                  }}
+                  className="btn-primary flex-1 justify-center !py-2 !text-[11.5px]"
+                >
+                  <IconClock size={13} /> Tunda {hariTunda} hari
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ---- panel delay reminder ---- */}
+          {tundaInfo && !tundaBuka && (
+            <div className="mb-2.5 flex items-start gap-2 rounded-xl border border-sky-500/40 bg-sky-500/[0.08] px-3 py-2">
+              <IconClock size={13} className="mt-0.5 shrink-0 text-sky-700" />
+              <div className="min-w-0 flex-1 text-[11px] leading-relaxed text-sky-900">
+                <p className="font-semibold">Pengingat ditunda sampai {tundaInfo.tundaSampaiIso}</p>
+                <p className="text-[10.5px] text-sky-800/90">
+                  {tundaInfo.sisaHari ?? tundaInfo.hariLagi} hari lagi unit ini muncul lagi untuk dicek HM-nya
+                  {tundaInfo.alasan ? ` · alasan: ${tundaInfo.alasan}` : ''}
+                </p>
+              </div>
+            </div>
+          )}
+          {!tundaBuka && (
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => onClose?.()} className="btn-ghost flex-1 justify-center !py-2.5">Tutup</button>
+            {tundaInfo && !tundaBuka && (
+              <button onClick={() => setTundaBuka(true)} className="btn-ghost flex-1 justify-center !py-2.5 !text-sky-700">
+                <IconClock size={14} /> Ubah tunda
+              </button>
+            )}
+            <button onClick={() => onCatat?.(unit)} className="btn-primary flex-1 justify-center !py-2.5">
+              <IconWrench size={14} /> Catat Service
+            </button>
+          </div>
+          )}
+          {!tundaInfo && !tundaBuka && onTunda && (
+            <button
+              onClick={() => setTundaBuka((v) => !v)}
+              className="mt-1.5 w-full rounded-lg border border-sky-500/40 bg-sky-500/[0.06] px-2 py-1.5 text-[11px] font-semibold text-sky-800"
+            >
+              <IconClock size={12} className="mr-1 inline" /> Delay reminder — tunda pengingat (HM belum masuk)
+            </button>
+          )}
+          {tundaInfo && !tundaBuka && (
+            <p className="mt-1.5 text-[10px] text-slate-500">
+              Catat service tetap bisa dilakukan kapan saja — penundaan hanya menahan pengingat.
+            </p>
+          )}
         </div>
       </div>
     </div>,

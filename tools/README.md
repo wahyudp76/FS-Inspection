@@ -67,6 +67,7 @@ Urutan aman: jalankan `dataquality` lebih dulu (ia memuat ulang mock lewat
 | `stabilitycheck.mjs` | `node tools/stabilitycheck.mjs` | muat ulang 5×: memori tidak merangkak naik |
 | `themetest.mjs` | `node tools/themetest.mjs` | tidak ada sisa tema gelap, kontras & aksen logo |
 | `layoutcheck.mjs` | `node tools/layoutcheck.mjs` | tinggi kartu seragam per baris, grafik mengisi kotak |
+| `delaycheck.mjs` | `BASE=… EP=… node tools/delaycheck.mjs` (opsional `VP=HP`) | **Delay reminder**: tunda pengingat dari detail & dari form Catat Service, unit pindah ke tab Ditunda (tb_service3) |
 | `livedeploy.mjs` | `EP=<url deployment> node tools/livedeploy.mjs` | **deployment produksi**, hanya aksi baca (ping/master/history/svcread/audit) |
 
 Catatan `BASE`/`EP`:
@@ -122,3 +123,21 @@ Beberapa alat menulis hasil ke `audit-shots/` (di-ignore git):
 Berkas sementara lain (`perf-last.json`, `tools/seed-cache.json`) juga
 di-ignore. `tools/svc-fixture.json` **di-commit** karena dipakai uji service
 sebagai data acuan tetap.
+
+### 2.1 Catatan ronde 21 — `delaycheck.mjs`
+
+Mock **harus** menulis ke folder salinan, bukan `data/`, karena `svcdefer`
+menambah baris di sheet `Delay Reminder Service`:
+
+```bash
+mkdir -p data2/tmp_svc && cp data/Monitor_Kasie_FS.csv data/Data_Service_Engine.csv data2/tmp_svc/
+MASTER=1 TESTHOOK=1 DATA_DIR=data MASTER_DIR=data SVC_DIR=data2/tmp_svc DI_CSV=data/Data_Inspeksi.csv \
+  node tools/mockapi.mjs                                   # :8111
+VITE_APPS_SCRIPT_URL=http://127.0.0.1:8111/exec npx vite --port 5199
+BASE=http://127.0.0.1:5199 EP=http://127.0.0.1:8111/exec node tools/delaycheck.mjs
+```
+
+Agar tab “Ditunda” mulai dari nol, kosongkan `data2/tmp_svc/` lalu salin ulang CSV
+sebelum menjalankan. `svcquality.mjs` memakai angka acuan dari
+`audit-shots/dataquality.json`, jadi jalankan `dataquality.mjs` lebih dulu setiap
+kali data uji berubah.

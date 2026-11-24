@@ -51,6 +51,8 @@ if (process.env.MASTER === '1') {
   ctx.__irrigatorSheet = irrigator
   ctx.SpreadsheetApp.openById = () => ({
     getSheetByName: (n) => (n === 'Mesin' ? mesin : n === 'Irrigator' ? irrigator : env.ss.getSheetByName(n)),
+    /* Code.gs 1.10.0 membuat sheet “Delay Reminder Service” otomatis bila belum ada */
+    insertSheet: (n) => env.ss.insertSheet(n),
     getSpreadsheetTimeZone: () => 'Asia/Jakarta',
   })
 }

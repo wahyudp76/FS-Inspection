@@ -27,6 +27,9 @@ import {
   tarikSetelahCatat,
   INTERVAL_HM,
   tundaService,
+  tundaAktif,
+  tundaServiceUnit,
+  hariIniIso,
 } from '../lib/service'
 import {
   IconWrench, IconDownload, IconAlert, IconCheck, IconClock, IconCalendar,
@@ -127,6 +130,8 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   const [duplikatLog, setDuplikatLog] = useState(cached?.duplikatLog || 0)
   const [barisEvalRaw, setBarisEvalRaw] = useState(cached?.barisEval || 0)
   const [syncedAt, setSyncedAt] = useState(cached?.syncedAt || null)
+  /* tb_service3 — penundaan pengingat (delay reminder) */
+  const [tundaDaftar, setTundaDaftar] = useState(cached?.tunda || [])
   /* berapa unit datang dari tb_service1 vs hasil turunan log/master (v1.9.0) */
   const [asal, setAsal] = useState({
     unitEval: cached?.unitEval ?? (cached?.units?.filter?.((u) => u.sumber !== 'log')?.length || 0),
@@ -176,14 +181,16 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
      “ditunda” dengan tanggal pengingat, supaya KPI Lewat Jadwal tetap fokus
      pada unit yang benar-benar sudah waktunya service. */
   const tunda = useMemo(() => {
+    const manual = tundaAktif(tundaDaftar)
     const peta = new Map()
     for (const u of units) {
-      const t = tundaService(u)
+      const t = tundaService(u, undefined, { manual })
       if (t) peta.set(u.kode, t)
     }
-    const daftar = [...peta.values()].sort((a, b) => a.sisaHm - b.sisaHm)
-    return { peta, jumlah: peta.size, daftar }
-  }, [units])
+    /* unit paling cepat “bangun” lebih dulu (hariLagi kecil), lalu sisa HM */
+    const daftar = [...peta.values()].sort((a, b) => (a.sisaHari ?? 9999) - (b.sisaHari ?? 9999) || (a.sisaHm ?? 9999) - (b.sisaHm ?? 9999))
+    return { peta, jumlah: peta.size, daftar, manual }
+  }, [units, tundaDaftar])
 
   const ringkasanAktif = useMemo(() => {
     const tundaJumlah = tunda.jumlah
@@ -231,6 +238,8 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       master,
     })
     setUnits(lengkap.units)
+    /* penundaan pengingat (tb_service3) ikut disegarkan setiap tarikan data */
+    if (Array.isArray(data.tunda)) setTundaDaftar(data.tunda)
     setAsal({
       unitEval: Number.isFinite(data.unitEval) ? data.unitEval : (data.units || []).filter((u) => u.sumber !== 'log').length,
       /* koreksi dari server/cache (dihitung sebelum data cache terkoreksi) */
@@ -348,9 +357,26 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
     setFormOpen(true)
   }
 
+  /* ---- tunda pengingat (delay reminder) ---- */
+  const mintaTunda = async (unit, { hari, alasan }) => {
+    const hasil = await tundaServiceUnit({ kode: unit.kode, hari, alasan, posisi: unit.posisi })
+    setTundaDaftar((lama) => [
+      ...lama,
+      { kode: unit.kode, sampaiIso: hasil.sampai, alasan, dicatatIso: hasil.dicatat || hariIniIso(), posisi: unit.posisi || '' },
+    ])
+    notify?.(`Pengingat ${unit.kode} ditunda ${hari} hari (s.d. ${hasil.sampai}).`, 'ok')
+    /* tarik ulang supaya tb_service3 yang sebenarnya ikut terbaca */
+    try {
+      const segar = await fetchServiceData({ master })
+      if (segar?.tunda) setTundaDaftar(segar.tunda)
+    } catch (e) { /* biarkan data lokal dulu */ }
+    return hasil
+  }
+
   const simpanService = async (payload) => {
     const hasil = await catatService(payload)
     const segar = await tarikSetelahCatat({ kode: payload.kode, hm: payload.hm, tanggal: payload.tanggal })
+    if (segar?.tunda) setTundaDaftar(segar.tunda)
     if (segar?.units?.length) {
       setUnits(segar.units)
       setLog(segar.log)
@@ -1040,8 +1066,13 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                   <span className="mt-0.5 block truncate text-[10.5px] text-slate-500">
                     {tunda.peta.has(u.kode) ? (
                       <>
-                        <span className="font-semibold text-sky-700">Ditunda</span> s.d. {tunda.peta.get(u.kode).tundaSampaiIso} ·
-                        sisa {fmt(tunda.peta.get(u.kode).sisaHm)} HM lagi (pemicu HM {fmt(tunda.peta.get(u.kode).hmPemicu)})
+                        <span className="font-semibold text-sky-700">Pengingat ditunda</span> s.d. {tunda.peta.get(u.kode).tundaSampaiIso} ·
+                        {' '}{tunda.peta.get(u.kode).sisaHari} hari lagi dicek HM-nya
+                        {tunda.peta.get(u.kode).jenis === 'manual' && tunda.peta.get(u.kode).alasan
+                          ? ` · ${tunda.peta.get(u.kode).alasan}`
+                          : tunda.peta.get(u.kode).hmSekarang != null
+                          ? ` (perkiraan HM ${fmt(tunda.peta.get(u.kode).hmSekarang)} dari ${fmt(u.nextHm)})`
+                          : ''}
                       </>
                     ) : u.status === 'belum'
                       ? 'Belum ada catatan service di tb_service2'
@@ -1309,6 +1340,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
         presetKode={presetKode}
         onClose={() => setFormOpen(false)}
         onSubmit={simpanService}
+        onTunda={mintaTunda}
         notify={notify}
       />
       <ServiceStatusModal
@@ -1325,10 +1357,24 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
           setFStatus([id])
           setHalEval(0)
           setKpiStatus(null)
+          /* ronde 21: penundaan manual mengeluarkan unit dari status “terlambat”
+             hanya di daftar Perlu Perhatian — di tabel evaluasi statusnya tetap
+             “terlambat”, jadi saringan harus memuat unit itu juga. */
+          if (id === 'terlambat' && tunda.daftar.length) {
+            setFKode({ label: `+ ditunda (${tunda.daftar.length})`, set: new Set(tunda.daftar.map((t) => t.kode)) })
+          }
           notify?.({ type: 'success', message: `Tabel disaring ke status “${serviceStatusMeta(id).label}”.` })
         }}
       />
-      <ServiceDetail unit={detailUnit} log={log} onClose={() => setDetailUnit(null)} onCatat={(u) => bukaForm(u.kode)} />
+      <ServiceDetail
+        unit={detailUnit}
+        log={log}
+        tundaInfo={detailUnit ? tunda.peta.get(detailUnit.kode) || null : null}
+        tundaDaftar={tundaDaftar}
+        onTunda={mintaTunda}
+        onClose={() => setDetailUnit(null)}
+        onCatat={(u) => bukaForm(u.kode)}
+      />
     </div>
   )
 }

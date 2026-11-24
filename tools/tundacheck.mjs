@@ -66,8 +66,10 @@ if (hitung.tunda > 0) {
     await tab.click()
     await page.waitForTimeout(600)
     const isi = await page.evaluate(() => document.body.innerText)
-    const baris = isi.split('\n').filter((l) => /Ditunda s\.d\./.test(l))
-    cek(baris.length > 0, 'baris ditunda menyebut tanggal pengingat + sisa HM', (baris[0] || '').slice(0, 90))
+    /* ronde 21: penundaan manual (sheet tb_service3) mencetak “Pengingat ditunda s.d. <tgl>”,
+       penundaan otomatis berbasis HM mencetak “Ditunda s.d. <tgl>”. Keduanya sah. */
+    const baris = isi.split('\n').filter((l) => /(Pengingat )?[Dd]itunda s\.d\./.test(l))
+    cek(baris.length > 0, 'baris ditunda menyebut tanggal pengingat', (baris[0] || '').slice(0, 100))
   }
 }
 

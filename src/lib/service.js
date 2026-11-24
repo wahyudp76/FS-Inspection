@@ -224,24 +224,88 @@ export function profilMeter(arr = [], kanonikJenis = null) {
   return { meter: meterTerakhir, kanonik, jumlahMeter: grup.length, perluCek, perluCekTerakhir: perluCek(meterTerakhir) }
 }
 
-/** Toleransi jam mesin untuk unit yang jadwalnya SUDAH lewat tanggal.
- *  Unit yang dipakai jarang (standby, cadangan) bisa lewat tanggal padahal HM
- *  belum masuk interval 250 HM. Yang dinilai BUKAN HM saat service terakhir
- *  (itu selalu 250 di bawah batas), melainkan perkiraan HM SEKARANG:
- *  HM terakhir + laju HM/hari × jumlah hari sejak service terakhir. */
-export const TUNDA_MIN_HM = 50 // sisa HM > ini → belum waktunya service
-export const TUNDA_MAKS_HARI = 120 // penundaan maksimum agar tidak “hilang”
+/** Penundaan pengingat service.
+ *  Dua sebab unit bisa DITUNDA:
+ *   1. HM jelas belum masuk — perkiraan HM sekarang masih > TUNDA_MIN_HM di bawah
+ *      batas (dulu satu-satunya sebab; jarang terjadi karena laju HM di sheet
+ *      sebenarnya “laju yang dibutuhkan”, lihat catatan di bawah).
+ *   2. Pengguna menunda secara sadar (delay reminder) — pengawas menekan
+ *      “Tunda 7 hari” saat unit lewat jadwal; HM dicek lagi 7 hari kemudian.
+ *      Ini yang dipakai sehari-hari untuk unit yang banyak standby.
+ *
+ *  PENTING soal laju: kolom “Rerata HM Perhari” di sheet tb_service1 dihitung
+ *  sebagai 250 ÷ jumlah hari menuju jadwal (terbukti 112/112 unit, 2026-11-24),
+ *  jadi itu laju YANG DIBUTUHKAN, bukan laju nyata. Memakainya untuk menebak HM
+ *  membuat unit yang lewat tanggal selalu tampak “HM sudah masuk”. */
+export const TUNDA_MIN_HM = 50 // sisa HM > ini → HM pasti belum masuk
+export const TUNDA_MAKS_HARI = 120 // batas penundaan manual agar unit tidak hilang
+export const TUNDA_HARI_BAWAAN = 7 // pilihan cepat “Tunda 7 hari”
+
+/** Penundaan manual yang masih berlaku: { kode, sampaiIso, hariLagi, alasan, dicatatIso } */
+export function tundaAktif(daftar = [], hariIni = todayIso()) {
+  const peta = new Map()
+  for (const t of daftar || []) {
+    const kode = norm(t?.kode)
+    if (!kode || !t?.sampaiIso) continue
+    /* selisihHari(a,b) = b − a → sisa hari = sampaiIso − hariIni */
+    const hariLagi = selisihHari(hariIni, t.sampaiIso)
+    if (hariLagi == null || hariLagi <= 0) continue // penundaan sudah lewat
+    /* bila satu unit ditunda berkali-kali, yang berlaku = tanggal terjauh */
+    const lama = peta.get(kode)
+    if (lama && lama.hariLagi >= hariLagi) continue
+    peta.set(kode, {
+      kode: String(t.kode).trim().toUpperCase(),
+      sampaiIso: t.sampaiIso,
+      hariLagi,
+      alasan: String(t.alasan || '').trim(),
+      dicatatIso: String(t.dicatatIso || '').trim(),
+    })
+  }
+  return peta
+}
 
 const fmtRibu = (n) => new Intl.NumberFormat('id-ID').format(Math.round(n))
 
-/**
- * Hitung penundaan pengingat untuk satu unit.
+/** Hitung penundaan pengingat untuk satu unit.
  * @param unit    hasil lengkapiUnitDariLog (butuh hm, nextHm, warning, rerata, terakhirIso)
  * @param hariIni ISO tanggal acuan
- * @returns {null | {hmSekarang, sisaHm, sisaHari, tundaSampaiIso, hmPemicu, laju, alasan}}
+ * @param opsi    { manual: Map hasil tundaAktif() }
+ * @returns {null | {jenis, hmSekarang, sisaHm, sisaHari, tundaSampaiIso, hmPemicu, laju, alasan}}
  */
-export function tundaService(unit, hariIni = todayIso()) {
-  if (!unit || unit.hm == null || unit.nextHm == null) return null
+export function tundaService(unit, hariIni = todayIso(), opsi = {}) {
+  if (!unit) return null
+  let manual = opsi.manual instanceof Map ? opsi.manual.get(norm(unit.kode)) : null
+  /* penundaan manual hanya berlaku sampai tanggalnya; peta boleh dibuat untuk
+     tanggal lain (mis. halaman dibiarkan terbuka melewati tengah malam) */
+  if (manual) {
+    const sisa = selisihHari(hariIni, manual.sampaiIso)
+    if (sisa == null || sisa <= 0) manual = null
+    else manual = { ...manual, hariLagi: sisa }
+  }
+
+  /* --- sebab 1: penundaan manual yang masih berlaku --- */
+  if (manual) {
+    const laju = unit.rerata && unit.rerata > 0 ? unit.rerata : null
+    const perkiraan = unit.hm != null && laju && unit.terakhirIso ? Math.round(unit.hm + laju * Math.max(0, selisihHari(unit.terakhirIso, hariIni) || 0)) : null
+    /* HM hanya ditampilkan bila perkiraannya masih di bawah batas; kalau tidak,
+       angka tebakan itu justru menyesatkan (lihat catatan laju di atas) */
+    const sisaPerkiraan = unit.nextHm != null && perkiraan != null ? Math.round(unit.nextHm - perkiraan) : null
+    const hmTampil = sisaPerkiraan != null && sisaPerkiraan > 0 ? perkiraan : null
+    return {
+      jenis: 'manual',
+      hmSekarang: hmTampil,
+      sisaHm: hmTampil != null ? sisaPerkiraan : null,
+      sisaHari: manual.hariLagi,
+      dibatasi: false,
+      laju,
+      tundaSampaiIso: manual.sampaiIso,
+      hmPemicu: unit.nextHm != null ? Math.round(unit.nextHm - TUNDA_MIN_HM) : null,
+      alasan: manual.alasan || `ditunda manual sampai ${manual.sampaiIso} — HM dicek lagi setelah itu`,
+    }
+  }
+
+  /* --- sebab 2: HM jelas belum masuk (tebakan dari laju sheet) --- */
+  if (unit.hm == null || unit.nextHm == null) return null
   if (!(unit.warning != null && unit.warning > 0)) return null
   const laju = unit.rerata && unit.rerata > 0 ? unit.rerata : null
   if (!laju) return null
@@ -255,6 +319,7 @@ export function tundaService(unit, hariIni = todayIso()) {
   if (sisaHm <= TUNDA_MIN_HM) return null
   const sisaHari = Math.max(1, Math.round(sisaHm / laju))
   return {
+    jenis: 'hm',
     hmSekarang,
     sisaHm,
     sisaHari,
@@ -266,6 +331,35 @@ export function tundaService(unit, hariIni = todayIso()) {
     hmPemicu: Math.round(unit.nextHm - TUNDA_MIN_HM),
     alasan: `jadwal lewat ${unit.warning} hari, tetapi perkiraan HM sekarang ${fmtRibu(hmSekarang)} baru menuju ${fmtRibu(unit.nextHm)} (${fmtRibu(sisaHm)} HM lagi ≈ ${sisaHari} hari pada laju ${laju} HM/hari)`,
   }
+}
+
+/** Catatan penundaan dari sheet (tb_service3) → daftar tunda manual.
+ *  Hanya baris yang sah yang dipakai: butuh kode unit + tanggal sampai + alasan. */
+export function parseTunda(header = [], rows = []) {
+  if (!rows.length) return []
+  const ix = {
+    kode: colIndex(header, ['Kode Unit', 'Kode Mesin']),
+    sampai: colIndex(header, ['Tunda Sampai', 'Tunda Sampai (ISO)', 'Sampai']),
+    alasan: colIndex(header, ['Alasan', 'Keterangan', 'Note']),
+    posisi: colIndex(header, ['Posisi']),
+    dicatat: colIndex(header, ['Dicatat', 'Tanggal Catat', 'Dicatat Pada']),
+  }
+  if (ix.kode < 0 || ix.sampai < 0) return []
+  const out = []
+  for (const r of rows) {
+    const kode = String(r[ix.kode] ?? '').trim().toUpperCase()
+    if (!kode) continue
+    const sampaiIso = parseTanggal(r[ix.sampai])?.iso || ''
+    if (!sampaiIso) continue
+    out.push({
+      kode,
+      sampaiIso,
+      alasan: String(r[ix.alasan] ?? '').trim(),
+      posisi: String(r[ix.posisi] ?? '').trim().toUpperCase(),
+      dicatatIso: parseTanggal(r[ix.dicatat])?.iso || '',
+    })
+  }
+  return out
 }
 
 export function parseService1(header = [], rows = []) {
@@ -1519,6 +1613,7 @@ export async function fetchServiceData({ master = [] } = {}) {
   }
   const json = await bacaSvcRaw()
   const r = json.result || {}
+  const tunda = parseTunda(r.tundaHeader || [], r.tundaRows || [])
   const intervalHm = r.intervalHm || INTERVAL_HM
   const { units: evalUnits, duplikat, baris } = parseService1(r.evalHeader || [], r.evalRows || [])
   const log = parseService2(r.logHeader || [], r.logRows || [])
@@ -1528,6 +1623,9 @@ export async function fetchServiceData({ master = [] } = {}) {
   const data = {
     units: lengkap.units,
     log,
+    /* penundaan pengingat (tb_service3) — riwayat lengkap; penyaringan tanggal
+       dilakukan di pemakai lewat tundaAktif()/tundaService() */
+    tunda,
     duplikat: duplikat || 0,
     duplikatLog: log.duplikat || 0,
     barisLog: (r.logRows || []).length,
@@ -1568,6 +1666,23 @@ export async function catatService(payload) {
     45000
   )
   return json.result || {}
+}
+
+/** Simpan penundaan pengingat (delay reminder) satu unit → baris baru di
+ *  sheet “Delay Reminder Service” (tb_service3). Tidak menyentuh log service. */
+export async function tundaServiceUnit({ kode, hari = TUNDA_HARI_BAWAAN, alasan, posisi = '', oleh = '', hariIni = todayIso() } = {}) {
+  if (!getEndpoint()) {
+    throw new Error('Endpoint Apps Script belum diatur (Pengaturan ▸ Koneksi sheet), jadi penundaan tidak bisa disimpan.')
+  }
+  const h = Math.max(1, Math.min(TUNDA_MAKS_HARI, Math.round(Number(hari) || TUNDA_HARI_BAWAAN)))
+  const sampai = tambahHari(hariIni, h)
+  const json = await postApi(
+    { action: 'svcdefer', payload: { kode: String(kode || '').trim().toUpperCase(), sampai, hari: h, alasan, posisi, oleh } },
+    45000
+  )
+  if (json && json.ok === false) throw new Error(json.error || 'Gagal menyimpan penundaan.')
+  const hasil = json.result || {}
+  return { ...hasil, hari: h, sampai: hasil.sampai || sampai }
 }
 
 /** Tunggu sampai baris baru muncul di tb_service2 (gviz kadang butuh 1–3 detik). */

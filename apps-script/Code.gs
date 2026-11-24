@@ -24,7 +24,7 @@
 /* ====================== KONFIGURASI ====================== */
 var SPREADSHEET_ID = '1mhXxr7cfdnS-A_gJ6E4aixGRSzINdGP94orr-2lL45o'; // Update ZPAS637 (tujuan)
 var SHEET_NAME = 'Data Inspeksi';
-var SCRIPT_VERSION = '1.9.28'; // naikkan setiap kali kode berubah besar
+var SCRIPT_VERSION = '1.10.0'; // naikkan setiap kali kode berubah besar
 /* 1.9.21 — fitur Tukar Unit (1.9.20) DIBATALKAN atas permintaan pemilik sheet:
      aksi "swapread"/"swapunit" dan sheet "Riwayat Tukar" tidak dipakai lagi.
    1.9.14 — HM boleh turun (meter diganti): catatan service tetap diterima. */
@@ -53,6 +53,11 @@ var MASTER = {
 var SERVICE = {
   logSheet: 'Monitor Kasie FS',      // tb_service2 → tempat MENULIS
   evalSheet: 'Data Service Engine',  // tb_service1 → hasil rumus (dibaca balik)
+  /* tb_service3 → penundaan pengingat (delay reminder) yang dicatat pengguna.
+     Dipisah dari tb_service2 supaya log service tetap murni pencatatan kerja. */
+  tundaSheet: 'Delay Reminder Service',
+  tundaHeaders: ['Dicatat', 'Posisi', 'Kode Unit', 'Tunda Sampai', 'Hari', 'Alasan', 'Dicatat Oleh'],
+  tundaMaksHari: 120,
   headers: ['Posisi', 'No', 'Tanggal', 'Month', 'Bulan Service', 'Minggu Service', 'Kode Mesin', 'HM Service'],
   intervalHm: 250
 };
@@ -171,6 +176,9 @@ function doPost(e) {
     }
     if (action === 'svcrecord') {
       return json_({ ok: true, result: serviceRecord_(body.payload || {}) });
+    }
+    if (action === 'svcdefer') {
+      return json_({ ok: true, result: serviceDefer_(body.payload || {}) });
     }
     if (action === 'svcrepair') {
       return json_({ ok: true, result: serviceRepairRumus_(), version: SCRIPT_VERSION });
@@ -987,6 +995,20 @@ function serviceRead_() {
   out.logHeader = logSh.getRange(lhr, 1, 1, lcols).getValues()[0].map(function (v) { return String(v); });
   out.logRows = llast > lhr ? logSh.getRange(lhr + 1, 1, llast - lhr, lcols).getValues().map(isoRow_) : [];
 
+  /* penundaan pengingat (tb_service3) — dibaca apa adanya; web yang menyaring
+     baris yang tanggal tundanya sudah lewat */
+  try {
+    var tsh = serviceTundaSheet_();
+    var tlast = tsh.getLastRow();
+    var tcols = SERVICE.tundaHeaders.length;
+    out.tundaHeader = tsh.getRange(1, 1, 1, tcols).getValues()[0].map(function (v) { return String(v); });
+    out.tundaRows = tlast > 1 ? tsh.getRange(2, 1, tlast - 1, tcols).getValues().map(isoRow_) : [];
+  } catch (eT) {
+    out.tundaHeader = SERVICE.tundaHeaders.slice();
+    out.tundaRows = [];
+    out.tundaError = String(eT && eT.message ? eT.message : eT);
+  }
+
   return out;
 }
 
@@ -1009,6 +1031,66 @@ function serviceInfo_() {
  * CATAT satu service → tambah satu baris di akhir tb_service2.
  * Idempoten: kode + tanggal + HM yang sama tidak ditulis dua kali.
  */
+/* ================= DELAY REMINDER SERVICE (tb_service3) =================
+   Pengawas menekan “Tunda” pada unit yang sudah lewat jadwal padahal HM-nya
+   belum masuk (unit banyak standby). Penundaan dicatat di sheet tersendiri,
+   TIDAK di tb_service2, supaya log service tetap murni pencatatan kerja.
+   Web membaca kembali lewat `svcread` (tundaHeader/tundaRows) dan menyaring
+   baris yang tanggal tundanya sudah lewat — riwayat lama tetap tersimpan
+   sebagai jejak audit. */
+
+function serviceTundaSheet_() {
+  var ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+  var sh = ss.getSheetByName(SERVICE.tundaSheet);
+  if (!sh) {
+    sh = ss.insertSheet(SERVICE.tundaSheet);
+    sh.getRange(1, 1, 1, SERVICE.tundaHeaders.length).setValues([SERVICE.tundaHeaders])
+      .setFontWeight('bold').setBackground('#0b3d5c').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  } else if (sh.getLastRow() === 0) {
+    sh.getRange(1, 1, 1, SERVICE.tundaHeaders.length).setValues([SERVICE.tundaHeaders])
+      .setFontWeight('bold').setBackground('#0b3d5c').setFontColor('#ffffff');
+    sh.setFrozenRows(1);
+  }
+  return sh;
+}
+
+/** Catat penundaan pengingat untuk satu unit.
+ *  payload: { kode, sampai (ISO), hari, alasan, posisi, oleh } */
+function serviceDefer_(p) {
+  var lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    var kode = String(p.kode || '').trim().toUpperCase();
+    if (!kode) throw new Error('Kode unit wajib diisi.');
+    var sampai = parseTanggal_(p.sampai);
+    if (!sampai) throw new Error('Tanggal “tunda sampai” tidak valid.');
+    var iso = Utilities.formatDate(sampai, 'Asia/Jakarta', 'yyyy-MM-dd');
+    var hariIni = Utilities.formatDate(new Date(), 'Asia/Jakarta', 'yyyy-MM-dd');
+    var jarak = Math.round((new Date(iso + 'T00:00:00+07:00').getTime() - new Date(hariIni + 'T00:00:00+07:00').getTime()) / 86400000);
+    if (jarak < 1) throw new Error('Tanggal tunda harus setelah hari ini.');
+    if (jarak > SERVICE.tundaMaksHari) throw new Error('Penundaan paling lama ' + SERVICE.tundaMaksHari + ' hari.');
+
+    var alasan = String(p.alasan || '').trim();
+    if (!alasan) throw new Error('Alasan penundaan wajib diisi (mis. “standby, HM belum masuk”).');
+
+    var sh = serviceTundaSheet_();
+    var baris = sh.getLastRow() + 1;
+    var posisi = String(p.posisi || '').trim().toUpperCase();
+    if (!posisi) {
+      var peta = petaEvaluasi_();
+      posisi = peta[kode] ? String(peta[kode].posisi || '').toUpperCase() : '';
+    }
+    sh.getRange(baris, 1, 1, SERVICE.tundaHeaders.length).setValues([[
+      hariIni, posisi, kode, iso, jarak, alasan, String(p.oleh || '').trim()
+    ]]);
+    bumpRev_();
+    return { baris: baris, kode: kode, posisi: posisi, sampai: iso, hari: jarak, alasan: alasan, dicatat: hariIni };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
 function serviceRecord_(p) {
   var lock = LockService.getScriptLock();
   lock.waitLock(30000);

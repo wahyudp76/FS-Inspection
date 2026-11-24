@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cx } from '../lib/analytics'
 import { useScrollLock } from '../lib/scrollLock'
-import { INTERVAL_HM, BATAS_DELTA_METER, mingguKe, namaBulan, hariIniIso, tundaService } from '../lib/service'
+import { INTERVAL_HM, BATAS_DELTA_METER, mingguKe, namaBulan, hariIniIso, tundaService, TUNDA_HARI_BAWAAN } from '../lib/service'
 import { serviceStatusMeta } from '../lib/config'
 import { IconWrench, IconSearch, IconX, IconCheck, IconAlert, IconChevronDown, IconClock } from './icons'
 
@@ -20,7 +20,7 @@ const fmt = (n) => (n == null ? '—' : new Intl.NumberFormat('id-ID').format(n)
  * (sheet "Monitor Kasie FS"). Setelah tersimpan, tb_service1 dihitung ulang
  * oleh rumus sheet, jadi jadwal service ikut berubah.
  */
-export default function ServiceForm({ open, units = [], log = [], presetKode, onClose, onSubmit, notify }) {
+export default function ServiceForm({ open, units = [], log = [], presetKode, onClose, onSubmit, onTunda, notify }) {
   const [kode, setKode] = useState(presetKode || '')
   const [cari, setCari] = useState('')
   const [daftarBuka, setDaftarBuka] = useState(false)
@@ -34,6 +34,9 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
   /* pengguna memilih tetap mencatat walau HM belum masuk (unit standby dsb.) */
   const [tundaDilewati, setTundaDilewati] = useState(false)
   const [sibuk, setSibuk] = useState(false)
+  /* delay reminder langsung dari form: unit lewat jadwal & HM belum masuk */
+  const [tundaHari, setTundaHari] = useState(TUNDA_HARI_BAWAAN)
+  const [sibukTunda, setSibukTunda] = useState(false)
   const [galat, setGalat] = useState('')
   const [sukses, setSukses] = useState(null)
   const boxRef = useRef(null)
@@ -332,6 +335,51 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                 </div>
               )}
 
+              {/* Delay reminder — tunda pengingat saat unit lewat jadwal tetapi HM belum masuk */}
+              {onTunda && unit && (infoTunda || unit.status === 'terlambat' || unit.status === 'segera') && (
+                <div className="rounded-xl border border-sky-500/30 bg-white/70 p-2.5">
+                  <p className="text-[11px] font-semibold text-sky-900">Tidak jadi service sekarang? Tunda pengingatnya:</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-1">
+                    {[3, 7, 14].map((h) => (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => setTundaHari(h)}
+                        aria-pressed={tundaHari === h}
+                        className={
+                          'rounded-lg border px-2 py-1 text-[10.5px] font-semibold transition max-sm:min-h-9 ' +
+                          (tundaHari === h ? 'border-sky-500/60 bg-sky-500/20 text-sky-900' : 'border-slate-900/10 bg-white text-slate-600')
+                        }
+                      >
+                        {h} hari
+                      </button>
+                    ))}
+                    <span className="ml-auto text-[10px] text-slate-500">pengingat berbunyi lagi setelah itu</span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={sibukTunda}
+                    onClick={async () => {
+                      setGalat('')
+                      setSibukTunda(true)
+                      try {
+                        const alasan = `HM belum masuk (${fmt(hmNum ?? 0)} dari batas ${fmt(unit.nextHm)}) — unit jarang kerja/standby`
+                        await onTunda(unit, { hari: tundaHari, alasan })
+                        onClose?.()
+                      } catch (e) {
+                        setGalat(e?.message || 'Gagal menyimpan penundaan.')
+                      } finally {
+                        setSibukTunda(false)
+                      }
+                    }}
+                    className="mt-1.5 w-full rounded-lg border border-sky-500/50 bg-sky-500/15 px-2 py-1.5 text-[11px] font-semibold text-sky-900 disabled:opacity-50"
+                  >
+                    <IconClock size={12} className="mr-1 inline" />
+                    {sibukTunda ? 'Menyimpan penundaan…' : `Delay reminder — tunda ${tundaHari} hari`}
+                  </button>
+                </div>
+              )}
+
               {/* peringatan: jadwal lewat tetapi HM belum masuk */}
               {infoTunda && (
                 <div className="rounded-xl border border-sky-500/40 bg-sky-500/[0.08] p-2.5">
@@ -359,9 +407,9 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                     <span>
                       Tetap catat service sekarang (HM memang belum masuk)
                       <span className="block font-normal text-[10px] leading-relaxed text-slate-500">
-                        Tanpa centang ini, unit hanya ditandai <span className="font-semibold">Ditunda</span> sampai{' '}
-                        {infoTunda.tundaSampaiIso} atau sampai HM menyentuh {fmt(infoTunda.hmPemicu)} — pengingatnya
-                        berbunyi lagi sendiri.
+                        Tanpa centang ini service tidak bisa disimpan. Bila unit memang belum perlu diservice,
+                        pakai <span className="font-semibold">Delay reminder</span> di bawah: pengingat ditunda
+                        (bawaan 7 hari), lalu unit muncul lagi untuk dicek HM-nya.
                       </span>
                     </span>
                   </label>
