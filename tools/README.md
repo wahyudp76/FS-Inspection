@@ -24,12 +24,19 @@ VITE_APPS_SCRIPT_URL=http://127.0.0.1:8111/exec npx vite --port 5199 --host 0.0.
 ```
 
 `data/` dan `data2/` berisi ekspor CSV sheet asli (tidak di-commit, lihat
-`.gitignore`). Cara mengambilnya: buka sheet → `File ▸ Download ▸ CSV`, atau
-lewat gviz:
+`.gitignore`). **Cara yang benar: `tools/freshenv.mjs`** — menarik data langsung
+dari endpoint produksi (aksi baca saja) dengan bentuk kolom yang sama seperti
+sheet:
 
+```bash
+EP='https://script.google.com/macros/s/<ID>/exec' node tools/freshenv.mjs
+EP='…' node tools/freshenv.mjs --cek     # hanya laporkan, tidak menulis
 ```
-https://docs.google.com/spreadsheets/d/<ID>/gviz/tq?tqx=out:csv&sheet=<NAMA TAB>
-```
+
+> **Jangan pakai gviz untuk spreadsheet ini.** `gviz/tq?tqx=out:csv&sheet=<NAMA TAB>`
+> mengabaikan nama tab dan mengembalikan tab pertama (`ZPAS637`, 19.274 baris
+> logging harian). Inilah sebab ekspor tab service dulu selalu salah (390 vs 423).
+> Bila tetap ingin gviz, verifikasi dulu header hasilnya.
 
 Isi `data/` yang dipakai:
 `Data_Inspeksi.csv`, `Monitor_Kasie_FS.csv` (tb_service2),
@@ -43,6 +50,7 @@ Urutan aman: jalankan `dataquality` lebih dulu (ia memuat ulang mock lewat
 
 | Alat | Menjalankan | Yang diperiksa |
 |---|---|---|
+| `freshenv.mjs` | `EP=… node tools/freshenv.mjs` | segarkan `data/` & `data2/` dari endpoint produksi (baca saja, bentuk kolom = sheet) |
 | `dataquality.mjs` | `node tools/dataquality.mjs` | kecocokan sheet ↔ web: riwayat, master, log service, status per unit (7 cek) |
 | `apicheck.mjs` | `node tools/apicheck.mjs` | protokol API: `unchanged` hemat, ukuran payload, revisi isi |
 | `livedata.mjs` | `node tools/livedata.mjs` | jalur “Repair” mengubah sel sheet seperti yang dijanjikan UI |
