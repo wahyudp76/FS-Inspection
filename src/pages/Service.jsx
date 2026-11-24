@@ -26,6 +26,7 @@ import {
   catatService,
   tarikSetelahCatat,
   INTERVAL_HM,
+  tundaService,
 } from '../lib/service'
 import {
   IconWrench, IconDownload, IconAlert, IconCheck, IconClock, IconCalendar,
@@ -170,6 +171,31 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
 
   const ringkasan = useMemo(() => ringkasService(units, log, { duplikat }), [units, log, duplikat])
 
+  /* ---- tunda pengingat: jadwal sudah lewat tanggal tetapi HM belum masuk ----
+     Unit seperti ini tidak “hilang” dari daftar; hanya dipisah ke kelompok
+     “ditunda” dengan tanggal pengingat, supaya KPI Lewat Jadwal tetap fokus
+     pada unit yang benar-benar sudah waktunya service. */
+  const tunda = useMemo(() => {
+    const peta = new Map()
+    for (const u of units) {
+      const t = tundaService(u)
+      if (t) peta.set(u.kode, t)
+    }
+    const daftar = [...peta.values()].sort((a, b) => a.sisaHm - b.sisaHm)
+    return { peta, jumlah: peta.size, daftar }
+  }, [units])
+
+  const ringkasanAktif = useMemo(() => {
+    if (!tunda.jumlah) return ringkasan
+    const lewat = ringkasan.daftar.terlambat.filter((u) => !tunda.peta.has(u.kode))
+    const ditunda = ringkasan.daftar.terlambat.filter((u) => tunda.peta.has(u.kode))
+    return {
+      ...ringkasan,
+      daftar: { ...ringkasan.daftar, terlambat: lewat, ditunda },
+      tundaJumlah: ditunda.length,
+    }
+  }, [ringkasan, tunda])
+
   /* daftar bulan acuan + default = bulan berjalan */
   const bulanOpsi = useMemo(() => daftarBulan(log), [log])
   const acuanAktif = useMemo(() => {
@@ -288,7 +314,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   useEffect(() => { setFKode(null) }, [acuanAktif])
 
   /* --------------------------- perhatian --------------------------- */
-  const daftarPerhatian = ringkasan.daftar[tabPerhatian] || []
+  const daftarPerhatian = ringkasanAktif.daftar[tabPerhatian] || []
   const perPerhatian = 10
   const totalHalPerhatian = Math.max(1, Math.ceil(daftarPerhatian.length / perPerhatian))
   const halPerhatianAman = Math.min(halPerhatian, totalHalPerhatian - 1)
@@ -360,7 +386,8 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
   }))
 
   const perhatianTabs = [
-    { value: 'terlambat', label: `Lewat (${ringkasan.terlambat})` },
+    { value: 'terlambat', label: `Lewat (${ringkasanAktif.daftar.terlambat.length})` },
+    { value: 'ditunda', label: `Ditunda (${ringkasanAktif.tundaJumlah})` },
     { value: 'segera', label: `Jatuh tempo (${ringkasan.segera})` },
     { value: 'belum', label: `Belum service (${ringkasan.belumService})` },
     { value: 'tanpaJadwal', label: `Data HM kurang (${ringkasan.tanpaJadwal})` },
@@ -512,12 +539,25 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
         <Kpi label="Total Engine" value={fmt(ringkasan.totalUnit)} unit="unit" hint="tb_service1" icon={<IconEngine size={14} />} accent="#0d9488" />
         <Kpi
           label="Lewat Jadwal"
-          value={fmt(ringkasan.terlambat)}
+          value={fmt(ringkasanAktif.daftar.terlambat.length)}
           unit="unit"
-          hint="Sudah melewati warning date"
+          hint={
+            ringkasanAktif.tundaJumlah
+              ? `Sudah lewat tanggal & HM sudah masuk · ${ringkasanAktif.tundaJumlah} unit lain ditunda (HM belum masuk)`
+              : 'Sudah melewati warning date'
+          }
           icon={<IconAlert size={14} />}
           accent="#f43f5e"
           onClick={() => setKpiStatus('terlambat')}
+        />
+        <Kpi
+          label="Ditunda"
+          value={fmt(tunda.jumlah)}
+          unit="unit"
+          hint="Lewat tanggal, tetapi HM belum masuk — pengingat ditunda"
+          icon={<IconClock size={14} />}
+          accent="#0ea5e9"
+          onClick={() => setKpiStatus('ditunda')}
         />
         <Kpi
           label="Jatuh Tempo"
@@ -997,14 +1037,21 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
                     {u.note && <span className="rounded border border-amber-500/40 bg-amber-500/10 px-1 py-0.5 text-[9.5px] text-amber-700">{u.note}</span>}
                   </span>
                   <span className="mt-0.5 block truncate text-[10.5px] text-slate-500">
-                    {u.status === 'belum'
+                    {tunda.peta.has(u.kode) ? (
+                      <>
+                        <span className="font-semibold text-sky-700">Ditunda</span> s.d. {tunda.peta.get(u.kode).tundaSampaiIso} ·
+                        sisa {fmt(tunda.peta.get(u.kode).sisaHm)} HM lagi (pemicu HM {fmt(tunda.peta.get(u.kode).hmPemicu)})
+                      </>
+                    ) : u.status === 'belum'
                       ? 'Belum ada catatan service di tb_service2'
                       : u.status === 'tanpaJadwal'
                       ? `Service terakhir ${u.terakhirIso || '—'} · HM ${fmt(u.hm)} · rerata HM/hari kosong di sheet`
                       : `Jadwal ${u.nextIso} · HM ${fmt(u.nextHm)} · ${hariTeks(u.sisaHari)}`}
                   </span>
                 </span>
-                <span className={cx('shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold', m.cls)}>{m.short}</span>
+                <span className={cx('shrink-0 rounded-md border px-2 py-0.5 text-[10px] font-semibold', m.cls)}>
+                  {tunda.peta.has(u.kode) ? 'Ditunda' : m.short}
+                </span>
                 <IconChevron size={14} className="shrink-0 text-slate-400" />
               </button>
             )
@@ -1265,7 +1312,7 @@ export default function Service({ notify, openFormSignal = 0, serviceSync = null
       />
       <ServiceStatusModal
         statusId={kpiStatus}
-        units={kpiStatus ? ringkasan.daftar[kpiStatus] || [] : []}
+        units={kpiStatus ? ringkasanAktif.daftar[kpiStatus] || [] : []}
         totalUnit={ringkasan.totalUnit}
         onClose={() => setKpiStatus(null)}
         onPick={(u) => {

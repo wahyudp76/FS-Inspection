@@ -224,6 +224,50 @@ export function profilMeter(arr = [], kanonikJenis = null) {
   return { meter: meterTerakhir, kanonik, jumlahMeter: grup.length, perluCek, perluCekTerakhir: perluCek(meterTerakhir) }
 }
 
+/** Toleransi jam mesin untuk unit yang jadwalnya SUDAH lewat tanggal.
+ *  Unit yang dipakai jarang (standby, cadangan) bisa lewat tanggal padahal HM
+ *  belum masuk interval 250 HM. Yang dinilai BUKAN HM saat service terakhir
+ *  (itu selalu 250 di bawah batas), melainkan perkiraan HM SEKARANG:
+ *  HM terakhir + laju HM/hari × jumlah hari sejak service terakhir. */
+export const TUNDA_MIN_HM = 50 // sisa HM > ini → belum waktunya service
+export const TUNDA_MAKS_HARI = 120 // penundaan maksimum agar tidak “hilang”
+
+const fmtRibu = (n) => new Intl.NumberFormat('id-ID').format(Math.round(n))
+
+/**
+ * Hitung penundaan pengingat untuk satu unit.
+ * @param unit    hasil lengkapiUnitDariLog (butuh hm, nextHm, warning, rerata, terakhirIso)
+ * @param hariIni ISO tanggal acuan
+ * @returns {null | {hmSekarang, sisaHm, sisaHari, tundaSampaiIso, hmPemicu, laju, alasan}}
+ */
+export function tundaService(unit, hariIni = todayIso()) {
+  if (!unit || unit.hm == null || unit.nextHm == null) return null
+  if (!(unit.warning != null && unit.warning > 0)) return null
+  const laju = unit.rerata && unit.rerata > 0 ? unit.rerata : null
+  if (!laju) return null
+  if (!unit.terakhirIso) return null
+  /* selisihHari(a, b) = b − a (hari): umur = hariIni − terakhir */
+  const umur = selisihHari(unit.terakhirIso, hariIni)
+  if (umur == null) return null
+  const hariSejak = Math.max(0, umur)
+  const hmSekarang = Math.round(unit.hm + laju * hariSejak)
+  const sisaHm = Math.round(unit.nextHm - hmSekarang)
+  if (sisaHm <= TUNDA_MIN_HM) return null
+  const sisaHari = Math.max(1, Math.round(sisaHm / laju))
+  return {
+    hmSekarang,
+    sisaHm,
+    sisaHari,
+    /* penundaan dibatasi TUNDA_MAKS_HARI — sisa hari di atas itu tidak dipakai */
+    dibatasi: sisaHari > TUNDA_MAKS_HARI,
+    laju,
+    tundaSampaiIso: tambahHari(hariIni, Math.min(TUNDA_MAKS_HARI, sisaHari)),
+    /* HM yang membuat pengingat berbunyi lagi */
+    hmPemicu: Math.round(unit.nextHm - TUNDA_MIN_HM),
+    alasan: `jadwal lewat ${unit.warning} hari, tetapi perkiraan HM sekarang ${fmtRibu(hmSekarang)} baru menuju ${fmtRibu(unit.nextHm)} (${fmtRibu(sisaHm)} HM lagi ≈ ${sisaHari} hari pada laju ${laju} HM/hari)`,
+  }
+}
+
 export function parseService1(header = [], rows = []) {
   if (!rows.length) return { units: [], header }
   const ix = {

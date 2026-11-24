@@ -2,9 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { cx } from '../lib/analytics'
 import { useScrollLock } from '../lib/scrollLock'
-import { INTERVAL_HM, BATAS_DELTA_METER, mingguKe, namaBulan, hariIniIso } from '../lib/service'
+import { INTERVAL_HM, BATAS_DELTA_METER, mingguKe, namaBulan, hariIniIso, tundaService } from '../lib/service'
 import { serviceStatusMeta } from '../lib/config'
-import { IconWrench, IconSearch, IconX, IconCheck, IconAlert, IconChevronDown } from './icons'
+import { IconWrench, IconSearch, IconX, IconCheck, IconAlert, IconChevronDown, IconClock } from './icons'
 
 const angka = (v) => {
   const t = String(v ?? '').trim()
@@ -31,6 +31,8 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
      meter rusak lalu diganti baru sehingga angkanya kembali dari nol. Pengguna
      hanya perlu menyatakan (centang) bahwa ini reset meter, bukan salah ketik. */
   const [resetMeter, setResetMeter] = useState(false)
+  /* pengguna memilih tetap mencatat walau HM belum masuk (unit standby dsb.) */
+  const [tundaDilewati, setTundaDilewati] = useState(false)
   const [sibuk, setSibuk] = useState(false)
   const [galat, setGalat] = useState('')
   const [sukses, setSukses] = useState(null)
@@ -92,8 +94,9 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
     setKode(u.kode)
     setPosisi(u.posisi || '')
     setHm('')
-    /* centang reset meter tidak boleh terbawa ke unit lain */
+    /* centang reset meter / persetujuan tunda tidak boleh terbawa ke unit lain */
     setResetMeter(false)
+    setTundaDilewati(false)
     setCari('')
     setDaftarBuka(false)
     setGalat('')
@@ -118,6 +121,16 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
   const perluTanda = tidakNaik || melompat
   const resetSah = perluTanda && resetMeter
 
+  /* ---- unit yang jadwalnya sudah lewat tetapi HM belum masuk ----
+     Saat unit seperti ini dicatat, HM yang diisi hampir pasti masih di bawah
+     batas service (mis. karena unit jarang dipakai / standby). Catatan ini
+     memberi tahu bahwa penjadwalan akan mendorong tanggal berikutnya dan
+     pengingat dianggap selesai — supaya tidak dicatat berulang kali. */
+  const infoTunda = useMemo(() => (unit ? tundaService(unit) : null), [unit])
+  const hmMasihDiBawah = hmNum != null && unit?.nextHm != null ? hmNum < unit.nextHm : false
+  const tundaMasihBerlaku = Boolean(infoTunda && hmMasihDiBawah && !tundaDilewati)
+
+
   /* perkiraan jadwal berikutnya memakai rerata HM/hari unit */
   const perkiraan = useMemo(() => {
     if (hmNum == null) return null
@@ -140,6 +153,12 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
     if (!kode) return setGalat('Pilih kode mesin yang diservice dulu.')
     if (!tanggal) return setGalat('Tanggal service belum diisi.')
     if (hmNum == null || hmNum <= 0) return setGalat('HM service harus berupa angka lebih dari 0.')
+    if (tundaMasihBerlaku) {
+      return setGalat(
+        `Unit ini sudah lewat jadwal (${unit.nextIso}) tetapi HM masih ${fmt(infoTunda.sisaHm)} di bawah batas service. ` +
+          'Centang “Tetap catat service sekarang” bila memang mau dicatat, atau tutup form agar unit tetap berstatus Ditunda.'
+      )
+    }
     if (perluTanda && !resetMeter) {
       return setGalat(
         (tidakNaik
@@ -159,6 +178,9 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
         posisi: posisi || unit?.posisi || '',
         /* keterangan untuk ringkasan di layar (bukan kolom sheet) */
         resetMeter: resetSah,
+        /* catatan: HM masih di bawah batas service saat unit lewat jadwal */
+        hmBelumMasuk: Boolean(infoTunda),
+        tundaDilewati: Boolean(infoTunda && tundaDilewati),
       })
       setSukses({ ...hasil, kode, hm: hmNum, tanggal, resetMeter: resetSah })
       notify?.({
@@ -212,7 +234,8 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
               <p className="mt-1 text-[11.5px] leading-relaxed text-emerald-700/80">
                 HM {fmt(sukses.hm)} · {sukses.tanggal}
                 {sukses.baris ? ` · baris ${sukses.baris} sheet` : ''}
-                {sukses.resetMeter ? ' · meter HM baru (di-reset)' : ''}
+                {sukses.resetMeter ? ' · meter HM baru (di-reset / hasil repair)' : ''}
+                {sukses.hmBelumMasuk ? ' · dicatat walau HM belum masuk interval' : ''}
               </p>
               {sukses.eval && (
                 <p className="mt-1.5 text-[11.5px] leading-relaxed text-slate-700">
@@ -306,6 +329,47 @@ export default function ServiceForm({ open, units = [], log = [], presetKode, on
                       <p className="truncate font-mono text-[12px] font-semibold text-slate-900">{v}</p>
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* peringatan: jadwal lewat tetapi HM belum masuk */}
+              {infoTunda && (
+                <div className="rounded-xl border border-sky-500/40 bg-sky-500/[0.08] p-2.5">
+                  <p className="flex items-start gap-1.5 text-[11.5px] font-semibold leading-relaxed text-sky-800">
+                    <IconClock size={13} className="mt-0.5 shrink-0" />
+                    Sudah lewat jadwal ({unit.nextIso}), tetapi HM belum masuk interval
+                  </p>
+                  <p className="mt-1 text-[10.5px] leading-relaxed text-sky-800/90">
+                    HM sekarang <span className="font-mono font-semibold">{fmt(unit.hm)}</span> dari batas{' '}
+                    <span className="font-mono font-semibold">{fmt(unit.nextHm)}</span> — sisa{' '}
+                    <span className="font-mono font-semibold">{fmt(infoTunda.sisaHm)} HM</span>
+                    {infoTunda.sisaHari
+                      ? ` (≈ ${Math.min(infoTunda.sisaHari, 120)} hari lagi${infoTunda.dibatasi ? ', pengingat dibatasi 120 hari' : ''})`
+                      : ''}. Bila service dicatat sekarang,
+                    jadwal berikutnya tetap didorong ke <span className="font-mono">{INTERVAL_HM} HM</span> dari HM baru,
+                    sehingga tanggal jadwal ikut mundur.
+                  </p>
+                  <label className="mt-1.5 flex cursor-pointer items-start gap-2 text-[11px] font-medium text-slate-700">
+                    <input
+                      type="checkbox"
+                      checked={tundaDilewati}
+                      onChange={(e) => setTundaDilewati(e.target.checked)}
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-sky-500"
+                    />
+                    <span>
+                      Tetap catat service sekarang (HM memang belum masuk)
+                      <span className="block font-normal text-[10px] leading-relaxed text-slate-500">
+                        Tanpa centang ini, unit hanya ditandai <span className="font-semibold">Ditunda</span> sampai{' '}
+                        {infoTunda.tundaSampaiIso} atau sampai HM menyentuh {fmt(infoTunda.hmPemicu)} — pengingatnya
+                        berbunyi lagi sendiri.
+                      </span>
+                    </span>
+                  </label>
+                  {hmMasihDiBawah && !tundaDilewati && (
+                    <p className="mt-1 rounded-lg bg-white/60 px-2 py-1 text-[10px] leading-relaxed text-slate-600">
+                      HM yang Anda isi ({fmt(hmNum)}) masih di bawah batas — cocok untuk keputusan menunda.
+                    </p>
+                  )}
                 </div>
               )}
 
