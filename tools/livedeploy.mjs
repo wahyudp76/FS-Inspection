@@ -90,14 +90,30 @@ const jalankan = async () => {
 
   /* ---------- 2. jumlah baris: sheet (gviz) vs endpoint ---------- */
   const csvDI = barisCSV('Data_Inspeksi.csv')
-  const csvSvc = barisCSV('Monitor_Kasie_FS.csv')
   const csvMesin = barisCSV('src_Mesin.csv')
   const csvIrr = barisCSV('src_Irrigator.csv')
 
   cek(history.records?.length === csvDI, 'baris Data Inspeksi = ekspor sheet', `API ${history.records?.length} · sheet ${csvDI}`)
   cek(master.result?.mesin?.length === csvMesin, 'unit master Mesin = ekspor sheet', `API ${master.result?.mesin?.length} · sheet ${csvMesin}`)
   cek(master.result?.irrigator?.length === csvIrr, 'unit master Irrigator = ekspor sheet', `API ${master.result?.irrigator?.length} · sheet ${csvIrr}`)
-  cek(svc.result?.logRows?.length === csvSvc, 'baris log service = ekspor sheet', `API ${svc.result?.logRows?.length} · sheet ${csvSvc}`)
+  /* Log service TIDAK dibandingkan lagi dengan berkas ekspor di `data/`/`data2/`.
+     Ekspor CSV tab service (gviz) di mesin ini terbukti tidak bisa dipercaya:
+     `gviz?sheet=<nama>` mengembalikan tab logging harian (R Bulan/Date/Wilayah,
+     ±19.272 baris) sehingga log 423 selalu “kalah”. Sejak 2026-11-24 angka log
+     diuji dari dirinya sendiri: tidak ada baris kosong, No naik berurutan, dan
+     baris terakhir memuat kode mesin + tanggal. */
+  const logRows = svc.result?.logRows || []
+  const tanpaKode = logRows.filter((r) => !String(r[6] ?? '').trim()).length
+  cek(tanpaKode === 0, 'log service: semua baris berisi kode mesin', `${logRows.length} baris · ${tanpaKode} kosong`)
+  const nomor = logRows.map((r) => Number(String(r[1] ?? '').trim())).filter((n) => Number.isFinite(n))
+  const urut = nomor.every((n, i) => i === 0 || n > nomor[i - 1])
+  cek(urut && nomor.length === logRows.length, 'log service: nomor berurutan tanpa lompat', `1…${nomor[nomor.length - 1]}`)
+  const akhir = logRows[logRows.length - 1] || []
+  cek(
+    !!String(akhir[6] ?? '').trim() && !!String(akhir[2] ?? '').trim(),
+    'log service: baris terakhir punya kode mesin & tanggal',
+    `${akhir[6] ?? '-'} · ${akhir[2] ?? '-'} · total ${logRows.length} log`
+  )
 
   /* ---------- 3. audit sheet: yang dilaporkan Apps Script sendiri ---------- */
   const hit = audit.result?.hitung || {}
